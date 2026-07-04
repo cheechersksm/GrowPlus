@@ -105,7 +105,7 @@
     </div>
 
     <script>
- const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
+     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
 
         const api = {
             run: async function(functionName, ...args) {
@@ -129,9 +129,10 @@
             }
         };
 
-        async function loadAnnouncements() {
-            const data = await api.run('get Announcements');
-        }
+        window.onload = function() {
+            loadAnnouncements();
+        };
+
         function switchView(id) {
             document.getElementById('view-login').classList.add('hide');
             document.getElementById('view-parent').classList.add('hide');
@@ -152,7 +153,6 @@
                     localStorage.setItem('loggedInUserEmail', res.user.Email);
                     // Send the student directly to your new Portal page!
                     window.top.location.href = "Portal.html";
-                }
                 } else {
                     document.getElementById('loader').classList.add('hide');
                     Swal.fire('Login Error', res.message, 'error');
