@@ -129,7 +129,9 @@
             }
         };
 
-        window.onload = function() { loadAnnouncements(); };
+        async function loadAnnouncements() {
+            const data = await api.run('get Announcements');
+        }
         function switchView(id) {
             document.getElementById('view-login').classList.add('hide');
             document.getElementById('view-parent').classList.add('hide');
