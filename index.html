@@ -105,7 +105,7 @@
     </div>
 
     <script>
-     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
 
         const api = {
             run: async function(functionName, ...args) {
@@ -129,8 +129,9 @@
             }
         };
 
-        window.onload = function() {
-            loadAnnouncements();
+        // Trigger the loader automatically when the page loads
+        window.onload = function() { 
+            loadAnnouncements(); 
         };
 
         function switchView(id) {
@@ -139,7 +140,7 @@
             document.getElementById(`view-${id}`).classList.remove('hide');
         }
 
-        // Handle submission and routing to App.html
+        // Handle submission and routing to Portal.html
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             document.getElementById('loader').classList.remove('hide');
@@ -181,7 +182,6 @@
                 console.error(e);
             }
         }
-
 
         function exitParentView() {
             document.getElementById('parentIcInput').value = '';
