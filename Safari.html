@@ -484,7 +484,7 @@
         }
 
         // Submit to GAS Backend
-        function submitScore() {
+        async function submitScore() {
             let name = document.getElementById('player-name').value.trim();
             if(!name) { alert("Please enter your hero name!"); return; }
 
@@ -493,7 +493,7 @@
             document.getElementById('submit-btn').innerText = "Saving...";
 
             let record = {
-                email: loggedInEmail || 'Guest', // 将 Email 一同传送至 Spreadsheet
+                email: (typeof loggedInEmail !== 'undefined' ? loggedInEmail : localStorage.getItem('loggedInUserEmail')) || 'Guest', 
                 name: name,
                 operation: settings.op,
                 difficulty: settings.diff,
@@ -503,26 +503,18 @@
                 avgTime: parseFloat((totalElapsedSeconds / settings.qCount).toFixed(1))
             };
 
-            // Call GAS function
-            if (typeof google !== 'undefined' && google.script) {
-                google.script.run
-                    .withSuccessHandler(() => {
-                        document.getElementById('submit-btn').innerText = "Saved";
-                        document.getElementById('save-msg').classList.remove('hidden');
-                    })
-                    .withFailureHandler((err) => {
-                        alert("Error saving score: " + err);
-                        document.getElementById('submit-btn').disabled = false;
-                        document.getElementById('submit-btn').classList.remove('opacity-50');
-                        document.getElementById('submit-btn').innerText = "Save";
-                    })
-                    .saveScore(record);
-            } else {
-                // Local fallback for testing outside GAS
-                setTimeout(() => {
-                    document.getElementById('submit-btn').innerText = "Saved";
-                    document.getElementById('save-msg').classList.remove('hidden');
-                }, 1000);
+            try {
+                // Call your API fetch bridge directly
+                await api.run('saveScore', record);
+                
+                document.getElementById('submit-btn').innerText = "Saved";
+                document.getElementById('save-msg').classList.remove('hidden');
+            } catch (err) {
+                console.error("Error saving score:", err);
+                alert("Error saving score: " + err);
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('submit-btn').classList.remove('opacity-50');
+                document.getElementById('submit-btn').innerText = "Save";
             }
         }
 
@@ -535,28 +527,20 @@
             fetchLeaderboard();
         }
 
-        function fetchLeaderboard() {
+        async function fetchLeaderboard() {
             let tbody = document.getElementById('lb-body');
             tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center font-bold text-gray-500">Fetching records... 🐒</td></tr>';
             
             let op = document.getElementById('lb-operation').value;
             let diff = document.getElementById('lb-difficulty').value;
 
-            if (typeof google !== 'undefined' && google.script) {
-                google.script.run
-                    .withSuccessHandler(renderLeaderboard)
-                    .withFailureHandler(() => {
-                        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">Failed to load</td></tr>';
-                    })
-                    .getLeaderboardData(op, diff);
-            } else {
-                // Local mock
-                setTimeout(() => {
-                    renderLeaderboard([
-                        {name: "Tiger Tom", scorePercent: 100, avgTime: 2.1},
-                        {name: "Monkey Max", scorePercent: 90, avgTime: 3.5}
-                    ]);
-                }, 500);
+            try {
+                // Fetch live leaderboard data from Google Sheets through GitHub
+                const data = await api.run('getLeaderboardData', op, diff);
+                renderLeaderboard(data);
+            } catch (err) {
+                console.error("Failed to load leaderboard:", err);
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">Failed to load leaderboard records</td></tr>';
             }
         }
 
@@ -645,54 +629,51 @@
         }
 
         // 1. CRITICAL: Define the missing API runner object for server communication
+        // ==================== CONFIGURATION ====================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
+
+        // ==================== API BRIDGE ====================
         const api = {
-            run: function(name, ...args) {
-                return new Promise((res, rej) => { 
-                    google.script.run
-                        .withSuccessHandler(res)
-                        .withFailureHandler(rej)[name](...args); 
-                });
+            run: async function(functionName, ...args) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            func: functionName, 
+                            args: args 
+                        }),
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    return result.data;
+                } catch (error) {
+                    console.error("Game API Call failed for " + functionName + ":", error);
+                    throw error;
+                }
             }
         };
 
         // 2. Your existing optimized return logic goes right underneath it:
-        document.getElementById('btnBackToPortal').addEventListener('click', async function() {
+       document.getElementById('btnBackToPortal').addEventListener('click', function() {
             const backBtn = document.getElementById('btnBackToPortal');
             if (backBtn) {
                 backBtn.disabled = true;
                 backBtn.innerText = "Returning to GrowPlus...";
             }
 
-            const urlPromise = api.run('getWebAppUrl');
-
-            try {
-                const baseUrl = await urlPromise;
-                const targetUrl = baseUrl + "?page=app"; // Suffix pointing back to App.html workspace
-                
-                if (window.top && window.top.location) {
-                    window.top.location.href = targetUrl;
-                } else {
-                    window.location.href = targetUrl;
-                }
-                
-            } catch (err) {
-                console.warn("Top window redirection restricted by sandbox expiry. Using fallback link panel...", err);
-                
-                const fallbackBaseUrl = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
-                const finalFallbackUrl = fallbackBaseUrl + "?page=app";
-                
-                document.body.innerHTML = `
-                  <div style="font-family: sans-serif; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #f0fdf4; color: #166534; padding: 20px;">
-                    <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 400px; width: 100%;">
-                      <div style="font-size: 48px; margin-bottom: 16px;">🌱</div>
-                      <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #065f46;">Game Session Finished</h2>
-                      <p style="font-size: 14px; color: #4b5563; margin-bottom: 24px; line-height: 1.5;">Ready to return to your school workspace dashboard?</p>
-                      <a href="${finalFallbackUrl}" target="_top" style="display: block; width: 100%; text-align: center; padding: 12px 0; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
-                        Click to Open Dashboard
-                      </a>
-                    </div>
-                  </div>
-                `;
+            // Target your GitHub-hosted portal file directly
+            const targetUrl = "Portal.html"; 
+            
+            if (window.top && window.top.location) {
+                window.top.location.href = targetUrl;
+            } else {
+                window.location.href = targetUrl;
             }
         });
     </script>
