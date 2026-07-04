@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Math Safari</title>
+    <!-- 接收来自后端的 Email (避免 JS 报错的安全写法) -->
+    <meta id="gas-email" data-email="<%= cleanEmail %>">
+    <!-- 使用 Tailwind 官方 CDN，避免 jsdelivr -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 使用卡通可爱的 Google 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #a7f3d0; /* 绿色系，贴近大自然 */
+            background-image: radial-gradient(#34d399 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+        .btn-bounce {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .btn-bounce:active {
+            transform: scale(0.95);
+            box-shadow: 0 0px 0px rgba(0,0,0,0.2);
+        }
+        .choice-btn {
+            box-shadow: 0 6px 0px #d97706; /* 立体按钮效果 */
+        }
+        .choice-btn:active {
+            box-shadow: 0 0px 0px #d97706;
+            transform: translateY(6px);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- HOME SCREEN (SETTINGS) -->
+    <div id="screen-home" class="glass-card w-full max-w-lg rounded-3xl p-6 md:p-8 border-4 border-yellow-400 relative">
+        <div class="text-center mb-6">
+            <h1 class="text-4xl md:text-5xl font-black text-green-700 drop-shadow-md mb-2">🦁 Math Safari 🐯</h1>
+            <p class="text-gray-600 font-bold">Challenge yourself in the animal world!</p>
+        </div>
+
+        <div class="space-y-4 mb-8">
+            <!-- Operation -->
+            <div>
+                <label class="block text-orange-600 font-extrabold mb-1">Operation Type 🐒</label>
+                <select id="set-operation" class="w-full p-3 rounded-xl border-2 border-orange-300 bg-orange-50 text-lg font-bold text-gray-700 focus:outline-none focus:border-orange-500">
+                    <option value="Add">Addition (+)</option>
+                    <option value="Sub">Subtraction (-)</option>
+                    <option value="Mul">Multiplication (×)</option>
+                    <option value="Div">Division (÷)</option>
+                    <option value="Mix">Mixed Challenge (All)</option>
+                </select>
+            </div>
+            <!-- Difficulty -->
+            <div>
+                <label class="block text-blue-600 font-extrabold mb-1">Difficulty Level 🐘</label>
+                <select id="set-difficulty" class="w-full p-3 rounded-xl border-2 border-blue-300 bg-blue-50 text-lg font-bold text-gray-700 focus:outline-none focus:border-blue-500">
+                    <option value="Easy">Easy (Cubs)</option>
+                    <option value="Medium">Medium (Explorers)</option>
+                    <option value="Challenge">Challenge (Kings)</option>
+                </select>
+            </div>
+            <!-- Questions & Choices Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-purple-600 font-extrabold mb-1">Questions 🦊</label>
+                    <select id="set-questions" class="w-full p-3 rounded-xl border-2 border-purple-300 bg-purple-50 text-lg font-bold text-gray-700 focus:outline-none focus:border-purple-500">
+                        <option value="10">10 Questions</option>
+                        <option value="20">20 Questions</option>
+                        <option value="30">30 Questions</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-pink-600 font-extrabold mb-1">Choices 🦜</label>
+                    <select id="set-choices" class="w-full p-3 rounded-xl border-2 border-pink-300 bg-pink-50 text-lg font-bold text-gray-700 focus:outline-none focus:border-pink-500">
+                        <option value="4">4 Choices</option>
+                        <option value="8">8 Choices</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <button onclick="startCountdown()" class="btn-bounce w-full bg-green-500 hover:bg-green-600 text-white font-black text-2xl py-4 rounded-2xl border-b-4 border-green-700 shadow-lg">
+                🚀 START CHALLENGE
+            </button>
+            <button onclick="showLeaderboard()" class="btn-bounce w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black text-xl py-3 rounded-2xl border-b-4 border-yellow-600 shadow-lg">
+                🏆 LEADERBOARD
+            </button>
+        </div>
+        <div class="flex justify-center mt-4 mb-4">
+            <button id="btnBackToPortal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200 flex items-center gap-2">
+                <span>← Back to GrowPlus</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- COUNTDOWN SCREEN -->
+    <div id="screen-countdown" class="hidden text-center">
+        <h2 id="countdown-text" class="text-9xl font-black text-white drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">3</h2>
+        <p class="text-2xl text-white font-bold mt-4">Get Ready!</p>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div id="screen-quiz" class="hidden glass-card w-full max-w-2xl rounded-3xl p-6 border-4 border-blue-400 flex flex-col h-full md:h-auto max-h-[90vh]">
+        <div class="flex justify-between items-center mb-6 bg-blue-100 p-3 rounded-2xl">
+            <div class="text-xl font-extrabold text-blue-800">Q: <span id="q-progress">1/10</span></div>
+            <div class="text-2xl font-black text-red-500 flex items-center">
+                ⏱️ <span id="q-timer">00:00</span>
+            </div>
+        </div>
+
+        <div class="flex-grow flex flex-col justify-center items-center mb-8">
+            <h2 id="q-text" class="text-6xl md:text-7xl font-black text-gray-800 drop-shadow-sm tracking-wide text-center">
+                12 + 15
+            </h2>
+        </div>
+
+        <div id="choices-container" class="grid grid-cols-2 gap-4 md:gap-6 mt-auto">
+            <!-- Buttons dynamically injected here -->
+        </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="screen-result" class="hidden glass-card w-full max-w-2xl rounded-3xl p-6 border-4 border-green-400">
+        <h2 class="text-4xl font-black text-center text-green-600 mb-6">🎉 Challenge Complete!</h2>
+        
+        <div class="grid grid-cols-3 gap-2 text-center mb-6 bg-green-50 p-4 rounded-2xl">
+            <div>
+                <p class="text-sm text-gray-500 font-bold">Score</p>
+                <p class="text-3xl font-black text-green-700" id="res-score">100%</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-bold">Total Time</p>
+                <p class="text-3xl font-black text-blue-700" id="res-time">45s</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500 font-bold">Avg/Q</p>
+                <p class="text-3xl font-black text-orange-700" id="res-avg">4.5s</p>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <!-- 新增显示已登入 Email 的区域 -->
+            <div id="email-display" class="hidden mb-3 px-4 py-2 bg-blue-50 border border-blue-200 rounded-xl text-sm font-bold text-blue-800">
+                👤 <span id="user-email-text"></span>
+            </div>
+            
+            <label class="block text-gray-700 font-extrabold mb-2">Enter your name to save score: 🐼</label>
+            <div class="flex gap-2">
+                <input type="text" id="player-name" placeholder="Your Hero Name..." class="flex-grow p-3 rounded-xl border-2 border-gray-300 text-lg font-bold focus:outline-none focus:border-green-500">
+                <button onclick="submitScore()" id="submit-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl border-b-4 border-green-700 active:translate-y-1 active:border-b-0">Save</button>
+            </div>
+            <p id="save-msg" class="text-sm text-green-600 font-bold mt-2 hidden">Score saved successfully!</p>
+        </div>
+
+        <h3 class="text-xl font-extrabold text-gray-700 mb-3 border-b-2 pb-2">Review Answers:</h3>
+        <div id="review-list" class="max-h-60 overflow-y-auto space-y-2 pr-2 mb-6">
+            <!-- Review items injected here -->
+        </div>
+
+        <button onclick="goHome()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-black text-xl py-3 rounded-2xl border-b-4 border-yellow-600 active:translate-y-1 active:border-b-0 shadow-lg">
+            🏠 Back to Home
+        </button>
+    </div>
+
+    <!-- LEADERBOARD SCREEN -->
+    <div id="screen-leaderboard" class="hidden glass-card w-full max-w-2xl rounded-3xl p-6 border-4 border-yellow-400">
+        <h2 class="text-4xl font-black text-center text-yellow-600 mb-6">🏆 Hall of Fame</h2>
+        
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <select id="lb-operation" onchange="fetchLeaderboard()" class="w-full p-2 rounded-xl border-2 border-gray-200 font-bold text-gray-700 focus:outline-none">
+                <option value="Add">Addition</option>
+                <option value="Sub">Subtraction</option>
+                <option value="Mul">Multiplication</option>
+                <option value="Div">Division</option>
+                <option value="Mix">Mixed Challenge</option>
+            </select>
+            <select id="lb-difficulty" onchange="fetchLeaderboard()" class="w-full p-2 rounded-xl border-2 border-gray-200 font-bold text-gray-700 focus:outline-none">
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Challenge">Challenge</option>
+            </select>
+        </div>
+
+        <div class="bg-white rounded-xl overflow-hidden border-2 border-gray-100 shadow-inner mb-6">
+            <table class="w-full text-left">
+                <thead class="bg-yellow-100 text-yellow-800">
+                    <tr>
+                        <th class="p-3 font-extrabold">Rank</th>
+                        <th class="p-3 font-extrabold">Name</th>
+                        <th class="p-3 font-extrabold text-center">Score</th>
+                        <th class="p-3 font-extrabold text-center">Avg Time</th>
+                    </tr>
+                </thead>
+                <tbody id="lb-body">
+                    <!-- Leaderboard injected here -->
+                    <tr><td colspan="4" class="p-4 text-center font-bold text-gray-500">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button onclick="goHome()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-black text-xl py-3 rounded-2xl border-b-4 border-gray-400 active:translate-y-1 active:border-b-0">
+            🏠 Back
+        </button>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // 后端会自动把这里的暗号替换成上面传过去的真实 Email
+        let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+        if (loggedInEmail === "" || loggedInEmail === "INSERT_USER_EMAIL_HERE" || loggedInEmail === "Guest") {
+            loggedInEmail = localStorage.getItem('loggedInUserEmail') || null;
+        }
+
+        // State
+        let settings = { op: 'Add', diff: 'Easy', qCount: 10, choices: 4 };
+        let quizData = [];
+        let currentQ = 0;
+        let score = 0;
+        let startTime = 0;
+        let totalTimerInterval = null;
+        let totalElapsedSeconds = 0;
+        
+        // Utility: Random Number (Inclusive)
+        function getRnd(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Logic: Generate Question based on rules
+        function generateQuestion(op, diff) {
+            let actualOp = op;
+            if (op === 'Mix') {
+                const ops = ['Add', 'Sub', 'Mul', 'Div'];
+                actualOp = ops[getRnd(0, 3)];
+            }
+
+            let qText = '', ans = 0;
+
+            switch(actualOp) {
+                case 'Add':
+                    if (diff === 'Easy') {
+                        let n1 = getRnd(1, 9), n2 = getRnd(1, 9);
+                        qText = `${n1} + ${n2}`; ans = n1 + n2;
+                    } else if (diff === 'Medium') {
+                        let n1 = getRnd(10, 99), n2 = getRnd(10, 99);
+                        qText = `${n1} + ${n2}`; ans = n1 + n2;
+                    } else { // Challenge
+                        let n1 = getRnd(10, 99), n2 = getRnd(10, 99), n3 = getRnd(1, 99);
+                        qText = `${n1} + ${n2} + ${n3}`; ans = n1 + n2 + n3;
+                    }
+                    break;
+                case 'Sub':
+                    if (diff === 'Easy') {
+                        let n1 = getRnd(10, 19), n2 = getRnd(1, 9);
+                        qText = `${n1} - ${n2}`; ans = n1 - n2;
+                    } else if (diff === 'Medium') {
+                        let n1 = getRnd(10, 99), n2 = getRnd(10, 99);
+                        if (n2 > n1) [n1, n2] = [n2, n1]; // Ensure positive
+                        if(n1 === n2) n1 += getRnd(1, 10);
+                        qText = `${n1} - ${n2}`; ans = n1 - n2;
+                    } else { // Challenge
+                        let n1 = getRnd(100, 999), n2 = getRnd(10, 99);
+                        qText = `${n1} - ${n2}`; ans = n1 - n2;
+                    }
+                    break;
+                case 'Mul':
+                    if (diff === 'Easy') {
+                        let n1 = getRnd(1, 9), n2 = getRnd(1, 9);
+                        qText = `${n1} × ${n2}`; ans = n1 * n2;
+                    } else if (diff === 'Medium') {
+                        let n1 = getRnd(10, 99), n2 = getRnd(1, 9);
+                        qText = `${n1} × ${n2}`; ans = n1 * n2;
+                    } else { // Challenge
+                        let n1 = getRnd(10, 99), n2 = getRnd(10, 99);
+                        qText = `${n1} × ${n2}`; ans = n1 * n2;
+                    }
+                    break;
+                case 'Div':
+                    if (diff === 'Easy') { // 2 digits / 1 digit
+                        let n2 = getRnd(2, 9);
+                        let ansCalc = getRnd(2, Math.floor(99/n2)); // Ensure N1 <= 99
+                        let n1 = ansCalc * n2;
+                        qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+                    } else if (diff === 'Medium') { // 3 digits / 1 digit
+                        let n2 = getRnd(2, 9);
+                        let minA = Math.ceil(100/n2), maxA = Math.floor(999/n2);
+                        let ansCalc = getRnd(minA, maxA);
+                        let n1 = ansCalc * n2;
+                        qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+                    } else { // Challenge (3-4 digits / 2 digits)
+                        let n2 = getRnd(10, 99);
+                        let minA = Math.ceil(100/n2), maxA = Math.floor(9999/n2);
+                        let ansCalc = getRnd(minA, maxA);
+                        let n1 = ansCalc * n2;
+                        qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+                    }
+                    break;
+            }
+            return { q: qText, a: ans, userAns: null };
+        }
+
+        // Generate Multiple Choices
+        function getChoices(correct, count) {
+            let options = new Set();
+            options.add(correct);
+            
+            // Try to generate clever distractors
+            let variationScale = Math.max(10, Math.floor(correct * 0.2)); 
+            
+            while(options.size < count) {
+                let shift = getRnd(-variationScale, variationScale);
+                if (shift === 0) shift = getRnd(1, 5);
+                let fake = correct + shift;
+                if (fake >= 0) options.add(fake);
+            }
+            
+            // Convert to array and shuffle
+            let arr = Array.from(options);
+            return arr.sort(() => Math.random() - 0.5);
+        }
+
+        // Screen Navigation
+        function showScreen(id) {
+            ['screen-home', 'screen-countdown', 'screen-quiz', 'screen-result', 'screen-leaderboard'].forEach(s => {
+                document.getElementById(s).classList.add('hidden');
+            });
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function goHome() {
+            showScreen('screen-home');
+        }
+
+        // Format Time
+        function formatTime(seconds) {
+            let m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            let s = (seconds % 60).toString().padStart(2, '0');
+            return `${m}:${s}`;
+        }
+
+        // Start Flow
+        function startCountdown() {
+            // Read settings
+            settings.op = document.getElementById('set-operation').value;
+            settings.diff = document.getElementById('set-difficulty').value;
+            settings.qCount = parseInt(document.getElementById('set-questions').value);
+            settings.choices = parseInt(document.getElementById('set-choices').value);
+            
+            // Build Quiz
+            quizData = [];
+            for(let i=0; i<settings.qCount; i++) {
+                quizData.push(generateQuestion(settings.op, settings.diff));
+            }
+            
+            currentQ = 0;
+            score = 0;
+            totalElapsedSeconds = 0;
+            document.getElementById('q-timer').innerText = "00:00";
+
+            showScreen('screen-countdown');
+            let count = 3;
+            document.getElementById('countdown-text').innerText = count;
+            
+            let cTimer = setInterval(() => {
+                count--;
+                if(count > 0) {
+                    document.getElementById('countdown-text').innerText = count;
+                } else if(count === 0) {
+                    document.getElementById('countdown-text').innerText = "GO!";
+                } else {
+                    clearInterval(cTimer);
+                    startQuiz();
+                }
+            }, 1000);
+        }
+
+        function startQuiz() {
+            showScreen('screen-quiz');
+            // Fix layout grid if 8 choices
+            let grid = document.getElementById('choices-container');
+            if(settings.choices === 8) {
+                grid.className = "grid grid-cols-2 md:grid-cols-4 gap-3 mt-auto";
+            } else {
+                grid.className = "grid grid-cols-2 gap-4 md:gap-6 mt-auto";
+            }
+
+            // Start Timer
+            if(totalTimerInterval) clearInterval(totalTimerInterval);
+            totalTimerInterval = setInterval(() => {
+                totalElapsedSeconds++;
+                document.getElementById('q-timer').innerText = formatTime(totalElapsedSeconds);
+            }, 1000);
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            let data = quizData[currentQ];
+            document.getElementById('q-progress').innerText = `${currentQ + 1} / ${settings.qCount}`;
+            document.getElementById('q-text').innerText = `${data.q} = ?`;
+            
+            let choices = getChoices(data.a, settings.choices);
+            let container = document.getElementById('choices-container');
+            container.innerHTML = '';
+            
+            // Vibrant colors for buttons
+            const colors = ['bg-orange-400', 'bg-blue-400', 'bg-pink-400', 'bg-purple-400', 'bg-yellow-400', 'bg-teal-400', 'bg-red-400', 'bg-indigo-400'];
+
+            choices.forEach((c, idx) => {
+                let btn = document.createElement('button');
+                btn.className = `choice-btn text-white font-black text-3xl md:text-4xl py-6 rounded-2xl ${colors[idx % colors.length]} hover:brightness-110`;
+                btn.innerText = c;
+                btn.onclick = () => handleAnswer(c);
+                container.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(ans) {
+            quizData[currentQ].userAns = ans;
+            if(ans === quizData[currentQ].a) score++;
+            
+            currentQ++;
+            if(currentQ < settings.qCount) {
+                renderQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        function endQuiz() {
+            clearInterval(totalTimerInterval);
+            showScreen('screen-result');
+            
+            let scorePercent = Math.round((score / settings.qCount) * 100);
+            let avg = (totalElapsedSeconds / settings.qCount).toFixed(1);
+
+            document.getElementById('res-score').innerText = `${scorePercent}%`;
+            document.getElementById('res-time').innerText = `${totalElapsedSeconds}s`;
+            document.getElementById('res-avg').innerText = `${avg}s`;
+
+            // Reset UI
+            document.getElementById('save-msg').classList.add('hidden');
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('submit-btn').classList.remove('opacity-50');
+
+            // 显示登入的 Email（但允许学生自己输入英雄名称）
+            const nameInput = document.getElementById('player-name');
+            if (loggedInEmail) {
+                document.getElementById('email-display').classList.remove('hidden');
+                document.getElementById('user-email-text').innerText = "Player Email: " + loggedInEmail;
+            }
+            
+            // 清空框框，让玩家填自己的动物英雄名字
+            nameInput.value = '';
+            nameInput.readOnly = false;
+            nameInput.classList.remove('bg-gray-100', 'text-gray-500');
+
+            // Build Review
+            let rv = document.getElementById('review-list');
+            rv.innerHTML = '';
+            quizData.forEach((item, idx) => {
+                let isCorrect = item.userAns === item.a;
+                let div = document.createElement('div');
+                div.className = `p-3 rounded-xl font-bold flex justify-between items-center ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+                
+                div.innerHTML = `
+                    <div class="text-lg">${idx+1}. ${item.q}</div>
+                    <div class="text-right">
+                        <div>You: ${item.userAns}</div>
+                        ${!isCorrect ? `<div class="text-sm">Correct: ${item.a}</div>` : ''}
+                    </div>
+                `;
+                rv.appendChild(div);
+            });
+        }
+
+        // Submit to GAS Backend
+        function submitScore() {
+            let name = document.getElementById('player-name').value.trim();
+            if(!name) { alert("Please enter your hero name!"); return; }
+
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').classList.add('opacity-50');
+            document.getElementById('submit-btn').innerText = "Saving...";
+
+            let record = {
+                email: loggedInEmail || 'Guest', // 将 Email 一同传送至 Spreadsheet
+                name: name,
+                operation: settings.op,
+                difficulty: settings.diff,
+                totalQuestions: settings.qCount,
+                scorePercent: Math.round((score / settings.qCount) * 100),
+                totalTime: totalElapsedSeconds,
+                avgTime: parseFloat((totalElapsedSeconds / settings.qCount).toFixed(1))
+            };
+
+            // Call GAS function
+            if (typeof google !== 'undefined' && google.script) {
+                google.script.run
+                    .withSuccessHandler(() => {
+                        document.getElementById('submit-btn').innerText = "Saved";
+                        document.getElementById('save-msg').classList.remove('hidden');
+                    })
+                    .withFailureHandler((err) => {
+                        alert("Error saving score: " + err);
+                        document.getElementById('submit-btn').disabled = false;
+                        document.getElementById('submit-btn').classList.remove('opacity-50');
+                        document.getElementById('submit-btn').innerText = "Save";
+                    })
+                    .saveScore(record);
+            } else {
+                // Local fallback for testing outside GAS
+                setTimeout(() => {
+                    document.getElementById('submit-btn').innerText = "Saved";
+                    document.getElementById('save-msg').classList.remove('hidden');
+                }, 1000);
+            }
+        }
+
+        // Leaderboard logic
+        function showLeaderboard() {
+            showScreen('screen-leaderboard');
+            // Default to current settings to show user their relevant rank
+            document.getElementById('lb-operation').value = settings.op;
+            document.getElementById('lb-difficulty').value = settings.diff;
+            fetchLeaderboard();
+        }
+
+        function fetchLeaderboard() {
+            let tbody = document.getElementById('lb-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center font-bold text-gray-500">Fetching records... 🐒</td></tr>';
+            
+            let op = document.getElementById('lb-operation').value;
+            let diff = document.getElementById('lb-difficulty').value;
+
+            if (typeof google !== 'undefined' && google.script) {
+                google.script.run
+                    .withSuccessHandler(renderLeaderboard)
+                    .withFailureHandler(() => {
+                        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-red-500 font-bold">Failed to load</td></tr>';
+                    })
+                    .getLeaderboardData(op, diff);
+            } else {
+                // Local mock
+                setTimeout(() => {
+                    renderLeaderboard([
+                        {name: "Tiger Tom", scorePercent: 100, avgTime: 2.1},
+                        {name: "Monkey Max", scorePercent: 90, avgTime: 3.5}
+                    ]);
+                }, 500);
+            }
+        }
+
+        function renderLeaderboard(data) {
+            let tbody = document.getElementById('lb-body');
+            tbody.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center font-bold text-gray-500">No records yet! Be the first! 🥇</td></tr>';
+                return;
+            }
+
+            // 0. 獲取當前登入玩家的 Email (用於比對是不是自己)
+            // 這裡使用我們之前鎖在快取裡的 'loggedInUserEmail'
+            let myEmail = localStorage.getItem('loggedInUserEmail') || "";
+            myEmail = myEmail.trim().toLowerCase();
+
+            // 1. 【去重邏輯】每個人（根據 Email）只保留最完美的那一次記錄
+            // 因為後端丟出來的 data 已經排好序了（分數高到低，時間短到長），所以我們只要拿每個人遇到的“第一筆”就是他的最高紀錄！
+            let uniquePlayers = [];
+            let seenEmails = new Set();
+
+            data.forEach(row => {
+                let playerEmail = (row.email || "").trim().toLowerCase();
+                
+                // 如果這個 Email 還沒被記錄過，它就是該玩家的最佳成績
+                if (playerEmail && !seenEmails.has(playerEmail)) {
+                    seenEmails.add(playerEmail);
+                    uniquePlayers.push(row);
+                } else if (!playerEmail) {
+                    // 預防萬一：如果是沒有 Email 的歷史髒數據(Guest)，就直接保留
+                    uniquePlayers.push(row);
+                }
+            });
+
+            // 2. 找出當前登入玩家在「去重後」的全體總排名
+            let myRealRankIndex = uniquePlayers.findIndex(row => (row.email || "").trim().toLowerCase() === myEmail);
+
+            // 3. 切割出前 10 名展示
+            let top10Players = uniquePlayers.slice(0, 10);
+
+            // 4. 開始渲染表格
+            top10Players.forEach((row, index) => {
+                let tr = document.createElement('tr');
+                
+                // 判斷是不是當前登入玩家自己，是的話給個特別的背景色（黃色高亮）
+                let isMe = (row.email || "").trim().toLowerCase() === myEmail;
+                tr.className = isMe ? 'bg-yellow-50 border-2 border-yellow-300 font-semibold' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50');
+                
+                // 獎牌圖示
+                let rankIcon = (index + 1).toString();
+                if (index === 0) rankIcon = '🥇 1';
+                if (index === 1) rankIcon = '🥈 2';
+                if (index === 2) rankIcon = '🥉 3';
+
+                tr.innerHTML = `
+                    <td class="p-3 font-black text-gray-700">${rankIcon}</td>
+                    <td class="p-3 font-bold text-gray-800">${row.name} ${isMe ? '<span class="text-xs bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-md ml-1">You</span>' : ''}</td>
+                    <td class="p-3 font-black text-center text-green-600">${row.scorePercent}%</td>
+                    <td class="p-3 font-bold text-center text-blue-600">${row.avgTime}s</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 5. 【核心追加入圍】如果玩家在 10 名以外，單獨在最下方插一列「自身排名」
+            if (myRealRankIndex >= 10) {
+                let myRecord = uniquePlayers[myRealRankIndex];
+                
+                // 插入一條虛線分隔線，表示中間有斷層
+                let dividerTr = document.createElement('tr');
+                dividerTr.innerHTML = `<td colspan="4" class="text-center p-1 text-gray-400 border-t border-dashed">•••</td>`;
+                tbody.appendChild(dividerTr);
+
+                // 渲染玩家自己的專屬倒數橫條
+                let meTr = document.createElement('tr');
+                meTr.className = 'bg-yellow-100 border-t-2 border-b-2 border-yellow-400 font-bold shadow-sm';
+                
+                meTr.innerHTML = `
+                    <td class="p-3 font-black text-yellow-800">🏃‍♂️ ${myRealRankIndex + 1}</td>
+                    <td class="p-3 font-bold text-gray-900">${myRecord.name} <span class="text-xs bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-md ml-1">You</span></td>
+                    <td class="p-3 font-black text-center text-green-700">${myRecord.scorePercent}%</td>
+                    <td class="p-3 font-bold text-center text-blue-700">${myRecord.avgTime}s</td>
+                `;
+                tbody.appendChild(meTr);
+            }
+        }
+
+        // 1. CRITICAL: Define the missing API runner object for server communication
+        const api = {
+            run: function(name, ...args) {
+                return new Promise((res, rej) => { 
+                    google.script.run
+                        .withSuccessHandler(res)
+                        .withFailureHandler(rej)[name](...args); 
+                });
+            }
+        };
+
+        // 2. Your existing optimized return logic goes right underneath it:
+        document.getElementById('btnBackToPortal').addEventListener('click', async function() {
+            const backBtn = document.getElementById('btnBackToPortal');
+            if (backBtn) {
+                backBtn.disabled = true;
+                backBtn.innerText = "Returning to GrowPlus...";
+            }
+
+            const urlPromise = api.run('getWebAppUrl');
+
+            try {
+                const baseUrl = await urlPromise;
+                const targetUrl = baseUrl + "?page=app"; // Suffix pointing back to App.html workspace
+                
+                if (window.top && window.top.location) {
+                    window.top.location.href = targetUrl;
+                } else {
+                    window.location.href = targetUrl;
+                }
+                
+            } catch (err) {
+                console.warn("Top window redirection restricted by sandbox expiry. Using fallback link panel...", err);
+                
+                const fallbackBaseUrl = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+                const finalFallbackUrl = fallbackBaseUrl + "?page=app";
+                
+                document.body.innerHTML = `
+                  <div style="font-family: sans-serif; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #f0fdf4; color: #166534; padding: 20px;">
+                    <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 400px; width: 100%;">
+                      <div style="font-size: 48px; margin-bottom: 16px;">🌱</div>
+                      <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #065f46;">Game Session Finished</h2>
+                      <p style="font-size: 14px; color: #4b5563; margin-bottom: 24px; line-height: 1.5;">Ready to return to your school workspace dashboard?</p>
+                      <a href="${finalFallbackUrl}" target="_top" style="display: block; width: 100%; text-align: center; padding: 12px 0; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
+                        Click to Open Dashboard
+                      </a>
+                    </div>
+                  </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
