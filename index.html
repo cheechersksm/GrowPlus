@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GROWPLUS</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GrowPlus">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/sweetalert2@11"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -102,9 +105,27 @@
     </div>
 
     <script>
+ const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
+
         const api = {
-            run: function(name, ...args) {
-                return new Promise((res, rej) => { google.script.run.withSuccessHandler(res).withFailureHandler(rej)[name](...args); });
+            run: async function(functionName, ...args) {
+                // We send a POST request formatted as plain text to bypass strict browser CORS rules
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        func: functionName, 
+                        args: args 
+                    }),
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    }
+                });
+                
+                const result = await response.json();
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                return result.data;
             }
         };
 
