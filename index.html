@@ -105,169 +105,173 @@
     </div>
 
     <script>
+    // ==================== CONFIGURATION ====================
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
 
-        const api = {
-            run: async function(functionName, ...args) {
-                // We send a POST request formatted as plain text to bypass strict browser CORS rules
-                const response = await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        func: functionName, 
-                        args: args 
-                    }),
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
-                    }
+    // ==================== API BRIDGE ====================
+    const api = {
+        run: async function(functionName, ...args) {
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    func: functionName, 
+                    args: args 
+                }),
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                }
+            });
+            
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.error);
+            }
+            return result.data;
+        }
+    };
+
+    // ==================== INITIALIZATION ====================
+    window.onload = function() { 
+        loadAnnouncements(); 
+    };
+
+    function switchView(id) {
+        document.getElementById('view-login').classList.add('hide');
+        document.getElementById('view-parent').classList.add('hide');
+        document.getElementById(`view-${id}`).classList.remove('hide');
+    }
+
+    // ==================== LOGIN CONTROLLER ====================
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        document.getElementById('loader').classList.remove('hide');
+        
+        const email = document.getElementById('loginEmail').value.trim();
+        const pass = document.getElementById('loginPassword').value.trim();
+
+        try {
+            const res = await api.run('loginUser', email, pass);
+            if (res.success) {
+                localStorage.setItem('loggedInUserEmail', res.user.Email);
+                window.top.location.href = "Portal.html";
+            } else {
+                document.getElementById('loader').classList.add('hide');
+                Swal.fire('Login Error', res.message, 'error');
+            }
+        } catch(err) {
+            document.getElementById('loader').classList.add('hide');
+            Swal.fire('Error', 'Connection failed', 'error');
+        }
+    });
+
+    // ==================== ANNOUNCEMENTS ====================
+    async function loadAnnouncements() {
+        try {
+            const ann = await api.run('getAnnouncements');
+            const container = document.getElementById('loginAnnouncements');
+            if (ann && ann.length > 0) {
+                container.innerHTML = ann.map(a => `
+                    <div class="p-3 bg-emerald-50/50 rounded border border-emerald-100">
+                        <span class="text-xs text-emerald-600 font-semibold">${new Date(a.Date).toLocaleDateString()}</span>
+                        <p class="text-sm text-gray-700 font-medium whitespace-pre-wrap mt-1">${a.Announcement}</p>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = '<p class="text-sm text-gray-500 italic">No announcements available.</p>';
+            }
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    // ==================== PARENT MODULE ====================
+    function exitParentView() {
+        document.getElementById('parentIcInput').value = '';
+        document.getElementById('parentStudentName').innerText = '-';
+        document.getElementById('parentStudentClass').innerText = 'Class: -';
+        document.getElementById('parentSubmissionRate').innerText = '-';
+        document.getElementById('parentHomework').innerHTML = '';
+        document.getElementById('parentExams').innerHTML = '';
+        
+        document.getElementById('parentResults').classList.add('hide');
+        switchView('login');
+    }
+
+    async function searchParent() {
+        const ic = document.getElementById('parentIcInput').value.trim();
+        if(!ic) return;
+        const btn = document.getElementById('btnSearchParent');
+        btn.innerText = 'Processing...'; btn.disabled = true;
+        
+        try {
+            const res = await api.run('getParentData', ic);
+            if(res.success) {
+                document.getElementById('parentResults').classList.remove('hide');
+                
+                document.getElementById('parentStudentName').innerText = res.student.FullName;
+                document.getElementById('parentStudentClass').innerText = `Class: ${res.student.Class || 'N/A'}`;
+                
+                const emailLower = res.student.Email.trim().toLowerCase();
+                
+                const targetedAssignments = res.assignments.filter(a => {
+                    const targetStr = String(a.AssignedTo || '').trim();
+                    if (!targetStr || targetStr.toLowerCase() === 'all') return true;
+                    const targetEmails = targetStr.toLowerCase().split(',').map(e => e.trim());
+                    return targetEmails.includes(emailLower);
                 });
                 
-                const result = await response.json();
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-                return result.data;
-            }
-        };
-
-        // Trigger the loader automatically when the page loads
-        window.onload = function() { 
-            loadAnnouncements(); 
-        };
-
-        function switchView(id) {
-            document.getElementById('view-login').classList.add('hide');
-            document.getElementById('view-parent').classList.add('hide');
-            document.getElementById(`view-${id}`).classList.remove('hide');
-        }
-
-        // Handle submission and routing to Portal.html
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            document.getElementById('loader').classList.remove('hide');
-            
-            const email = document.getElementById('loginEmail').value.trim();
-            const pass = document.getElementById('loginPassword').value.trim();
-
-            try {
-                const res = await api.run('loginUser', email, pass);
-                if (res.success) {
-                    localStorage.setItem('loggedInUserEmail', res.user.Email);
-                    // Send the student directly to your new Portal page!
-                    window.top.location.href = "Portal.html";
-                } else {
-                    document.getElementById('loader').classList.add('hide');
-                    Swal.fire('Login Error', res.message, 'error');
-                }
-            } catch(err) {
-                document.getElementById('loader').classList.add('hide');
-                Swal.fire('Error', 'Connection failed', 'error');
-            }
-        });
-
-        async function loadAnnouncements() {
-            try {
-                const ann = await api.run('getAnnouncements');
-                const container = document.getElementById('loginAnnouncements');
-                if (ann && ann.length > 0) {
-                    container.innerHTML = ann.map(a => `
-                        <div class="p-3 bg-emerald-50/50 rounded border border-emerald-100">
-                            <span class="text-xs text-emerald-600 font-semibold">${new Date(a.Date).toLocaleDateString()}</span>
-                            <p class="text-sm text-gray-700 font-medium whitespace-pre-wrap mt-1">${a.Announcement}</p>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = '<p class="text-sm text-gray-500 italic">No announcements available.</p>';
-                }
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        function exitParentView() {
-            document.getElementById('parentIcInput').value = '';
-            document.getElementById('parentStudentName').innerText = '-';
-            document.getElementById('parentStudentClass').innerText = 'Class: -';
-            document.getElementById('parentSubmissionRate').innerText = '-';
-            document.getElementById('parentHomework').innerHTML = '';
-            document.getElementById('parentExams').innerHTML = '';
-            
-            document.getElementById('parentResults').classList.add('hide');
-            switchView('login');
-        }
-
-        async function searchParent() {
-            const ic = document.getElementById('parentIcInput').value.trim();
-            if(!ic) return;
-            const btn = document.getElementById('btnSearchParent');
-            btn.innerText = 'Processing...'; btn.disabled = true;
-            
-            try {
-                const res = await api.run('getParentData', ic);
-                if(res.success) {
-                    document.getElementById('parentResults').classList.remove('hide');
-                    
-                    document.getElementById('parentStudentName').innerText = res.student.FullName;
-                    document.getElementById('parentStudentClass').innerText = `Class: ${res.student.Class || 'N/A'}`;
-                    
-                    const emailLower = res.student.Email.trim().toLowerCase();
-                    
-                    const targetedAssignments = res.assignments.filter(a => {
-                        const targetStr = String(a.AssignedTo || '').trim();
-                        if (!targetStr || targetStr.toLowerCase() === 'all') return true;
-                        const targetEmails = targetStr.toLowerCase().split(',').map(e => e.trim());
-                        return targetEmails.includes(emailLower);
-                    });
-                    
-                    const totalTargeted = targetedAssignments.length;
-                    const completedSubs = res.submissions.filter(s => s.Submitted === 'Yes');
-                    const submissionRate = totalTargeted > 0 ? ((completedSubs.length / totalTargeted) * 100).toFixed(1) : 0;
-                    document.getElementById('parentSubmissionRate').innerText = `${submissionRate}%`;
-                    
-                    const hwHtml = targetedAssignments.map(a => {
-                        const sub = res.submissions.find(s => String(s.AssignmentId).trim() === String(a.Id).trim());
-                        let badgeHtml = '';
-                        if (sub) {
-                            if (sub.Graded === 'Yes') {
-                                badgeHtml = `<span class="px-2 py-1 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">Score: ${sub.Score}/10</span>`;
-                            } else {
-                                badgeHtml = `<span class="px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-700">Pending Grading</span>`;
-                            }
+                const totalTargeted = targetedAssignments.length;
+                const completedSubs = res.submissions.filter(s => s.Submitted === 'Yes');
+                const submissionRate = totalTargeted > 0 ? ((completedSubs.length / totalTargeted) * 100).toFixed(1) : 0;
+                document.getElementById('parentSubmissionRate').innerText = `${submissionRate}%`;
+                
+                const hwHtml = targetedAssignments.map(a => {
+                    const sub = res.submissions.find(s => String(s.AssignmentId).trim() === String(a.Id).trim());
+                    let badgeHtml = '';
+                    if (sub) {
+                        if (sub.Graded === 'Yes') {
+                            badgeHtml = `<span class="px-2 py-1 rounded text-xs font-semibold bg-emerald-100 text-emerald-700">Score: ${sub.Score}/10</span>`;
                         } else {
-                            badgeHtml = `<span class="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-700">Unsubmitted</span>`;
+                            badgeHtml = `<span class="px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-700">Pending Grading</span>`;
                         }
-                        
-                        return `
-                            <div class="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
-                                <span class="font-medium text-gray-700">${a.Title}</span>
-                                ${badgeHtml}
-                            </div>
-                        `;
-                    }).join('');
-                    document.getElementById('parentHomework').innerHTML = hwHtml || '<p class="text-sm text-gray-400 italic">No tasks found.</p>';
+                    } else {
+                        badgeHtml = `<span class="px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-700">Unsubmitted</span>`;
+                    }
                     
-                    const exHtml = res.exams.map(e => {
-                        let badgeClass = 'bg-gray-100 text-gray-700 border-gray-300';
-                        if (e.Grade === 'E') badgeClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                        if (e.Grade === 'F') badgeClass = 'bg-red-100 text-red-700 border-red-200';
-                        if (e.Grade === 'A' || e.Grade === 'B' || e.Grade === 'C' || e.Grade === 'D') badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-                        
-                        return `
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <span class="font-medium text-gray-700">${e.ExamName}</span>
-                                <div class="text-right">
-                                    <span class="font-bold text-gray-900">${e.Score}%</span>
-                                    <span class="ml-2 text-xs font-bold px-2 py-1 border rounded-md ${badgeClass}">Grade ${e.Grade}</span>
-                                </div>
+                    return `
+                        <div class="flex justify-between items-center text-sm border-b border-gray-100 pb-2">
+                            <span class="font-medium text-gray-700">${a.Title}</span>
+                            ${badgeHtml}
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('parentHomework').innerHTML = hwHtml || '<p class="text-sm text-gray-400 italic">No tasks found.</p>';
+                
+                const exHtml = res.exams.map(e => {
+                    let badgeClass = 'bg-gray-100 text-gray-700 border-gray-300';
+                    if (e.Grade === 'E') badgeClass = 'bg-orange-100 text-orange-700 border-orange-200';
+                    if (e.Grade === 'F') badgeClass = 'bg-red-100 text-red-700 border-red-200';
+                    if (e.Grade === 'A' || e.Grade === 'B' || e.Grade === 'C' || e.Grade === 'D') badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                    
+                    return `
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <span class="font-medium text-gray-700">${e.ExamName}</span>
+                            <div class="text-right">
+                                <span class="font-bold text-gray-900">${e.Score}%</span>
+                                <span class="ml-2 text-xs font-bold px-2 py-1 border rounded-md ${badgeClass}">Grade ${e.Grade}</span>
                             </div>
-                        `;
-                    }).join('');
-                    document.getElementById('parentExams').innerHTML = exHtml || '<p class="text-sm text-gray-400 italic">No exam entries.</p>';
-                } else {
-                    Swal.fire('No student found', res.message, 'warning');
-                }
-            } catch(e) { console.error(e); }
-            btn.innerText = 'Search'; btn.disabled = false;
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('parentExams').innerHTML = exHtml || '<p class="text-sm text-gray-400 italic">No exam entries.</p>';
+            } else {
+                Swal.fire('No student found', res.message, 'warning');
+            }
+        } catch(e) { 
+            console.error(e); 
         }
-    </script>
+        btn.innerText = 'Search'; btn.disabled = false;
+    }
+</script>
 </body>
 </html>
