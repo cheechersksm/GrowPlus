@@ -147,12 +147,10 @@
             try {
                 const res = await api.run('loginUser', email, pass);
                 if (res.success) {
-                    // Lock token credentials securely inside the localized browser sandbox cache
                     localStorage.setItem('loggedInUserEmail', res.user.Email);
-                    
-                    // Fetch deployment address context dynamically, then append structural route
-                    const baseUrl = await api.run('getWebAppUrl');
-                    window.top.location.href = baseUrl + "?page=app";
+                    // Send the student directly to your new Portal page!
+                    window.top.location.href = "Portal.html";
+                }
                 } else {
                     document.getElementById('loader').classList.add('hide');
                     Swal.fire('Login Error', res.message, 'error');
