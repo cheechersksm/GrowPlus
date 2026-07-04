@@ -899,29 +899,13 @@
         // Handler linking direct browser game launch routines (Same GAS Project Structure)
         async function launchPracticeApp(appKey) {
             if (appKey === 'mathSafari') {
-                try {
-                    // 1. Dynamically retrieve the absolute Web App deployment URL
-                    const baseUrl = await api.run('getWebAppUrl');
-                    
-                    // 2. Append the target page parameter flag pointing to MathGame.html
-                    const targetGameUrl = baseUrl + "?page=game";
-                    
-                    // 3. Perform a safe top-frame redirect out of the sandbox
-                    if (window.top && window.top.location) {
-                        window.top.location.href = targetGameUrl;
-                    } else {
-                        window.location.href = targetGameUrl;
-                    }
-                } catch (err) {
-                    console.error("Failed to route to game page container safely:", err);
-                    
-                    // Fallback backup route assignment in case the promise encounters an absolute break
-                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec?page=game";
-                    if (window.top && window.top.location) {
-                        window.top.location.href = fallbackUrl;
-                    } else {
-                        window.location.href = fallbackUrl;
-                    }
+                // Since Safari.html is in the same folder path on GitHub, link to it directly!
+                const targetGameUrl = "Safari.html";
+                
+                if (window.top && window.top.location) {
+                    window.top.location.href = targetGameUrl;
+                } else {
+                    window.location.href = targetGameUrl;
                 }
             }
         }
