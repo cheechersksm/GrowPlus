@@ -555,59 +555,88 @@
                 return;
             }
 
-            // 1. Get current logged-in student's email to track their personal standing
+            // 1. Get current logged-in student's email
             const currentUserEmail = (typeof loggedInEmail !== 'undefined' ? loggedInEmail : localStorage.getItem('loggedInUserEmail')) || 'Guest';
 
-            // 2. Sort the raw records accurately: Highest score first. If tied, fastest average time first.
-            let sortedData = [...data].sort((a, b) => {
-                if (b.scorePercent !== a.scorePercent) {
-                    return b.scorePercent - a.scorePercent; // Descending by score
+            // 2. Filter & Group by unique Email to find the BEST run per person
+            let bestRunsMap = {};
+            data.forEach(item => {
+                let emailKey = (item.email || 'Guest').trim().toLowerCase();
+                
+                // Ensure values are numbers for safe sorting math
+                let score = Number(item.scorePercent) || 0;
+                let avgTime = Number(item.avgTime) || 999;
+
+                if (!bestRunsMap[emailKey]) {
+                    // First time seeing this user, store their record
+                    bestRunsMap[emailKey] = item;
+                } else {
+                    // Compare to see if this new run is better than the stored one
+                    let existingScore = Number(bestRunsMap[emailKey].scorePercent) || 0;
+                    let existingTime = Number(bestRunsMap[emailKey].avgTime) || 999;
+
+                    if (score > existingScore) {
+                        bestRunsMap[emailKey] = item; // Higher score wins
+                    } else if (score === existingScore && avgTime < existingTime) {
+                        bestRunsMap[emailKey] = item; // Same score but faster time wins
+                    }
                 }
-                return a.avgTime - b.avgTime; // Ascending by time (faster is better)
             });
 
-            // 3. Assign true rankings (handling shared ties cleanly)
-            let rankedData = sortedData.map((item, index) => {
+            // Convert our unique player map back into an array list
+            let uniquePlayersList = Object.values(bestRunsMap);
+
+            // 3. Sort the unique players: Highest score first, then fastest time
+            uniquePlayersList.sort((a, b) => {
+                let scoreA = Number(a.scorePercent) || 0;
+                let scoreB = Number(b.scorePercent) || 0;
+                let timeA = Number(a.avgTime) || 999;
+                let timeB = Number(b.avgTime) || 999;
+
+                if (scoreB !== scoreA) {
+                    return scoreB - scoreA; 
+                }
+                return timeA - timeB; 
+            });
+
+            // 4. Assign structural leaderboard rankings (1st, 2nd, 3rd...)
+            let rankedData = uniquePlayersList.map((item, index) => {
                 return {
                     ...item,
                     rank: index + 1
                 };
             });
 
-            // 4. Extract the absolute Top 10
+            // 5. Slice down to the absolute Top 10 unique profiles
             let top10 = rankedData.slice(0, 10);
 
-            // 5. Check if the logged-in user made it into the Top 10
+            // 6. See if the logged-in student is present inside this Top 10 unique list
             let userInTop10 = top10.some(item => item.email && item.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
 
-            // 6. If the user is NOT in the top 10, find their best personal run and prepare to append it
+            // 7. If they are not in the Top 10, find their specific rank row out of the total field and append it
             let finalDisplayList = [...top10];
             if (!userInTop10 && currentUserEmail !== 'Guest') {
                 let userBestRun = rankedData.find(item => item.email && item.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
                 if (userBestRun) {
-                    // Add a special visual flag so we know it's a breakout row
-                    userBestRun.isUserSpacer = true; 
+                    userBestRun.isUserSpacer = true; // Inject breakout flag
                     finalDisplayList.push(userBestRun);
                 }
             }
 
-            // 7. Render out the rows to your HTML table
+            // 8. Generate and append table components to HTML panel
             tbody.innerHTML = finalDisplayList.map((row) => {
                 const isCurrentUser = row.email && row.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase();
                 
-                // Add distinct row colors: Emerald highlight for current student, standard text for others
                 let rowBgClass = isCurrentUser ? "bg-emerald-100/80 font-semibold text-emerald-900" : "hover:bg-gray-50 text-gray-700";
                 
-                // Style medals for top 3 spots
                 let rankDisplay = row.rank;
                 if (row.rank === 1) rankDisplay = "🥇";
                 if (row.rank === 2) rankDisplay = "🥈";
                 if (row.rank === 3) rankDisplay = "🥉";
 
-                // Insert a visual divider item if it's the personal cutout row appended at the bottom
                 let spacerHtml = row.isUserSpacer ? `
                     <tr class="bg-gray-100">
-                        <td colspan="4" class="p-1 text-center text-xs text-gray-400 italic">... your standing ...</td>
+                        <td colspan="4" class="p-1 text-center text-xs text-gray-400 italic">... your best standing ...</td>
                     </tr>
                 ` : '';
 
