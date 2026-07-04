@@ -421,9 +421,33 @@
     <!-- ==================== SCRIPTS ==================== -->
     <script>
 
+    // ==================== CONFIGURATION ====================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
+
+        // ==================== API BRIDGE ====================
         const api = {
-            run: function(name, ...args) {
-                return new Promise((res, rej) => { google.script.run.withSuccessHandler(res).withFailureHandler(rej)[name](...args); });
+            run: async function(functionName, ...args) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            func: functionName, 
+                            args: args 
+                        }),
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    return result.data;
+                } catch (error) {
+                    console.error("API Call failed for " + functionName + ":", error);
+                    throw error;
+                }
             }
         };
 
