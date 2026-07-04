@@ -1,0 +1,2286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROWPLUS - Workplace</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 for Modals/Popups -->
+    <script src="https://unpkg.com/sweetalert2@11"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/phosphor-icons/2.1.0/index.min.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            startup: { typeset: false }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.2/src/bold/style.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #f0fdf4; color: #166534; }
+        .hide { display: none !important; }
+        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border-radius: 1rem; border: 1px solid rgba(255,255,255,0.4); box-shadow: 0 4px 10px -1px rgba(0, 0, 0, 0.08); }
+        .btn-green { background-color: #10b981; color: white; transition: all 0.2s; }
+        .btn-green:hover:not(:disabled) { background-color: #059669; transform: translateY(-1px); }
+        .btn-green:disabled { background-color: #a7f3d0; cursor: not-allowed; }
+        .nav-item.active { color: #059669; border-bottom: 2px solid #059669; }
+        .mobile-nav-item.active { color: #10b981; background-color: #ecfdf5; border-radius: 0.5rem; }
+
+        /* Plant Animations */
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        .streak-pulse { animation: pulse-glow 2s infinite; }
+        .plant-emoji { font-size: 6.5rem; filter: drop-shadow(0 10px 12px rgba(0,0,0,0.06)); transition: transform 0.3s; }
+        .plant-emoji:hover { transform: scale(1.15) rotate(5deg); }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Global Loading Overlay -->
+    <div id="loader" class="hide fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <i class="ph-bold ph-spinner-gap animate-spin text-5xl text-emerald-500 mb-4"></i>
+        <p class="text-emerald-700 font-medium tracking-wide">Loading...</p>
+    </div>
+
+    <div id="logoutLoader" class="hide fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <i class="ph-bold ph-spinner-gap animate-spin text-5xl text-emerald-500 mb-4"></i>
+        <p class="text-emerald-700 font-medium">Securing profile session and logging out...</p>
+    </div>  
+
+    <!-- ==================== STUDENT VIEW ==================== -->
+    <div id="view-student" class="hide min-h-screen pb-24">
+        <!-- Top Bar -->
+        <div class="bg-white shadow-sm px-4 py-3 sticky top-0 z-30 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showStudentTab('profile')">
+                <div id="stuAvatarBg" class="w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-inner">
+                    <span id="stuAvatar">🧑‍🎓</span>
+                </div>
+                <div>
+                    <p id="stuNickname" class="font-bold text-gray-800 leading-tight">Student</p>
+                    <p class="text-xs text-emerald-600 font-medium">Lv. <span id="stuLvl">1</span> <i class="ph-fill ph-drop text-blue-400"></i> <span id="stuMat">0</span>/600</p>
+                </div>
+            </div>
+            <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500"><i class="ph ph-sign-out text-2xl"></i></button>
+        </div>
+
+        <!-- Student Content Area -->
+        <div class="p-4" id="studentContent">
+            <!-- Plant Tab (Default with High Contrast Amber Progress Bar) -->
+            <div id="tab-plant" class="student-tab text-center pt-8">
+                <div class="inline-block relative mb-12 mt-4">
+                    <div id="plantStageEmoji" class="plant-emoji">🌰</div>
+                    <div class="absolute -bottom-6 w-full text-center">
+                        <span id="plantStageText" class="px-4 py-1 bg-white rounded-full text-sm font-semibold shadow-sm border border-emerald-100 text-emerald-700">Seed</span>
+                    </div>
+                </div>
+                
+                <div class="max-w-xs mx-auto mb-8">
+                    <div class="flex justify-between text-xs font-semibold text-gray-500 mb-1">
+                        <span>Progress</span>
+                        <span id="plantProgressText">0 / 600</span>
+                    </div>
+                    <div class="w-full bg-emerald-200/50 rounded-full h-4 mb-4 shadow-inner overflow-hidden border border-emerald-200">
+                        <div id="plantProgressBar" class="bg-amber-400 h-full rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 max-w-sm mx-auto flex items-center justify-between">
+                    <div class="text-left">
+                        <p class="font-bold text-gray-800">Daily Check-In</p>
+                        <p class="text-xs text-gray-500">Check in daily for water!</p>
+                    </div>
+                    <button id="btnClaimStreak" onclick="claimStreak()" class="btn-green w-14 h-14 rounded-full flex items-center justify-center shadow-lg streak-pulse">
+                        <div class="text-center">
+                            <i class="ph-fill ph-drop text-xl text-blue-100"></i>
+                            <div class="text-[10px] font-bold mt-[-2px]" id="streakDayText">Day 1</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Daily Quizzes Tab -->
+            <div id="tab-daily" class="student-tab hide">
+                <h2 class="text-xl font-bold mb-4"><i class="ph ph-lightning text-yellow-500 mr-2"></i>Daily Quizzes</h2>
+                <div id="dailyQuizzesContainer" class="space-y-4"></div>
+                <div id="dailyFeedback" class="mt-4 p-4 rounded-lg bg-emerald-100/50 text-sm font-medium text-emerald-800 hide"></div>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                    <button id="btnSubmitDaily" onclick="submitDaily()" class="btn-green flex-1 py-3 rounded-lg font-bold">Submit Answers</button>
+                    <button id="btnRetryDaily" onclick="retryQuiz()" class="bg-amber-400 hover:bg-amber-500 text-amber-950 flex-1 py-3 rounded-lg font-bold hide">Generate New Quiz</button>
+                </div>
+            </div>
+
+            <!-- AppReward Tab -->
+            <div id="tab-appreward" class="student-tab hide">
+                <div class="max-w-4xl mx-auto p-4 md:p-6 mt-6">
+                    <div class="glass-panel p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-emerald-800 flex items-center mb-2">
+                            <i class="ph-bold ph-game-controller mr-2 text-emerald-500"></i> Practice Zone App Hub
+                        </h2>
+                        <p class="text-xs text-emerald-600">Launch learning environments, challenge active benchmarks, and claim dynamic daily bonuses.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <div class="md:col-span-2 space-y-4">
+                            <div class="glass-panel p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-l-4 border-emerald-500">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-2xl text-emerald-600 font-bold">🦁</div>
+                                    <div>
+                                        <h3 class="font-bold text-emerald-900 text-sm sm:text-base">Arithmetic Math Safari</h3>
+                                        <p class="text-[11px] text-gray-500">Master fundamental arithmetic formulas and log records onto the server dashboard.</p>
+                                    </div>
+                                </div>
+                                <button onclick="launchPracticeApp('mathSafari')" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-xs shadow-sm transition-all">
+                                    Launch Game
+                                </button>
+                            </div>
+                            
+                            </div>
+
+                        <div class="space-y-4">
+                            <div class="glass-panel p-5 border border-amber-200 bg-amber-50/30">
+                                <h4 class="text-xs font-bold text-amber-800 flex items-center mb-3">
+                                    <i class="ph-fill ph-lightning mr-1 text-sm text-amber-500"></i> Daily Challenge Quest
+                                </h4>
+                                <div class="bg-white/80 p-3 rounded-lg border border-amber-100 text-center">
+                                    <p class="text-xs font-semibold text-gray-700 mb-1">Play 1 Game / Day</p>
+                                    <p class="text-[10px] text-amber-600 font-medium mb-3">+100 Nutrients Reward</p>
+                                    <button id="btnDailyClaim" disabled onclick="executeDailyClaim()" class="w-full py-2 bg-gray-300 text-gray-500 text-xs font-bold rounded-md transition-all cursor-not-allowed">
+                                        Checking Status...
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="glass-panel p-5 border border-indigo-200 bg-indigo-50/30">
+                                <h4 class="text-xs font-bold text-indigo-800 flex items-center mb-3">
+                                    <i class="ph-fill ph-trophy mr-1 text-sm text-indigo-500"></i> Specialized Achievement Awards
+                                </h4>
+                                <div id="dynamicAwardsContainer" class="space-y-2">
+                                    <p class="text-[10px] text-gray-400 text-center py-2">Loading performance awards...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Challenges Tab -->
+            <div id="tab-weekly" class="student-tab hide">
+                <h2 class="text-xl font-bold mb-4"><i class="ph-bold ph-calendar-star text-purple-500 mr-2"></i>Weekly Challenges</h2>
+                <div id="weeklyContainer" class="space-y-4"></div>
+            </div>
+
+            <!-- Assignments Tab -->
+            <div id="tab-assignments" class="student-tab hide">
+                <h2 class="text-xl font-bold mb-4"><i class="ph ph-book-bookmark text-blue-500 mr-2"></i>Assignments</h2>
+                <div id="studentAssContainer" class="space-y-4"></div>
+            </div>
+
+            <!-- Backpack Tab -->
+            <div id="tab-backpack" class="student-tab hide">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold"><i class="ph ph-backpack text-orange-500 mr-2"></i>My Backpack</h2>
+                    <button onclick="showStudentTab('sendgift')" class="text-sm bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium"><i class="ph ph-gift mr-1"></i>Send Gift</button>
+                </div>
+                <div id="backpackContainer" class="grid grid-cols-3 gap-3 animate-fade-in"></div>
+            </div>
+
+            <!-- Send Gift Tab -->
+            <div id="tab-sendgift" class="student-tab hide">
+                <h2 class="text-xl font-bold mb-4"><i class="ph ph-paper-plane-tilt text-pink-500 mr-2"></i>Send Gift</h2>
+                <div class="glass-panel p-5 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Select Item to Send</label>
+                        <select id="giftItem" class="w-full p-2 rounded border outline-none bg-white"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Class</label>
+                            <select id="giftClass" onchange="filterGiftReceivers(this.value)" class="w-full p-2 rounded border outline-none bg-white">
+                                <option value="">-- Class --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Receiver Name</label>
+                            <select id="giftName" class="w-full p-2 rounded border outline-none bg-white">
+                                <option value="">-- Select student --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Message (<span id="msgCount">60</span> left)</label>
+                        <textarea id="giftMsg" maxlength="60" rows="2" class="w-full p-2 rounded border outline-none" oninput="document.getElementById('msgCount').innerText = 60 - this.value.length"></textarea>
+                    </div>
+                    <button id="btnSendGift" onclick="sendGift()" class="btn-green w-full py-2 rounded font-bold mt-2">Send Gift</button>
+                </div>
+            </div>
+
+            <!-- Profile Edit Tab with Password Change Section -->
+            <div id="tab-profile" class="student-tab hide">
+                <h2 class="text-xl font-bold mb-4"><i class="ph ph-user-circle-gear text-gray-500 mr-2"></i>Edit Profile</h2>
+                <div class="glass-panel p-5 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nickname</label>
+                        <input type="text" id="profNick" class="w-full p-2 rounded border outline-none bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Avatar Color</label>
+                        <div id="profColorGrid" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Avatar Emoji</label>
+                        <div id="profAvatarGrid" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-2 border rounded bg-white"></div>
+                    </div>
+                    
+                    <!-- Secure password change segment -->
+                    <div class="border-t pt-4 space-y-3">
+                        <h4 class="font-bold text-sm text-emerald-800"><i class="ph ph-lock mr-1"></i>Change Password</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">New Password (6-12 chars)</label>
+                                <input type="password" id="profNewPass" class="w-full p-2 rounded border outline-none text-sm bg-white" placeholder="••••••••">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Confirm New Password</label>
+                                <input type="password" id="profConfPass" class="w-full p-2 rounded border outline-none text-sm bg-white" placeholder="••••••••">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="saveProfile()" class="btn-green w-full py-3 rounded font-bold mt-4 shadow-md">Save Profile Settings</button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Tab -->
+            <div id="tab-leaderboard" class="student-tab hide">
+                <h2 class="text-xl font-bold mb-4 text-emerald-800 flex items-center"><i class="ph ph-trophy text-yellow-500 mr-2 text-2xl animate-bounce"></i>Top 10 Leaderboard</h2>
+                <div class="glass-panel p-4 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm whitespace-nowrap">
+                            <thead class="bg-emerald-50 text-emerald-800 font-bold border-b border-emerald-100">
+                                <tr>
+                                    <th class="p-3 text-center">Rank</th>
+                                    <th class="p-3">Nickname</th>
+                                    <th class="p-3">Class</th>
+                                    <th class="p-3 text-center">Level</th>
+                                    <th class="p-3 text-right">Nutrients</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentLeaderboardBody" class="divide-y divide-emerald-100/50">
+                                <tr>
+                                    <td colspan="5" class="p-6 text-center text-gray-400 italic">Syncing global rankings...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <div class="fixed bottom-0 w-full bg-white border-t border-gray-100 flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+            <button onclick="showStudentTab('plant')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 active text-emerald-500 bg-emerald-50" data-target="plant">
+                <i class="ph-fill ph-plant text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Plant</span>
+            </button>
+            <button onclick="showStudentTab('daily')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 text-gray-400" data-target="daily">
+                <i class="ph-fill ph-check-square text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Daily</span>
+            </button>
+            <button onclick="showStudentTab('appreward')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 text-gray-400" data-target="appreward">
+                <i class="ph-fill ph-game-controller text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">AppReward</span>
+            </button>
+            <button onclick="showStudentTab('weekly')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 text-gray-400" data-target="weekly">
+                <i class="ph-fill ph-star text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Weekly</span>
+            </button>
+            <button onclick="showStudentTab('assignments')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 text-gray-400" data-target="assignments">
+                <i class="ph-fill ph-book text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Tasks</span>
+            </button>
+            <button onclick="showStudentTab('backpack')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 text-gray-400" data-target="backpack">
+                <i class="ph-fill ph-backpack text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Bag</span>
+            </button>
+            <button onclick="showStudentTab('leaderboard')" class="mobile-nav-item flex flex-col items-center p-1.5 w-14 text-gray-400" data-target="leaderboard">
+                <i class="ph-fill ph-trophy text-xl mb-0.5"></i>
+                <span class="text-[9px] font-semibold">Leader</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== ADMIN VIEW ==================== -->
+    <div id="view-admin" class="hide min-h-screen bg-gray-50 flex flex-col md:flex-row">
+        <!-- Sidebar -->
+        <div class="bg-emerald-800 text-white w-full md:w-64 flex-shrink-0 md:min-h-screen flex flex-col z-20 sticky top-0">
+            <div class="p-6 text-center border-b border-emerald-700">
+                <div class="w-16 h-16 bg-white rounded-full mx-auto mb-3 flex items-center justify-center">
+                    <i class="ph-fill ph-chalkboard-teacher text-3xl text-emerald-800"></i>
+                </div>
+                <h3 id="adminName" class="font-bold text-lg">Teacher</h3>
+                <p class="text-emerald-300 text-xs uppercase tracking-wider mb-2">Administrator</p>
+                
+                <!-- Quick Logout inside Sidebar -->
+                <button onclick="handleLogout()" class="px-4 py-1.5 bg-emerald-700/60 hover:bg-red-600 rounded text-xs transition inline-flex items-center gap-1"><i class="ph ph-sign-out"></i>Log Out</button>
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="md:hidden w-full p-3 bg-emerald-900 text-left font-semibold flex justify-between" onclick="document.getElementById('adminMenu').classList.toggle('hidden')">
+                Menu <i class="ph ph-caret-down"></i>
+            </button>
+
+            <nav id="adminMenu" class="flex-1 hidden md:block py-4">
+                <a href="#" onclick="showAdminTab('dashboard')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 active-nav border-l-4 border-white" data-target="dashboard"><i class="ph ph-squares-four mr-3"></i>Dashboard</a>
+                <a href="#" onclick="showAdminTab('student')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="student"><i class="ph ph-users mr-3"></i>Students</a>
+                <a href="#" onclick="showAdminTab('assignment')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="assignment"><i class="ph ph-book-bookmark mr-3"></i>Assignments</a>
+                <a href="#" onclick="showAdminTab('grading')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="grading"><i class="ph ph-check-circle mr-3"></i>Grading</a>
+                <a href="#" onclick="showAdminTab('challenge')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="challenge"><i class="ph ph-target mr-3"></i>Challenges</a>
+                <a href="#" onclick="showAdminTab('exam')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="exam"><i class="ph ph-exam mr-3"></i>Exams</a>
+                <a href="#" onclick="showAdminTab('info')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="info"><i class="ph ph-megaphone mr-3"></i>Info</a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-4 md:p-8 overflow-x-hidden">
+            <!-- Dashboard Tab -->
+            <div id="admin-dashboard" class="admin-tab">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 font-semibold">Dashboard Overview</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 text-blue-600 flex justify-center items-center text-2xl mr-4"><i class="ph-fill ph-users"></i></div>
+                        <div><p class="text-sm text-gray-500">Active Today</p><h4 id="dashActive" class="text-2xl font-bold text-gray-800">-</h4></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-12 h-12 rounded-lg bg-orange-100 text-orange-600 flex justify-center items-center text-2xl mr-4"><i class="ph-fill ph-files"></i></div>
+                        <div><p class="text-sm text-gray-500">Total Submissions</p><h4 id="dashSubs" class="text-2xl font-bold text-gray-800">-</h4></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-600 flex justify-center items-center text-2xl mr-4"><i class="ph-fill ph-check-square"></i></div>
+                        <div><p class="text-sm text-gray-500">Grading Progress</p><h4 id="dashGraded" class="text-2xl font-bold text-gray-800 font-bold">-%</h4></div>
+                    </div>
+                </div>
+                
+                <!-- Assignment Progress Dashboard Widget -->
+                <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mt-6">
+                    <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Assignment Grading Progress</h3>
+                    <div id="dashboardAssignmentList" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                        <!-- Progress bars will load dynamically here -->
+                        <p class="text-xs text-gray-400">Loading progress data...</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                        <h3 class="font-bold text-gray-800"><i class="ph-fill ph-trophy text-yellow-500 mr-2"></i>Top 15 Harvesters</h3>
+                        <button onclick="resetStudentLevels()" class="px-3.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-xs font-semibold flex items-center gap-1 transition"><i class="ph ph-arrow-counter-clockwise"></i> Reset Levels to 1</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-50 text-gray-600">
+                                <tr>
+                                    <th class="p-3">Rank</th>
+                                    <th class="p-3">Name</th>
+                                    <th class="p-3">Class</th>
+                                    <th class="p-3">Level</th>
+                                    <th class="p-3">Maturity Points</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashTopUsers" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generic CRUD Table Container Structure -->
+            <div id="admin-dynamic-view" class="hide w-full bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-fade-in">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h2 id="adminViewTitle" class="text-2xl font-bold text-gray-800 font-semibold">Title</h2>
+                    <button id="adminBtnAdd" class="btn-green px-4 py-2 rounded-lg text-sm font-medium hide"><i class="ph ph-plus mr-1"></i> Add New</button>
+                </div>
+                <div id="adminCustomControls" class="mb-4 hide flex flex-wrap gap-4 items-end bg-gray-50 p-4 rounded-lg"></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead id="adminTableHead" class="bg-gray-50 text-gray-600"></thead>
+                        <tbody id="adminTableBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== SCRIPTS ==================== -->
+    <script>
+
+        const api = {
+            run: function(name, ...args) {
+                return new Promise((res, rej) => { google.script.run.withSuccessHandler(res).withFailureHandler(rej)[name](...args); });
+            }
+        };
+
+        let currentUser = null;
+        let curriculumCache = [];
+        let classesCache = [];
+        let studentsCache = {};
+
+        // Auto-authenticates and recovers user data on load using the browser sandbox session cache
+        window.onload = async function() {
+            const cachedEmail = localStorage.getItem('loggedInUserEmail');
+            if (!cachedEmail) {
+                forceRedirectToLogin();
+                return;
+            }
+
+            try {
+                // Fetch profile authentication from server
+                const res = await api.run('getUserProfileByEmailOnly', cachedEmail); 
+                if (res && res.success) {
+                    currentUser = res.user;
+                    
+                    if (currentUser.Role === 'Student') {
+                        document.getElementById('view-student').classList.remove('hide');
+                        await initStudentView(); 
+                        
+                        // === CRITICAL FIX: Trigger the reward & app loading engine here ===
+                        await initializePracticeZoneModule(); 
+                        
+                    } else {
+                        document.getElementById('view-admin').classList.remove('hide');
+                        await initAdminView();   
+                    }
+                    
+                    // Smoothly remove the full-screen loader after everything is fully loaded
+                    const appLoader = document.getElementById('appLoader');
+                    if (appLoader) {
+                        appLoader.style.transition = "opacity 0.3s ease";
+                        appLoader.style.opacity = "0";
+                        setTimeout(() => appLoader.classList.add('hide'), 300);
+                    }
+
+                } else {
+                    forceRedirectToLogin();
+                }
+            } catch(e) {
+                console.error("Initialization failed:", e);
+                forceRedirectToLogin();
+            }
+        };
+
+        const showLoader = () => document.getElementById('loader').classList.remove('hide');
+        const hideLoader = () => document.getElementById('loader').classList.add('hide');
+        const swalToast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000 });
+        
+        function switchView(viewId) {
+            document.querySelectorAll('body > div[id^="view-"]').forEach(el => el.classList.add('hide'));
+            document.getElementById(`view-${viewId}`).classList.remove('hide');
+        }
+
+        // Decoupled Manual Logout Operation (Fixing Asynchronous Gesture Expiry)
+        async function handleLogout() {
+          // 1. Immediately show your logout loader element
+          const loader = document.getElementById('logoutLoader');
+          if (loader) {
+            loader.classList.remove('hide');
+          }
+          
+          // 2. Fetch the Base Web App deployment URL synchronously or beforehand if possible.
+          // Instead of waiting for getWebAppUrl after logging activity, let's start fetching right away
+          const urlPromise = api.run('getWebAppUrl');
+
+          try {
+            // 3. Track activity logs on the server-side spreadsheet
+            if (currentUser && currentUser.Email) {
+              await api.run('logStudentActivity', currentUser.Email, 'Logout', 'Logged out of dashboard', 0).catch(()=>{});
+            }
+          } catch (err) {
+            console.warn("Log activity cleanup encountered an issue:", err);
+          }
+
+          // 4. Wipe browser cache session data cleanly
+          localStorage.removeItem('loggedInUserEmail');
+          
+          try {
+            const baseUrl = await urlPromise;
+            
+            // 5. Breakout Safe-net: Try navigating top window
+            if (window.top && window.top.location) {
+              window.top.location.href = baseUrl;
+            } else {
+              window.location.href = baseUrl;
+            }
+          } catch (securityError) {
+            console.warn("Top window redirection restricted by sandbox expiry. Using fallback interface framework...");
+            
+            // 6. ULTIMATE FALLBACK: If the browser blocks top window changes, 
+            // convert the inner container into an explicit clickable panel.
+            const baseUrl = "https://script.google.com/a/moe-dl.edu.my/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+            
+            document.body.innerHTML = `
+              <div style="font-family: 'Poppins', sans-serif; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #f0fdf4; color: #166534; padding: 20px;">
+                <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); max-width: 400px; width: 100%;">
+                  <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+                  <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #065f46;">Session Closed</h2>
+                  <p style="font-size: 14px; color: #4b5563; margin-bottom: 24px; line-height: 1.5;">You have been safely logged out of your session profile.</p>
+                  <a href="${baseUrl}" target="_top" style="display: block; width: 100%; text-align: center; padding: 12px 0; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px; transition: background 0.2s;">
+                    Return to Login Panel
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+        }
+
+        async function forceRedirectToLogin() {
+            const baseUrl = await api.run('getWebAppUrl');
+            window.top.location.href = baseUrl; // Drops url parameters, clean-shunting straight back to index.html
+        }
+
+        function getLocalDateString() {
+            const date = new Date();
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function initStudentView() {
+            document.getElementById('stuAvatar').innerText = currentUser.Avatar || '🧑‍🎓';
+            document.getElementById('stuAvatarBg').style.backgroundColor = currentUser.BgColor || '#d1fae5';
+            document.getElementById('stuNickname').innerText = currentUser.Nickname || currentUser.FullName;
+            updatePlantUI(currentUser.Maturity, currentUser.Level);
+            
+            const lastCheckVal = currentUser.LastCheckIn ? String(currentUser.LastCheckIn).substring(0, 10) : "";
+            const todayStr = getLocalDateString();
+            
+            let diffDays = 999;
+            if (lastCheckVal && lastCheckVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const d1 = new Date(lastCheckVal + "T00:00:00");
+                const d2 = new Date(todayStr + "T00:00:00");
+                const diffTime = d2.getTime() - d1.getTime();
+                diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            }
+            
+            const btn = document.getElementById('btnClaimStreak');
+            if (diffDays === 0) {
+                btn.disabled = true;
+                btn.classList.remove('streak-pulse');
+                btn.innerHTML = '<i class="ph-fill ph-check-circle text-2xl text-emerald-600"></i><div class="text-[10px] font-bold text-emerald-800">Done</div>';
+            } else {
+                btn.disabled = false;
+                btn.classList.add('streak-pulse');
+                let currentStreakVal = Number(currentUser.Streak) || 0;
+                let nextStreakVal = (diffDays === 1) ? (currentStreakVal >= 7 ? 1 : currentStreakVal + 1) : 1;
+                btn.innerHTML = `
+                    <div class="text-center">
+                        <i class="ph-fill ph-drop text-xl text-blue-100"></i>
+                        <div class="text-[10px] font-bold mt-[-2px]" id="streakDayText">Day ${nextStreakVal}</div>
+                    </div>`;
+            }
+            showStudentTab('plant');
+            checkAndLoadDailyQuiz();
+        }
+
+        function updatePlantUI(maturity, level) {
+            maturity = Number(maturity) || 0;
+            level = Number(level) || 1;
+            document.getElementById('stuMat').innerText = maturity;
+            document.getElementById('stuLvl').innerText = level;
+            
+            let emoji, text;
+            if(maturity < 20) { emoji='🌰'; text='Seed'; }
+            else if(maturity < 100) { emoji='🌱'; text='Germination'; }
+            else if(maturity < 200) { emoji='🌿'; text='Growing'; }
+            else if(maturity < 350) { emoji='🪴'; text='Plant'; }
+            else if(maturity < 600) { emoji='🌸'; text='Flowering'; }
+            else { emoji='🍎'; text='Harvest Available!'; }
+            
+            document.getElementById('plantStageEmoji').innerText = emoji;
+            document.getElementById('plantStageText').innerText = text;
+            
+            const pct = Math.min((maturity / 600) * 100, 100);
+            document.getElementById('plantProgressBar').style.width = pct + '%';
+            document.getElementById('plantProgressText').innerText = `${maturity} / 600`;
+        }
+
+        function showStudentTab(tabId) {
+            document.querySelectorAll('.student-tab').forEach(el => el.classList.add('hide'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hide');
+            
+            document.querySelectorAll('.mobile-nav-item').forEach(el => {
+                el.classList.remove('active', 'text-emerald-500', 'bg-emerald-50');
+                el.classList.add('text-gray-400');
+                if(el.dataset.target === tabId) {
+                    el.classList.add('active', 'text-emerald-500', 'bg-emerald-50');
+                    el.classList.remove('text-gray-400');
+                }
+            });
+
+            if(tabId === 'weekly') loadWeekly();
+            if(tabId === 'assignments') loadAssignments();
+            if(tabId === 'backpack' || tabId === 'sendgift') loadBackpack();
+            if(tabId === 'profile') loadProfileOpts();
+            if(tabId === 'leaderboard') loadLeaderboard();
+        }
+
+        async function claimStreak() {
+            const btn = document.getElementById('btnClaimStreak');
+            btn.disabled = true; btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i>';
+            try {
+                const res = await api.run('claimDailyStreak', currentUser.Email);
+                if(res.success) {
+                    currentUser.Maturity = res.newMaturity;
+                    currentUser.Level = res.newLevel;
+                    currentUser.LastCheckIn = getLocalDateString();
+                    updatePlantUI(res.newMaturity, res.newLevel);
+                    btn.classList.remove('streak-pulse');
+                    btn.innerHTML = '<i class="ph-fill ph-check-circle text-2xl text-emerald-600"></i><div class="text-[10px] font-bold text-emerald-800">Done</div>';
+                    Swal.fire({title: '+'+res.reward+' Water!', text: 'Daily streak claimed successfully.', icon: 'success', timer: 2000, showConfirmButton: false});
+                } else {
+                    Swal.fire('Oops', res.message, 'warning');
+                    initStudentView();
+                }
+            } catch(e) { btn.disabled = false; btn.innerText = "Error"; }
+        }
+
+        let dailyAnswers = [];
+
+        // NEW: Gatekeeper function to verify attempt availability before showing questions
+        async function checkAndLoadDailyQuiz() {
+            showLoader();
+            try {
+                // 1. ONLY check if they are allowed (Safe from accidental logouts)
+                const status = await api.run('checkDailyAttemptLimit', currentUser.Email);
+                
+                if (!status.allowed) {
+                    hideLoader();
+                    // Clear the container area so they can't see or answer old questions
+                    document.getElementById('dailyQuizzesContainer').innerHTML = `
+                        <div class="p-6 text-center glass-panel bg-amber-50/50 border-amber-200 rounded-xl">
+                            <p class="text-amber-800 font-semibold">⚠️ Daily Limit Reached!</p>
+                            <p class="text-sm text-gray-600 mt-1">You have completed ${status.attemptsUsed}/5 math quizzes today. Take a rest, come back tomorrow, or try the Weekly Challenge instead!</p>
+                        </div>`;
+                    const btnSubmit = document.getElementById('btnSubmitDaily');
+                    if (btnSubmit) btnSubmit.classList.add('hide');
+                    return;
+                }
+                
+                // 2. Build quiz questions safely
+                buildDailyQuizUI();
+            } catch (e) {
+                console.error(e);
+                hideLoader();
+            }
+        }
+
+        // Renamed core generator function
+        function buildDailyQuizUI() {
+            const container = document.getElementById('dailyQuizzesContainer');
+            container.innerHTML = '';
+            dailyAnswers = [];
+            
+            const feedback = document.getElementById('dailyFeedback');
+            if (feedback) feedback.classList.add('hide');
+            
+            const btnSubmit = document.getElementById('btnSubmitDaily');
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = 'Submit Answers';
+                btnSubmit.classList.remove('hide');
+            }
+
+            const btnRetry = document.getElementById('btnRetryDaily');
+            if (btnRetry) {
+                btnRetry.classList.add('hide');
+            }
+            
+            const ops = ['+', '-', '×', '÷'];
+            
+            for(let i=0; i<5; i++) {
+                let op = ops[Math.floor(Math.random()*4)];
+                let a, b, ans;
+                if(op==='+'){ a=rnd(10,50); b=rnd(10,50); ans=a+b; }
+                else if(op==='-'){ a=rnd(20,50); b=rnd(1,a); ans=a-b; }
+                else if(op==='×'){ a=rnd(2,12); b=rnd(2,12); ans=a*b; }
+                else { b=rnd(2,10); ans=rnd(2,10); a=b*ans; }
+                
+                dailyAnswers.push({ qIndex: i, a, b, op, ans });
+                container.innerHTML += `
+                    <div id="dailyBlock_${i}" class="glass-panel p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 border border-emerald-100">
+                        <span class="text-xl font-bold font-mono tracking-widest text-gray-700">${a} ${op} ${b} = </span>
+                        <div class="flex items-center gap-2 w-full md:w-auto">
+                            <input type="number" id="dailyQ_${i}" class="w-full md:w-28 p-2 border border-emerald-200 rounded text-center text-lg font-bold outline-none focus:border-emerald-500 bg-white">
+                            <span id="dailyMark_${i}" class="text-2xl"></span>
+                        </div>
+                    </div>`;
+            }
+            hideLoader();
+        }
+
+        function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        async function submitDaily() {
+            // NEW: Lock the submission immediately and register the attempt on the spreadsheet!
+            document.getElementById('btnSubmitDaily').classList.add('hide');
+            showLoader();
+            
+            try {
+                // Increment the counter on the backend sheet now that they are officially submitting
+                await api.run('incrementDailyAttempt', currentUser.Email);
+            } catch(e) { console.error("Failed to log entry counter:", e); }
+            
+            hideLoader();
+
+            let correctCount = 0;
+            let errors = [];
+            
+            dailyAnswers.forEach((qObj, idx) => {
+                const inputEl = document.getElementById(`dailyQ_${idx}`);
+                const inputVal = Number(inputEl.value.trim());
+                const markEl = document.getElementById(`dailyMark_${idx}`);
+                const blockEl = document.getElementById(`dailyBlock_${idx}`);
+                
+                if (inputEl) inputEl.disabled = true;
+                
+                if (inputVal === qObj.ans) {
+                    correctCount++;
+                    markEl.innerHTML = '✅';
+                    blockEl.classList.remove('border-red-300', 'bg-red-50/50');
+                    blockEl.classList.add('border-emerald-300', 'bg-emerald-50/50');
+                } else {
+                    markEl.innerHTML = '❌';
+                    blockEl.classList.remove('border-emerald-300', 'bg-emerald-50/50');
+                    blockEl.classList.add('border-red-300', 'bg-red-50/50');
+                    errors.push({ idx, correctAns: qObj.ans });
+                }
+            });
+            
+            const pointsEarned = correctCount * 10;
+            const feedback = document.getElementById('dailyFeedback');
+            if (feedback) {
+                feedback.classList.remove('hide');
+                if (correctCount === 5) {
+                    feedback.innerHTML = `🌟 Outstanding! You solved all 5 tasks correctly. +50 Nutrients added!`;
+                    feedback.className = "mt-4 p-4 rounded-lg bg-emerald-100 text-emerald-800 font-bold animate-pulse";
+                } else if (correctCount > 0) {
+                    feedback.innerHTML = `✨ Nice work! You got ${correctCount}/5 tasks correct and earned +${pointsEarned} Nutrients! Study corrections below.`;
+                    feedback.className = "mt-4 p-4 rounded-lg bg-emerald-50 text-emerald-800 font-semibold";
+                } else {
+                    feedback.innerHTML = `⚠️ Keep practicing! 0/5 solved. Study the correct answers below and try a new quiz.`;
+                    feedback.className = "mt-4 p-4 rounded-lg bg-amber-100 text-amber-800 font-semibold";
+                }
+                
+                errors.forEach(err => {
+                    const block = document.getElementById(`dailyBlock_${err.idx}`);
+                    let correctionDiv = block.querySelector('.correction-label');
+                    if (!correctionDiv) {
+                        block.insertAdjacentHTML('beforeend', `<span class="correction-label text-xs font-semibold text-red-600 block md:inline mt-1 md:mt-0">Answer is ${err.correctAns}</span>`);
+                    }
+                });
+            }
+
+            if (pointsEarned > 0) {
+                awardDailyPoints(pointsEarned);
+            }
+            api.run('logStudentActivity', currentUser.Email, 'Daily Quiz', `Completed daily math practice. Score: ${correctCount}/5`, pointsEarned);
+            
+            // Show Retry button so they can attempt another one if under the 5-limit rule
+            document.getElementById('btnRetryDaily').classList.remove('hide');
+        }
+
+        async function awardDailyPoints(pts) {
+            try {
+                const res = await api.run('updateStudentMaturity', currentUser.Email, pts);
+                currentUser.Maturity = res.maturity;
+                currentUser.Level = res.level;
+                updatePlantUI(res.maturity, res.level);
+                swalToast.fire({ icon: 'success', title: `+${pts} Nutrients credited!` });
+            } catch(e) { console.error(e); }
+        }
+
+        function retryQuiz() {
+            checkAndLoadDailyQuiz();
+        }
+
+        // Append this function inside your core dashboard initialization routines (e.g. initStudentView)
+        async function initializePracticeZoneModule() {
+            if (!currentUser || !currentUser.Email) return;
+            
+            // 1. Check current layout states for daily streak conditions
+            try {
+                const dailyStatus = await api.run('checkDailyPracticeStatus', currentUser.Email);
+                const dailyBtn = document.getElementById('btnDailyClaim');
+                
+                if (dailyBtn) {
+                    if (dailyStatus.hasClaimed) {
+                        dailyBtn.className = "w-full py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-md cursor-not-allowed";
+                        dailyBtn.innerText = "Claimed Today ✓";
+                        dailyBtn.disabled = true;
+                    } else if (dailyStatus.hasAttempted) {
+                        dailyBtn.className = "w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-md shadow-sm transition-all";
+                        dailyBtn.innerText = "Claim 100 Nutrients";
+                        dailyBtn.disabled = false;
+                    } else {
+                        dailyBtn.className = "w-full py-2 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-md cursor-not-allowed";
+                        dailyBtn.innerText = "Locked (Play 1 Game)";
+                        dailyBtn.disabled = true;
+                    }
+                }
+            } catch(err) {
+                console.error("Daily tracking interface failure:", err);
+            }
+
+            // 2. Poll and render special rewards from the AppReward sheet
+            try {
+                const awards = await api.run('getUnclaimedAppAwards', currentUser.Email);
+                const awardsContainer = document.getElementById('dynamicAwardsContainer');
+                
+                if (awardsContainer) {
+                    if (!awards || awards.length === 0) {
+                        awardsContainer.innerHTML = `
+                            <div class="text-center p-4 bg-white/50 rounded-lg border border-dashed border-indigo-100">
+                                <p class="text-[10px] font-medium text-indigo-400">No active milestone awards to claim right now.</p>
+                            </div>`;
+                        return;
+                    }
+
+                    // Loop through each row found in AppReward for this user and generate a claim button
+                    awardsContainer.innerHTML = awards.map(award => {
+                        return `
+                            <div class="bg-white p-3 rounded-lg border border-indigo-100 flex flex-col justify-between items-stretch gap-2 shadow-sm">
+                                <div>
+                                    <p class="text-xs font-bold text-indigo-900 leading-tight">${award.AwardName}</p>
+                                    <p class="text-[10px] text-emerald-600 font-semibold mt-0.5">+${award.NutrientReward} Nutrients</p>
+                                </div>
+                                <button onclick="executeAwardClaim('${award.RewardID}', this)" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded transition-all">
+                                    Claim Award
+                                </button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (awardErr) {
+                console.error("Awards engine display collapse:", awardErr);
+            }
+        }
+
+        // Handler linking direct browser game launch routines (Same GAS Project Structure)
+        async function launchPracticeApp(appKey) {
+            if (appKey === 'mathSafari') {
+                try {
+                    // 1. Dynamically retrieve the absolute Web App deployment URL
+                    const baseUrl = await api.run('getWebAppUrl');
+                    
+                    // 2. Append the target page parameter flag pointing to MathGame.html
+                    const targetGameUrl = baseUrl + "?page=game";
+                    
+                    // 3. Perform a safe top-frame redirect out of the sandbox
+                    if (window.top && window.top.location) {
+                        window.top.location.href = targetGameUrl;
+                    } else {
+                        window.location.href = targetGameUrl;
+                    }
+                } catch (err) {
+                    console.error("Failed to route to game page container safely:", err);
+                    
+                    // Fallback backup route assignment in case the promise encounters an absolute break
+                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec?page=game";
+                    if (window.top && window.top.location) {
+                        window.top.location.href = fallbackUrl;
+                    } else {
+                        window.location.href = fallbackUrl;
+                    }
+                }
+            }
+        }
+
+        // Action executor mapping customized achievement entries
+        async function executeAwardClaim(rewardId, buttonElement) {
+            if (buttonElement) buttonElement.disabled = true;
+            
+            Swal.fire({ title: 'Securing Award...', didOpen: () => { Swal.showLoading(); } });
+
+            try {
+                const result = await api.run('claimSpecificAppAward', rewardId, currentUser.Email);
+                Swal.close();
+
+                if (result.success) {
+                    // 1. Update your global tracking session object 
+                    currentUser.Maturity = result.newTotal; // The new maturity returned from updateStudentMaturity
+                    currentUser.Level = result.newLevel;    // The new level returned from updateStudentMaturity
+
+                    // 2. Clear out old elements from the practice portal view module
+                    await initializePracticeZoneModule(); 
+
+                    // 3. THIS IS HOW YOU GET/UPDATE THE VALUE ON SCREEN:
+                    // Pass the fresh values directly into your existing layout drawing engine!
+                    if (typeof updatePlantUI === 'function') {
+                        updatePlantUI(currentUser.Maturity, currentUser.Level);
+                    }
+
+                    Swal.fire('Award Claimed!', 'Your special nutrients bonus has been credited.', 'success');
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                    if (buttonElement) buttonElement.disabled = false;
+                }
+            } catch (err) {
+                Swal.close();
+                console.error("Transmission error:", err);
+                if (buttonElement) buttonElement.disabled = false;
+            }
+        }
+
+        // Action executor mapping standard daily streak points collection
+        async function executeDailyClaim() {
+            const dailyBtn = document.getElementById('btnDailyClaim');
+            if (dailyBtn) dailyBtn.disabled = true;
+
+            Swal.fire({ title: 'Processing Claim...', didOpen: () => { Swal.showLoading(); } });
+
+            try {
+                const result = await api.run('claimDailyPracticeReward', currentUser.Email);
+                Swal.close();
+
+                if (result.success) {
+                    // 1. Update global session memory parameters
+                    currentUser.Maturity = result.newTotal;
+                    currentUser.Level = result.newLevel;
+
+                    // 2. Refresh the active state flags of the buttons
+                    await initializePracticeZoneModule();
+
+                    // 3. Trigger your original visual renderer instantly
+                    if (typeof updatePlantUI === 'function') {
+                        updatePlantUI(currentUser.Maturity, currentUser.Level);
+                    }
+
+                    Swal.fire('Success!', '100 points have been added to your Maturity!', 'success');
+                } else {
+                    Swal.fire('Claim Failed', result.message, 'error');
+                    if (dailyBtn) dailyBtn.disabled = false;
+                }
+            } catch (err) {
+                Swal.close();
+                if (dailyBtn) dailyBtn.disabled = false;
+            }
+        }
+
+        let weeklyChallengesCache = []; // Global cache to keep question references active
+
+        async function loadWeekly() {
+            showLoader();
+            const container = document.getElementById('weeklyContainer');
+            try {
+                const challenges = await api.run('getAdminData', 'Challenges');
+                weeklyChallengesCache = challenges || []; // Save to cache for submission reference
+                const emailLower = currentUser.Email.toLowerCase().trim();
+                
+                if(!challenges || challenges.length===0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 mt-10">No challenges posted for this week.</p>';
+                } else {
+                    container.innerHTML = challenges.map(c => {
+                        const completedBy = String(c.CompletedBy || '').trim().toLowerCase();
+                        const isSolved = completedBy.split(',').map(e => e.trim()).includes(emailLower);
+                        
+                        // Prepare the resource link block if it exists
+                        let resourceLinkHtml = '';
+                        if (c.ResourceLink) {
+                            const linkLabel = c.ResourceText ? c.ResourceText : "View Learning Resource";
+                            resourceLinkHtml = `
+                                <div class="text-right mb-2">
+                                    <a href="${c.ResourceLink}" target="_blank" class="inline-flex items-center gap-1 bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg border border-blue-200 text-xs font-medium hover:bg-blue-100 transition">
+                                        <i class="ph ph-link"></i> ${linkLabel}
+                                    </a>
+                                </div>
+                            `;
+                        }
+
+                        let submissionHtml = `
+                            <div class="flex flex-col gap-1 w-full md:w-80">
+                                ${resourceLinkHtml}
+                                <div class="flex gap-2">
+                                    <input type="text" id="ans_${c.Id}" placeholder="Your Answer" class="flex-1 p-2 border rounded outline-none text-sm bg-white">
+                                    <button onclick="submitWeekly('${c.Id}', '${c.Answer}', ${c.RewardPoints}, this)" class="btn-green px-4 rounded font-bold text-sm">Submit</button>
+                                </div>
+                            </div>`;
+                            
+                        if (isSolved) {
+                            submissionHtml = `
+                                <div class="flex flex-col gap-1 w-full md:w-80">
+                                    ${resourceLinkHtml}
+                                    <div class="bg-emerald-50 text-emerald-800 font-bold p-2 text-center rounded-lg border border-emerald-200 flex items-center justify-center gap-1">
+                                        <i class="ph-fill ph-check-circle"></i> Solved (Already Claimed)
+                                    </div>
+                                </div>`;
+                        }
+
+                        return `
+                            <div class="glass-panel p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                <div class="text-sm text-gray-800 overflow-x-auto flex-1">${c.Question}</div>
+                                ${submissionHtml}
+                            </div>`;
+                    }).join('');
+                    
+                    if(window.MathJax) MathJax.typesetPromise();
+                }
+            } catch(e) { console.error(e); }
+            hideLoader();
+        }
+
+        async function submitWeekly(id, correctAns, points, btn) {
+            const input = document.getElementById(`ans_${id}`);
+            const userAnsVal = input.value.trim();
+            
+            // Find current challenge item in our cache to fetch explanation data
+            const cObj = weeklyChallengesCache.find(item => String(item.Id) === String(id));
+            
+            // If answer is INCORRECT
+            if(userAnsVal.toLowerCase() !== String(correctAns).trim().toLowerCase()) {
+                let errorHtml = `<p class="text-gray-700">Check your math and try again.</p>`;
+                
+                // Show dynamic tutorial help reference if configured
+                if (cObj && cObj.ResourceLink) {
+                    const label = cObj.ResourceText ? cObj.ResourceText : "Open Tutorial Resource";
+                    errorHtml += `
+                        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-center">
+                            <p class="text-xs text-blue-700 font-medium mb-2">Need a hint? Check the learning resources:</p>
+                            <a href="${cObj.ResourceLink}" target="_blank" class="inline-flex items-center gap-1 bg-blue-600 text-white px-3 py-1.5 rounded-md font-semibold text-sm hover:bg-blue-700 transition">
+                                <i class="ph ph-video-camera"></i> ${label}
+                            </a>
+                        </div>
+                    `;
+                }
+
+                return Swal.fire({
+                    icon: 'error',
+                    title: 'Incorrect Answer',
+                    html: errorHtml,
+                    confirmButtonColor: '#10b981'
+                });
+            }
+            
+            // If answer is CORRECT -> Process background reward logic
+            btn.disabled = true; btn.innerText = 'Processing...';
+            try {
+                const res = await api.run('submitWeeklyChallenge', currentUser.Email, id, points);
+                if (res.success) {
+                    currentUser.Maturity = res.newMaturity;
+                    currentUser.Level = res.newLevel;
+                    updatePlantUI(res.newMaturity, res.newLevel);
+                    api.run('logStudentActivity', currentUser.Email, 'Weekly Challenge', `Solved Challenge ID: ${id}`, points);
+                    
+                    // Build Explanation Window HTML block
+                    let successHtml = `<p class="font-medium text-emerald-700">Fantastic! +${points} Nutrients credited to your plant.</p>`;
+                    if (cObj && cObj.Explanation) {
+                        successHtml += `
+                            <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-left text-sm text-gray-600">
+                                <strong class="text-gray-800 block mb-1">Explanation:</strong>
+                                <p>${cObj.Explanation}</p>
+                        `;
+                        if (cObj.ExplanationLink) {
+                            successHtml += `
+                                <a href="${cObj.ExplanationLink}" target="_blank" class="text-emerald-600 font-semibold hover:underline block mt-2">
+                                    👉 Click here to explore more
+                                </a>
+                            `;
+                        }
+                        successHtml += `</div>`;
+                    }
+
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Correct Answer!',
+                        html: successHtml,
+                        confirmButtonColor: '#10b981'
+                    });
+                    
+                    loadWeekly();
+                } else {
+                    Swal.fire('Notice', res.message, 'info');
+                    btn.disabled = false; btn.innerText = 'Submit';
+                }
+            } catch(e) { 
+                console.error(e);
+                btn.disabled = false; btn.innerText = 'Submit'; 
+            }
+        }
+
+        async function loadAssignments() {
+            showLoader();
+            const container = document.getElementById('studentAssContainer');
+            try {
+                const allAss = await api.run('getAdminData', 'Assignments');
+                const mySubs = await api.run('getAdminData', 'Submissions');
+                const userSubs = mySubs.filter(s => String(s.StudentEmail).trim().toLowerCase() === String(currentUser.Email).trim().toLowerCase());
+                
+                const emailLower = currentUser.Email.trim().toLowerCase();
+                const targetedAssignments = allAss.filter(a => {
+                    const targetStr = String(a.AssignedTo || '').trim();
+                    if (!targetStr || targetStr.toLowerCase() === 'all') return true;
+                    const targetEmails = targetStr.toLowerCase().split(',').map(e => e.trim());
+                    return targetEmails.includes(emailLower);
+                });
+                
+                if(targetedAssignments.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 mt-10">No tasks posted yet.</p>';
+                } else {
+                    container.innerHTML = targetedAssignments.map(a => {
+                        const sub = userSubs.find(s => String(s.AssignmentId).trim() === String(a.Id).trim());
+                        let actionHtml = `<button onclick="submitAss('${a.Id}', this)" class="btn-green w-full py-2 rounded text-sm font-bold mt-3">Mark as Submitted</button>`;
+                        if(sub) {
+                            if(sub.Claimed === 'Yes') actionHtml = `<div class="mt-3 text-center text-sm font-bold text-gray-400 bg-gray-100 py-2 rounded">Claimed</div>`;
+                            else if(sub.Graded === 'Yes') actionHtml = `<button onclick="claimAss('${sub.Id}', ${a.RewardPoints}, this)" class="w-full py-2 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 rounded text-sm font-bold mt-3 shadow animate-pulse">Claim Reward (${sub.Score}/10)</button>`;
+                            else actionHtml = `<div class="mt-3 text-center text-sm font-medium text-emerald-600 bg-emerald-50 py-2 rounded"><i class="ph ph-hourglass-high mr-1"></i>Waiting for teacher grading...</div>`;
+                        }
+                        return `
+                            <div class="glass-panel p-4">
+                                <div class="flex justify-between items-start mb-1">
+                                    <h3 class="font-bold text-gray-800">${a.Title}</h3>
+                                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Max ${a.RewardPoints} pts</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mb-2">Due Date: ${new Date(a.DueDate).toLocaleDateString()}</p>
+                                <p class="text-sm text-gray-700">${a.Description}</p>
+                                ${actionHtml}
+                            </div>`;
+                    }).join('');
+                }
+            } catch(e) {}
+            hideLoader();
+        }
+
+        async function submitAss(id, btn) {
+            btn.disabled = true; btn.innerText = 'Processing...';
+            const res = await api.run('submitAssignmentStatus', currentUser.Email, id);
+            if(res.success) {
+                api.run('logStudentActivity', currentUser.Email, 'Homework Submission', `Submitted assignment for HW ID: ${id}`, 0);
+                loadAssignments();
+            } else {
+                Swal.fire('Failed', res.message, 'warning');
+                btn.disabled = false; btn.innerText = 'Mark as Submitted';
+            }
+        }
+        
+        async function claimAss(subId, maxPts, btn) {
+            btn.disabled = true; btn.innerText = 'Processing...';
+            const res = await api.run('claimAssignmentReward', currentUser.Email, subId, maxPts);
+            if(res.success) {
+                currentUser.Maturity = res.newMaturity;
+                currentUser.Level = res.newLevel;
+                updatePlantUI(res.newMaturity, res.newLevel);
+                Swal.fire('Claimed!', `Received ${res.earnedPoints} points!`, 'success');
+                api.run('logStudentActivity', currentUser.Email, 'Homework Reward Claim', `Claimed reward for assignment ID: ${subId}`, res.earnedPoints);
+                loadAssignments();
+            }
+        }
+
+        async function loadBackpack() {
+            showLoader();
+            try {
+                const bp = await api.run('getAdminData', 'Backpack');
+                const users = await api.run('getAdminData', 'Users');
+                
+                currentBackpack = bp.filter(b => String(b.OwnerEmail).trim().toLowerCase() === String(currentUser.Email).trim().toLowerCase());
+                
+                const container = document.getElementById('backpackContainer');
+                container.innerHTML = currentBackpack.map(b => {
+                    const typeLabel = b.Type || 'Item';
+                    const fullMessage = b.Message || '';
+                    
+                    return `
+                        <div class="glass-panel p-4 text-center flex flex-col justify-between items-center relative border border-emerald-100 min-h-[140px] hover:shadow-md transition duration-200">
+                            <span class="absolute top-1.5 right-1.5 text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${typeLabel}</span>
+                            <div class="text-sm font-semibold text-gray-800 my-auto pt-4 break-words w-full px-1">${fullMessage}</div>
+                            <div class="text-[10px] text-gray-500 font-medium mt-2">From: ${b.SenderName || 'System'}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                if(currentBackpack.length === 0) {
+                    container.innerHTML = '<p class="col-span-3 text-center text-sm text-gray-400 mt-10 italic">Backpack is empty.</p>';
+                }
+                
+                const selectItem = document.getElementById('giftItem');
+                selectItem.innerHTML = '<option value="">-- Choose Item --</option>' + 
+                    currentBackpack.map(b => {
+                        const typeLabel = b.Message ? b.Message.split('-')[0].trim() : (b.Type || 'Item');
+                        const sender = b.SenderName || 'System';
+                        return `<option value="${b.Id}">${typeLabel} (From: ${sender})</option>`;
+                    }).join('');
+                
+                const studentUsers = users.filter(u => u.Role === 'Student');
+                const uniqueClasses = [...new Set(studentUsers.map(u => String(u.Class).trim()).filter(Boolean))];
+                
+                const selectClass = document.getElementById('giftClass');
+                selectClass.innerHTML = '<option value="">-- Class --</option>' +
+                    uniqueClasses.map(c => `<option value="${c}">${c}</option>`).join('');
+                
+                studentsCache = {};
+                studentUsers.forEach(u => {
+                    const c = String(u.Class).trim();
+                    if (!studentsCache[c]) studentsCache[c] = [];
+                    studentsCache[c].push(u);
+                });
+                
+            } catch(e) { console.error(e); }
+            hideLoader();
+        }
+
+        async function loadLeaderboard() {
+            const tbody = document.getElementById('studentLeaderboardBody');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-emerald-700 italic">Analyzing global scores...</td></tr>`;
+            try {
+                const list = await api.run('getLeaderboard');
+                if (list && list.length > 0) {
+                    tbody.innerHTML = list.map((user, idx) => {
+                        let rankIcon = idx + 1;
+                        if (idx === 0) rankIcon = '🥇';
+                        if (idx === 1) rankIcon = '🥈';
+                        if (idx === 2) rankIcon = '🥉';
+                        
+                        return `
+                            <tr class="hover:bg-emerald-50/40 transition">
+                                <td class="p-3 text-center font-bold text-base">${rankIcon}</td>
+                                <td class="p-3 font-semibold text-gray-800">${user.Nickname}</td>
+                                <td class="p-3 text-gray-600 font-medium">${user.Class}</td>
+                                <td class="p-3 text-center font-bold text-emerald-600">Lv. ${user.Level}</td>
+                                <td class="p-3 text-right font-bold text-emerald-800">${user.Maturity} pts</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No student records discovered.</td></tr>`;
+                }
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">Failed to generate global ranking metrics.</td></tr>`;
+            }
+        }
+
+        function filterGiftReceivers(className) {
+            const nameSelect = document.getElementById('giftName');
+            nameSelect.innerHTML = '<option value="">-- Select student --</option>';
+            if (!className || !studentsCache[className]) return;
+            
+            const filtered = studentsCache[className];
+            nameSelect.innerHTML += filtered.map(u => `<option value="${u.FullName}">${u.FullName}</option>`).join('');
+        }
+
+        async function sendGift() {
+            const itemId = document.getElementById('giftItem').value;
+            const cls = document.getElementById('giftClass').value;
+            const name = document.getElementById('giftName').value;
+            const msg = document.getElementById('giftMsg').value.trim();
+            
+            if(!itemId || !cls || !name) return Swal.fire('Error', 'Ensure all recipient details are selected.', 'warning');
+            
+            const btn = document.getElementById('btnSendGift');
+            btn.disabled = true; btn.innerText = 'Sending...';
+            const res = await api.run('sendGift', currentUser.Email, cls, name, itemId, msg);
+            if(res.success) {
+                Swal.fire('Gift Sent!', `Your gift has been successfully sent to ${name}!`, 'success');
+                api.run('logStudentActivity', currentUser.Email, 'Send Gift', `Sent item ID: ${itemId} to friend`, 0);
+                document.getElementById('giftClass').value = '';
+                document.getElementById('giftName').innerHTML = '<option value="">-- Select student --</option>';
+                document.getElementById('giftMsg').value = '';
+                loadBackpack();
+            } else {
+                Swal.fire('Failed', res.message, 'error');
+            }
+            btn.disabled = false; btn.innerText = 'Send Gift';
+        }
+
+        function loadProfileOpts() {
+            document.getElementById('profNick').value = currentUser.Nickname || currentUser.FullName;
+            const colors = ['#f87171','#fb923c','#fbbf24','#a3e635','#4ade80','#34d399','#2dd4bf','#38bdf8','#60a5fa','#818cf8','#a78bfa','#c084fc','#e879f9','#f472b6','#fb7185','#fda4af','#fcd34d','#fef08a','#d9f99d','#bbf7d0'];
+            document.getElementById('profColorGrid').innerHTML = colors.map(c => `<div onclick="selectColor('${c}')" class="w-8 h-8 rounded-full cursor-pointer border-2 border-transparent hover:scale-110 transition" style="background:${c}" data-color="${c}"></div>`).join('');
+            
+            const avatars = ['🧑‍🎓','👨‍🎓','👩‍🎓','🧑‍🏫','👨‍🏫','👩‍🏫','🧑‍💻','👨‍💻','👩‍💻','🧑‍🚀','👨‍🚀','👩‍🚀','🦸‍♂️','🦸‍♀️','🧙‍♂️','🧙‍♀️','🧛‍♂️','🧛‍♀️','🧝‍♂️','🧝‍♀️','🧟‍♂️','🧟‍♀️','🧞‍♂️','🧞‍♀️','🧜‍♂️','🧜‍♀️','🧚‍♂️','🧚‍♀️','👼','🎅','🤶','🕵️‍♂️','🕵️‍♀️','💂‍♂️','💂‍♀️','👷‍♂️','👷‍♀️','🤴','👸','👳‍♂️','👳‍♀️','👲','🧔','👱‍♂️','👱‍♀️','🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦁','🐙','🦑','🦞','🦀','🐠','🐟','🐬','🐳','🐅','🐆','🦓','🦍','🐘','🦛','🦏','🐪','🦒','🦘','🐎','🐕','🐈','🐇'];
+            document.getElementById('profAvatarGrid').innerHTML = avatars.map(a => `<div onclick="selectAvatar('${a}')" class="text-2xl cursor-pointer p-1 hover:bg-gray-100 rounded text-center transition" data-avatar="${a}">${a}</div>`).join('');
+            
+            document.getElementById('profNewPass').value = '';
+            document.getElementById('profConfPass').value = '';
+        }
+
+        let selColor = '', selAvatar = '';
+        function selectColor(c) { selColor = c; document.querySelectorAll('#profColorGrid div').forEach(el=>el.style.borderColor='transparent'); document.querySelector(`[data-color="${c}"]`).style.borderColor='#1f2937'; }
+        function selectAvatar(a) { selAvatar = a; document.querySelectorAll('#profAvatarGrid div').forEach(el=>el.style.backgroundColor='transparent'); document.querySelector(`[data-avatar="${a}"]`).style.backgroundColor='#e5e7eb'; }
+        
+        async function saveProfile() {
+            const nick = document.getElementById('profNick').value.trim();
+            const newPass = document.getElementById('profNewPass').value.trim();
+            const confPass = document.getElementById('profConfPass').value.trim();
+            const btn = document.querySelector('#tab-profile button');
+            
+            btn.disabled = true; btn.innerText = 'Saving...';
+            
+            if (newPass) {
+                if (newPass.length < 6 || newPass.length > 12) {
+                    Swal.fire('Password Length Error', 'Password must be between 6 and 12 characters.', 'warning');
+                    btn.disabled = false; btn.innerText = 'Save Profile Settings';
+                    return;
+                }
+                if (newPass !== confPass) {
+                    Swal.fire('Mismatch Error', 'New passwords do not match. Check entries.', 'warning');
+                    btn.disabled = false; btn.innerText = 'Save Profile Settings';
+                    return;
+                }
+                
+                try {
+                    const passRes = await api.run('updatePassword', currentUser.Email, newPass);
+                    if (!passRes.success) {
+                        Swal.fire('Error', 'Could not update password at this time.', 'error');
+                        btn.disabled = false; btn.innerText = 'Save Profile Settings';
+                        return;
+                    }
+                } catch(e) { console.error(e); }
+            }
+            
+            const c = selColor || currentUser.BgColor;
+            const a = selAvatar || currentUser.Avatar;
+            
+            const res = await api.run('updateProfile', currentUser.Email, a, c, nick);
+            if(res.success) {
+                currentUser.Nickname = nick; currentUser.BgColor = c; currentUser.Avatar = a;
+                document.getElementById('stuAvatar').innerText = a;
+                document.getElementById('stuAvatarBg').style.backgroundColor = c;
+                document.getElementById('stuNickname').innerText = nick;
+                Swal.fire('Success', 'Profile settings updated.', 'success');
+            }
+            btn.disabled = false; btn.innerText = 'Save Profile Settings';
+        }
+
+        function initAdminView() {
+            document.getElementById('adminName').innerText = currentUser.FullName;
+            showAdminTab('dashboard');
+        }
+
+        function showAdminTab(tabId) {
+            document.querySelectorAll('.admin-nav-item').forEach(el => {
+                el.classList.remove('active-nav', 'border-white', 'bg-emerald-700');
+                el.classList.add('border-transparent');
+                if(el.dataset.target === tabId) {
+                    el.classList.add('active-nav', 'border-white', 'bg-emerald-700');
+                    el.classList.remove('border-transparent');
+                }
+            });
+            document.getElementById('admin-dashboard').classList.add('hide');
+            document.getElementById('admin-dynamic-view').classList.add('hide');
+            
+            if(tabId === 'dashboard') {
+                document.getElementById('admin-dashboard').classList.remove('hide');
+                loadAdminDashboard();
+            } else {
+                document.getElementById('admin-dynamic-view').classList.remove('hide');
+                loadAdminModule(tabId);
+            }
+            if(window.innerWidth < 768) document.getElementById('adminMenu').classList.add('hidden');
+        }
+
+        async function loadAdminDashboard() {
+            showLoader();
+            try {
+                const data = await api.run('getAdminDashboard');
+                document.getElementById('dashActive').innerText = data.activeToday;
+                document.getElementById('dashSubs').innerText = data.totalSubmissions;
+                document.getElementById('dashGraded').innerText = data.gradedPercentage + '%';
+                
+                document.getElementById('dashTopUsers').innerHTML = data.topUsers.map((u, i) => `
+                    <tr>
+                        <td class="p-3 font-bold ${i<3?'text-yellow-500':''}">${i+1}</td>
+                        <td class="p-3 font-semibold text-gray-700">${u.Nickname}</td>
+                        <td class="p-3 text-gray-500">${u.Class}</td>
+                        <td class="p-3 font-bold text-teal-600">Lv. ${u.Level}</td>
+                        <td class="p-3 font-bold text-emerald-600">${u.Maturity}</td>
+                    </tr>
+                `).join('');
+            } catch(e) {}
+            hideLoader();
+            loadDashboardAssignmentMetrics();
+        }
+
+        async function loadDashboardAssignmentMetrics() {
+          try {
+              // Run backend script task
+              const statsData = await api.run('getAssignmentDashboardStats');
+              const container = document.getElementById('dashboardAssignmentList');
+              
+              if (!statsData || statsData.length === 0) {
+                  container.innerHTML = `<p class="text-xs text-gray-400 p-2">No active assignments found.</p>`;
+                  return;
+              }
+              
+              container.innerHTML = statsData.map(item => {
+                  // Determine dynamic coloration flags for low vs high completion progress
+                  let barColor = 'bg-amber-500';
+                  if (item.percentage === 100) barColor = 'bg-emerald-500';
+                  else if (item.percentage < 40) barColor = 'bg-rose-500';
+
+                  return `
+                      <div class="border-b border-gray-100 pb-3 last:border-none">
+                          <div class="flex justify-between items-center mb-1">
+                              <div>
+                                  <span class="text-sm font-semibold text-gray-800 block">${item.title}</span>
+                                  <span class="text-xs text-gray-400">Target: ${item.assignedTo}</span>
+                              </div>
+                              <span class="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                                  ${item.gradedCount}/${item.totalCount} books (${item.percentage}%)
+                              </span>
+                          </div>
+                          <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                              <div class="${barColor} h-full transition-all duration-500" style="width: ${item.percentage}%"></div>
+                          </div>
+                      </div>
+                  `;
+              }).join('');
+              
+          } catch (err) {
+              console.error("Failed loading dashboard widget:", err);
+          }
+      }
+
+      // Call this inside your main function when the Dashboard panel initialization switches on!
+      loadDashboardAssignmentMetrics();
+
+        async function resetStudentLevels() {
+            const confirm = await Swal.fire({
+                title: 'Reset All Student Levels?',
+                text: 'All student Levels will be set back to Level 1. Nutrients (Maturity) will NOT change.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, reset levels!'
+            });
+            if (confirm.isConfirmed) {
+                showLoader();
+                try {
+                    const res = await api.run('resetAllStudentLevels');
+                    if (res.success) {
+                        Swal.fire('Reset Complete', 'All student levels have been set back to Level 1.', 'success');
+                        loadAdminDashboard();
+                    }
+                } catch(e) { console.error(e); }
+                hideLoader();
+            }
+        }
+
+        async function loadAdminModule(type) {
+            showLoader();
+            const title = document.getElementById('adminViewTitle');
+            const thead = document.getElementById('adminTableHead');
+            const tbody = document.getElementById('adminTableBody');
+            const btnAdd = document.getElementById('adminBtnAdd');
+            const customCtrl = document.getElementById('adminCustomControls');
+            
+            btnAdd.classList.add('hide');
+            btnAdd.onclick = null;
+            customCtrl.classList.add('hide'); customCtrl.innerHTML = '';
+            thead.innerHTML = ''; tbody.innerHTML = '';
+
+            try {
+                if(type === 'student') {
+                    title.innerText = 'Student Progress';
+                    const data = await api.run('getAdminStudents');
+                    thead.innerHTML = '<tr><th class="p-3">Name</th><th class="p-3">Class</th><th class="p-3">Email</th><th class="p-3">Completion %</th></tr>';
+                    tbody.innerHTML = data.map(d => `<tr><td class="p-3 font-medium">${d.FullName}</td><td class="p-3">${d.Class}</td><td class="p-3">${d.Email}</td><td class="p-3 font-bold text-emerald-600">${d.CompletionRate}%</td></tr>`).join('');
+                }
+                
+                else if(type === 'assignment') {
+                    title.innerText = 'Assignments Management';
+                    btnAdd.classList.remove('hide');
+                    btnAdd.onclick = () => showCustomAssignmentModal();
+                    
+                    const data = await api.run('getAdminData', 'Assignments');
+                    thead.innerHTML = '<tr><th class="p-3">ID</th><th class="p-3">Title</th><th class="p-3">Due Date</th><th class="p-3">Pts</th><th class="p-3 text-center">Actions</th></tr>';
+                    
+                    if(!data || data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No Assignments found. Click 'Add New' above!</td></tr>`;
+                    } else {
+                        tbody.innerHTML = data.map(d => `
+                            <tr>
+                                <td class="p-3 text-xs text-gray-400">${d.Id}</td>
+                                <td class="p-3 font-semibold text-gray-700">${d.Title}</td>
+                                <td class="p-3">${new Date(d.DueDate).toLocaleDateString()}</td>
+                                <td class="p-3">${d.RewardPoints}</td>
+                                <td class="p-3 text-center space-x-2">
+                                    <button onclick="showCustomAssignmentModal('${d.Id}')" class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs border border-emerald-300 rounded px-2.5 py-1">Edit</button>
+                                    <button onclick="deleteAdminRecord('Assignments', '${d.Id}', 'assignment')" class="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-300 rounded px-2.5 py-1">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('');
+                    }
+                }
+                
+                else if(type === 'grading') {
+                    title.innerText = 'Submission Grading';
+                    customCtrl.classList.remove('hide');
+                    
+                    const assData = await api.run('getAdminData', 'Assignments');
+                    const users = await api.run('getAdminData', 'Users');
+                    const students = users.filter(u => u.Role === 'Student');
+                    const uniqueClasses = [...new Set(students.map(u => String(u.Class).trim()).filter(Boolean))];
+                    
+                    // Alphabetically sort students by FullName for clean dropdown selection
+                    students.sort((a, b) => String(a.FullName).localeCompare(String(b.FullName)));
+
+                    customCtrl.innerHTML = `
+                        <div class="flex flex-col gap-3 w-full bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div class="flex flex-wrap gap-3 items-end">
+                                <div class="w-full sm:w-48">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-1">Grading Mode</label>
+                                    <select id="gradingModeSelect" class="w-full p-2 border rounded text-sm outline-none bg-white font-medium">
+                                        <option value="class">View By Class</option>
+                                        <option value="student">View By Student (Late Submissions)</option>
+                                    </select>
+                                </div>
+
+                                <div id="divClassMode" class="flex flex-1 flex-col sm:flex-row gap-3">
+                                    <div class="flex-1">
+                                        <label class="block text-xs font-semibold text-gray-500 mb-1">Select Assignment</label>
+                                        <select id="gradeAssSelect" class="w-full p-2 border rounded text-sm outline-none bg-white">
+                                            <option value="">-- Select Assignment --</option>
+                                            ${assData.map(a => `<option value="${a.Id}">${a.Title}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div class="w-full sm:w-48">
+                                        <label class="block text-xs font-semibold text-gray-500 mb-1">Select Class</label>
+                                        <select id="gradeClassSelect" class="w-full p-2 border rounded text-sm outline-none bg-white">
+                                            <option value="">-- Class --</option>
+                                            ${uniqueClasses.map(c => `<option value="${c}">${c}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="divStudentMode" class="flex-1 hide">
+                                    <label class="block text-xs font-semibold text-gray-500 mb-1">Select Student</label>
+                                    <select id="gradeStudentSelect" class="w-full p-2 border rounded text-sm outline-none bg-white">
+                                        <option value="">-- Choose Pupil --</option>
+                                        ${students.map(s => `<option value="${s.Email}">${s.FullName} (${s.Class || 'No Class'})</option>`).join('')}
+                                    </select>
+                                </div>
+
+                                <button id="btnFilterGrade" class="btn-green px-6 h-10 rounded-lg text-sm font-semibold">Load List</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Handle dynamic control visibility toggling
+                    const modeSelect = document.getElementById('gradingModeSelect');
+                    const divClassMode = document.getElementById('divClassMode');
+                    const divStudentMode = document.getElementById('divStudentMode');
+
+                    modeSelect.onchange = () => {
+                        if (modeSelect.value === 'class') {
+                            divClassMode.classList.remove('hide');
+                            divStudentMode.classList.add('hide');
+                        } else {
+                            divClassMode.classList.add('hide');
+                            divStudentMode.classList.remove('hide');
+                        }
+                    };
+
+                    document.getElementById('btnFilterGrade').onclick = async () => {
+                        const currentMode = modeSelect.value;
+                        showLoader();
+                        
+                        try {
+                            if (currentMode === 'class') {
+                                const selAssId = document.getElementById('gradeAssSelect').value;
+                                const selClass = document.getElementById('gradeClassSelect').value;
+                                if(!selAssId || !selClass) {
+                                    hideLoader();
+                                    return Swal.fire('Filter Missing', 'Ensure both assignment and class filters are selected.', 'warning');
+                                }
+                                
+                                const gradingList = await api.run('getGradingSubmissions', selAssId, selClass);
+                                thead.innerHTML = '<tr><th class="p-3 text-left">Student Name</th><th class="p-3 text-left">Submitted</th><th class="p-3 text-left">Score (1-10)</th><th class="p-3 text-left">Action</th></tr>';
+                                
+                                if (gradingList.length === 0) {
+                                    tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">No student accounts matched class "${selClass}".</td></tr>`;
+                                } else {
+                                    tbody.innerHTML = gradingList.map(g => {
+                                        const isGraded = g.Graded === 'Yes';
+                                        const uniqueId = g.StudentEmail.replace(/[@.]/g, '_');
+                                        const actionBtn = isGraded 
+                                            ? `<span class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 rounded">Graded</span>`
+                                            : `<button onclick="saveLiveGrade('${g.AssignmentId}', '${g.StudentEmail}', '${g.SubmissionId || ''}', this)" class="btn-green px-4 py-1.5 rounded text-xs font-semibold shadow-sm">Save</button>`;
+
+                                        return `
+                                            <tr class="border-b">
+                                                <td class="p-3 font-semibold text-gray-700">${g.FullName}</td>
+                                                <td class="p-3">
+                                                    <input type="checkbox" id="chkSubmitted_${uniqueId}" ${g.Submitted==='Yes'?'checked':''} ${isGraded ? 'disabled' : ''} class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                                    <label for="chkSubmitted_${uniqueId}" class="text-xs ml-1 text-gray-500">Submitted</label>
+                                                </td>
+                                                <td class="p-3">
+                                                    <input type="number" min="1" max="10" id="score_${uniqueId}" value="${g.Score}" placeholder="1-10" ${isGraded ? 'disabled' : ''} class="w-20 p-1 border rounded text-center bg-white">
+                                                </td>
+                                                <td class="p-3 select-status-container">${actionBtn}</td>
+                                            </tr>`;
+                                    }).join('');
+                                }
+                            } else {
+                                // STUDENT MODE (Late Book Collections filtering)
+                                const studentEmail = document.getElementById('gradeStudentSelect').value;
+                                if(!studentEmail) {
+                                    hideLoader();
+                                    return Swal.fire('Filter Missing', 'Please select a student to load their book submissions.', 'warning');
+                                }
+                                
+                                const studentBooksList = await api.run('getStudentSubmissionsForGrading', studentEmail);
+                                // Dynamic column setup matching your requirement
+                                thead.innerHTML = '<tr><th class="p-3 text-left">Assignment Name</th><th class="p-3 text-left">Submitted</th><th class="p-3 text-left">Score (1-10)</th><th class="p-3 text-left">Action</th></tr>';
+                                
+                                if (studentBooksList.length === 0) {
+                                    tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-gray-400">No active assignments found for this pupil.</td></tr>`;
+                                } else {
+                                    tbody.innerHTML = studentBooksList.map(g => {
+                                        const isGraded = g.Graded === 'Yes';
+                                        // Use AssignmentId in the HTML element IDs to avoid collisions
+                                        const uniqueId = String(g.AssignmentId).trim();
+                                        const actionBtn = isGraded 
+                                            ? `<span class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 rounded">Graded</span>`
+                                            : `<button onclick="saveLiveGrade('${g.AssignmentId}', '${g.StudentEmail}', '${g.SubmissionId || ''}', this)" class="btn-green px-4 py-1.5 rounded text-xs font-semibold shadow-sm">Save</button>`;
+
+                                        return `
+                                            <tr class="border-b">
+                                                <td class="p-3 font-semibold text-gray-700">${g.AssignmentTitle}</td>
+                                                <td class="p-3">
+                                                    <input type="checkbox" id="chkSubmitted_${uniqueId}" ${g.Submitted==='Yes'?'checked':''} ${isGraded ? 'disabled' : ''} class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                                    <label for="chkSubmitted_${uniqueId}" class="text-xs ml-1 text-gray-500">Submitted</label>
+                                                </td>
+                                                <td class="p-3">
+                                                    <input type="number" min="1" max="10" id="score_${uniqueId}" value="${g.Score}" placeholder="1-10" ${isGraded ? 'disabled' : ''} class="w-20 p-1 border rounded text-center bg-white">
+                                                </td>
+                                                <td class="p-3 select-status-container">${actionBtn}</td>
+                                            </tr>`;
+                                    }).join('');
+                                }
+                            }
+                        } catch(err) { console.error(err); }
+                        hideLoader();
+                    };
+                }
+                
+                else if(type === 'challenge') {
+                    title.innerText = 'Weekly Challenges (LaTeX supported)';
+                    btnAdd.classList.remove('hide');
+                    btnAdd.onclick = () => showChallengeModal();
+                    
+                    const data = await api.run('getAdminData', 'Challenges');
+                    thead.innerHTML = '<tr><th class="p-3">ID</th><th class="p-3">Question</th><th class="p-3">Answer</th><th class="p-3">Pts</th><th class="p-3 text-center">Actions</th></tr>';
+                    tbody.innerHTML = data.map(d => `
+                        <tr>
+                            <td class="p-3 text-xs text-gray-400">${d.Id}</td>
+                            <td class="p-3 text-gray-700">${d.Question}</td>
+                            <td class="p-3 font-mono font-bold">${d.Answer}</td>
+                            <td class="p-3">${d.RewardPoints}</td>
+                            <td class="p-3 text-center space-x-2">
+                                <button onclick="showChallengeModal('${d.Id}')" class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs border border-emerald-300 rounded px-2.5 py-1">Edit</button>
+                                <button onclick="deleteAdminRecord('Challenges', '${d.Id}', 'challenge')" class="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-300 rounded px-2.5 py-1">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+                
+                else if(type === 'exam') {
+                    title.innerText = 'Exam Results';
+                    btnAdd.classList.remove('hide');
+                    btnAdd.onclick = () => showExamModal();
+                    
+                    const data = await api.run('getAdminData', 'Exams');
+                    const users = await api.run('getAdminData', 'Users');
+                    
+                    thead.innerHTML = '<tr><th class="p-3">Exam Name</th><th class="p-3">Class</th><th class="p-3">Student Name</th><th class="p-3">Score</th><th class="p-3">Grade</th><th class="p-3 text-center">Actions</th></tr>';
+                    
+                    tbody.innerHTML = data.map(d => {
+                        const matchingUser = users.find(u => String(u.Email).trim().toLowerCase() === String(d.StudentEmail).trim().toLowerCase());
+                        const stuFullName = matchingUser ? matchingUser.FullName : d.StudentEmail;
+                        return `
+                            <tr>
+                                <td class="p-3 font-medium">${d.ExamName}</td>
+                                <td class="p-3">${d.Class}</td>
+                                <td class="p-3 font-semibold text-gray-700">${stuFullName}</td>
+                                <td class="p-3 font-bold">${d.Score}</td>
+                                <td class="p-3"><span class="px-2 py-0.5 bg-gray-100 border rounded text-xs font-bold">${d.Grade}</span></td>
+                                <td class="p-3 text-center space-x-2">
+                                    <button onclick="showExamModal('${d.Id}')" class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs border border-emerald-300 rounded px-2.5 py-1">Edit</button>
+                                    <button onclick="deleteAdminRecord('Exams', '${d.Id}', 'exam')" class="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-300 rounded px-2.5 py-1">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+                
+                else if(type === 'info') {
+                    title.innerText = 'Announcements';
+                    btnAdd.classList.remove('hide');
+                    btnAdd.onclick = () => showInfoModal();
+                    
+                    const data = await api.run('getAdminData', 'Info');
+                    thead.innerHTML = '<tr><th class="p-3">Date</th><th class="p-3">Announcement</th><th class="p-3 text-center">Actions</th></tr>';
+                    tbody.innerHTML = data.map(d => `
+                        <tr>
+                            <td class="p-3 whitespace-nowrap">${new Date(d.Date).toLocaleDateString()}</td>
+                            <td class="p-3 whitespace-normal font-medium text-gray-700">${d.Announcement}</td>
+                            <td class="p-3 text-center space-x-2">
+                                <button onclick="showInfoModal('${d.Id}')" class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs border border-emerald-300 rounded px-2.5 py-1">Edit</button>
+                                <button onclick="deleteAdminRecord('Info', '${d.Id}', 'info')" class="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-300 rounded px-2.5 py-1">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+            } catch(e) { console.error(e); }
+            hideLoader();
+        }
+
+        async function saveLiveGrade(assignmentId, studentEmail, submissionId, btn) {
+            // Generate both possible selectors
+            const emailKey = studentEmail.replace(/[@.]/g, '_');
+            const assignmentKey = String(assignmentId).trim();
+            
+            // Fallback lookups so it reads the correct row regardless of active view
+            const chkEl = document.getElementById(`chkSubmitted_${emailKey}`) || document.getElementById(`chkSubmitted_${assignmentKey}`);
+            const scoreEl = document.getElementById(`score_${emailKey}`) || document.getElementById(`score_${assignmentKey}`);
+            
+            if(!chkEl || !scoreEl) return Swal.fire('Error', 'Could not locate data items.', 'error');
+            
+            const isSubmitted = chkEl.checked ? 'Yes' : 'No';
+            const scoreVal = scoreEl.value.trim();
+            
+            if (isSubmitted === 'Yes' && (!scoreVal || Number(scoreVal) < 1 || Number(scoreVal) > 10)) {
+                return Swal.fire('Invalid Score', 'Please input a ranking score between 1 and 10.', 'warning');
+            }
+            
+            btn.disabled = true; btn.innerText = 'Saving...';
+            try {
+                const res = await api.run('saveLiveGradeDirectly', assignmentId, studentEmail, submissionId, isSubmitted, scoreVal);
+                if(res.success) {
+                    swalToast.fire({ icon: 'success', title: 'Grade saved successfully!' });
+                    // Turn the row elements to disabled so they can't double-save
+                    chkEl.disabled = true;
+                    scoreEl.disabled = true;
+                    btn.parentElement.innerHTML = `<span class="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 rounded">Graded</span>`;
+                } else {
+                    Swal.fire('Failed', res.message, 'error');
+                    btn.disabled = false; btn.innerText = 'Save';
+                }
+            } catch(e) {
+                console.error(e);
+                btn.disabled = false; btn.innerText = 'Save';
+            }
+        }
+
+        async function deleteAdminRecord(sheetName, id, refreshModuleKey) {
+            const confirm = await Swal.fire({
+                title: 'Are you sure?',
+                text: 'This process cannot be reversed.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            });
+            if (confirm.isConfirmed) {
+                showLoader();
+                try {
+                    const res = await api.run('deleteRecord', sheetName, id);
+                    if (res.success) {
+                        Swal.fire('Deleted!', 'Record removed from sheet.', 'success');
+                        loadAdminModule(refreshModuleKey);
+                    }
+                } catch(e) { console.error(e); }
+                hideLoader();
+            }
+        }
+
+        async function showCustomAssignmentModal(id = '') {
+            showLoader();
+            try {
+                curriculumCache = await api.run('getCurriculum');
+                const users = await api.run('getAdminData', 'Users');
+                const allStudents = users.filter(u => u.Role === 'Student');
+                const uniqueUnits = [...new Set(curriculumCache.map(c => c.Unit).filter(Boolean))];
+                
+                let editObj = null;
+                if (id) {
+                    const allAss = await api.run('getAdminData', 'Assignments');
+                    editObj = allAss.find(a => String(a.Id).trim() === String(id).trim());
+                }
+                hideLoader();
+                
+                let assignedList = [];
+                if (editObj && editObj.AssignedTo && editObj.AssignedTo.toLowerCase() !== 'all') {
+                    assignedList = editObj.AssignedTo.split(',').map(e => e.trim().toLowerCase());
+                }
+                const isAssignedToAll = !editObj || !editObj.AssignedTo || editObj.AssignedTo.toLowerCase() === 'all';
+                
+                const htmlStr = `
+                    <div class="text-left space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Assignment Title</label>
+                            <input type="text" id="assModalTitle" value="${editObj ? editObj.Title : ''}" class="swal2-input w-full mx-0 bg-white" placeholder="e.g. Fractions Drill">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Description / Instructions</label>
+                            <textarea id="assModalDesc" class="swal2-textarea w-full mx-0 bg-white" style="height:80px;" placeholder="Instructions...">${editObj ? editObj.Description : ''}</textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Due Date</label>
+                                <input type="date" id="assModalDueDate" value="${editObj && editObj.DueDate ? new Date(editObj.DueDate).toISOString().substring(0, 10) : ''}" class="swal2-input w-full mx-0 bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Max Reward Points</label>
+                                <input type="number" id="assModalReward" value="${editObj ? editObj.RewardPoints : '50'}" class="swal2-input w-full mx-0 bg-white">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-2 border-t pt-3">
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Unit</label>
+                                <select id="assModalUnit" onchange="cascadeModalUnitChange(this.value)" class="w-full p-2 border rounded-md outline-none bg-white text-sm">
+                                    <option value="">-- Unit --</option>
+                                    ${uniqueUnits.map(u => `<option value="${u}" ${editObj && editObj.Unit === u ? 'selected' : ''}>${u}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Topic</label>
+                                <select id="assModalTopic" onchange="cascadeModalTopicChange(this.value)" class="w-full p-2 border rounded-md outline-none bg-white text-sm">
+                                    <option value="">-- Topic --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Subtopic</label>
+                                <select id="assModalSubtopic" class="w-full p-2 border rounded-md outline-none bg-white text-sm">
+                                    <option value="">-- Subtopic --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="border-t pt-3 space-y-2">
+                            <label class="block text-xs font-bold text-emerald-800">Target Students</label>
+                            <div class="flex items-center gap-4 bg-gray-50 p-2 rounded-lg">
+                                <label class="inline-flex items-center text-sm cursor-pointer">
+                                    <input type="radio" name="assTargetType" value="all" ${isAssignedToAll ? 'checked' : ''} onchange="toggleStudentListSelector(false)" class="text-emerald-600 focus:ring-emerald-500">
+                                    <span class="ml-2 text-gray-700 font-semibold">Assign to All Students</span>
+                                </label>
+                                <label class="inline-flex items-center text-sm cursor-pointer">
+                                    <input type="radio" name="assTargetType" value="selected" ${!isAssignedToAll ? 'checked' : ''} onchange="toggleStudentListSelector(true)" class="text-emerald-600 focus:ring-emerald-500">
+                                    <span class="ml-2 text-gray-700 font-semibold">Assign Selected Students Only</span>
+                                </label>
+                            </div>
+                            
+                            <div id="studentCheckboxesContainer" class="${isAssignedToAll ? 'hide' : ''} space-y-2">
+                                <div class="relative">
+                                    <input type="text" id="studentCheckFilter" placeholder="Search student by name or class..." oninput="filterStudentTargetCheckboxes(this.value)" class="w-full p-2 border rounded-md text-xs outline-none focus:ring-1 focus:ring-emerald-500 bg-white">
+                                </div>
+                                <div class="max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-2 bg-white divide-y divide-gray-100">
+                                    ${allStudents.map(student => {
+                                        const emailVal = student.Email.trim().toLowerCase();
+                                        const isChecked = assignedList.includes(emailVal);
+                                        return `
+                                            <label class="flex items-center py-1.5 px-1 hover:bg-emerald-50/50 cursor-pointer student-target-row" data-name="${student.FullName.toLowerCase()}" data-class="${String(student.Class || '').toLowerCase()}">
+                                                <input type="checkbox" name="targetStudentEmails" value="${student.Email}" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                                <span class="ml-2.5 text-xs text-gray-700 font-medium">${student.FullName} <span class="text-gray-400 font-normal">(${student.Class || 'No Class'})</span></span>
+                                            </label>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const { value: formValues } = await Swal.fire({
+                    title: id ? 'Edit Assignment' : 'Add Assignment',
+                    html: htmlStr,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    didOpen: () => {
+                        if (editObj) {
+                            cascadeModalUnitChange(editObj.Unit, editObj.Topic, editObj.Subtopic);
+                        }
+                    },
+                    preConfirm: () => {
+                        const titleVal = document.getElementById('assModalTitle').value.trim();
+                        const descVal = document.getElementById('assModalDesc').value.trim();
+                        const dueVal = document.getElementById('assModalDueDate').value;
+                        const rewVal = document.getElementById('assModalReward').value.trim();
+                        const unitVal = document.getElementById('assModalUnit').value;
+                        const topicVal = document.getElementById('assModalTopic').value;
+                        const subtopicVal = document.getElementById('assModalSubtopic').value;
+                        
+                        const targetType = document.querySelector('input[name="assTargetType"]:checked').value;
+                        let assignedToVal = 'All';
+                        if (targetType === 'selected') {
+                            const checkedBoxes = document.querySelectorAll('input[name="targetStudentEmails"]:checked');
+                            if (checkedBoxes.length === 0) {
+                                Swal.showValidationMessage('Please select at least one student if assigning to Selected Students Only.');
+                                return false;
+                            }
+                            assignedToVal = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+                        }
+                        
+                        if(!titleVal || !dueVal || !rewVal) {
+                            Swal.showValidationMessage('Title, Due Date, and Reward are mandatory fields.');
+                            return false;
+                        }
+                        return {
+                            Title: titleVal,
+                            Description: descVal,
+                            DueDate: dueVal,
+                            RewardPoints: Number(rewVal),
+                            Unit: unitVal,
+                            Topic: topicVal,
+                            Subtopic: subtopicVal,
+                            AssignedTo: assignedToVal
+                        };
+                    }
+                });
+                
+                if (formValues) {
+                    showLoader();
+                    let response;
+                    if (id) {
+                        response = await api.run('editRecord', 'Assignments', id, formValues);
+                    } else {
+                        formValues.AssignDate = new Date().toISOString();
+                        response = await api.run('addRecord', 'Assignments', formValues);
+                    }
+                    if (response.success) {
+                        Swal.fire('Saved!', 'Assignment record saved successfully.', 'success');
+                        loadAdminModule('assignment');
+                    }
+                    hideLoader();
+                }
+            } catch(err) { console.error(err); hideLoader(); }
+        }
+
+        function toggleStudentListSelector(show) {
+            const container = document.getElementById('studentCheckboxesContainer');
+            if (show) container.classList.remove('hide');
+            else container.classList.add('hide');
+        }
+
+        function filterStudentTargetCheckboxes(query) {
+            const q = query.trim().toLowerCase();
+            const rows = document.querySelectorAll('.student-target-row');
+            rows.forEach(row => {
+                const name = row.getAttribute('data-name');
+                const classCode = row.getAttribute('data-class');
+                if (name.includes(q) || classCode.includes(q)) {
+                    row.classList.remove('hide');
+                } else {
+                    row.classList.add('hide');
+                }
+            });
+        }
+
+        function cascadeModalUnitChange(unitName, preSelectTopic = '', preSelectSubtopic = '') {
+            const topicSelect = document.getElementById('assModalTopic');
+            const subtopicSelect = document.getElementById('assModalSubtopic');
+            topicSelect.innerHTML = '<option value="">-- Topic --</option>';
+            subtopicSelect.innerHTML = '<option value="">-- Subtopic --</option>';
+            
+            if (!unitName) return;
+            const topics = [...new Set(curriculumCache.filter(c => c.Unit === unitName).map(c => c.Topic).filter(Boolean))];
+            topicSelect.innerHTML += topics.map(t => `<option value="${t}" ${preSelectTopic === t ? 'selected' : ''}>${t}</option>`).join('');
+            
+            if (preSelectTopic) {
+                cascadeModalTopicChange(preSelectTopic, preSelectSubtopic);
+            }
+        }
+
+        function cascadeModalTopicChange(topicName, preSelectSubtopic = '') {
+            const subtopicSelect = document.getElementById('assModalSubtopic');
+            subtopicSelect.innerHTML = '<option value="">-- Subtopic --</option>';
+            if (!topicName) return;
+            
+            const subtopics = [...new Set(curriculumCache.filter(c => c.Topic === topicName).map(c => c.Subtopic).filter(Boolean))];
+            subtopicSelect.innerHTML += subtopics.map(s => `<option value="${s}" ${preSelectSubtopic === s ? 'selected' : ''}>${s}</option>`).join('');
+        }
+
+        async function showChallengeModal(id = '') {
+            showLoader();
+            try {
+                let editObj = null;
+                if (id) {
+                    const data = await api.run('getAdminData', 'Challenges');
+                    editObj = data.find(c => String(c.Id).trim() === String(id).trim());
+                }
+                hideLoader();
+                
+                const htmlStr = `
+                    <div class="text-left space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Challenge Question (Supports LaTeX e.g. $2x=10$)</label>
+                            <textarea id="chalModalQuest" class="swal2-textarea w-full mx-0 bg-white" style="height:90px;" placeholder="Challenge statement...">${editObj ? editObj.Question : ''}</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Match Answer (Case-insensitive string check)</label>
+                            <input type="text" id="chalModalAns" value="${editObj ? editObj.Answer : ''}" class="swal2-input w-full mx-0 bg-white" placeholder="Matching Answer">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Reward Points</label>
+                            <input type="number" id="chalModalPts" value="${editObj ? editObj.RewardPoints : '100'}" class="swal2-input w-full mx-0 bg-white">
+                        </div>
+                    </div>
+                `;
+                
+                const { value: formValues } = await Swal.fire({
+                    title: id ? 'Edit Challenge' : 'Add Challenge',
+                    html: htmlStr,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    preConfirm: () => {
+                        const quest = document.getElementById('chalModalQuest').value.trim();
+                        const ans = document.getElementById('chalModalAns').value.trim();
+                        const pts = document.getElementById('chalModalPts').value.trim();
+                        if (!quest || !ans || !pts) {
+                            Swal.showValidationMessage('All fields must be completed.');
+                            return false;
+                        }
+                        return {
+                            Question: quest,
+                            Answer: ans,
+                            RewardPoints: Number(pts),
+                            CompletedBy: editObj ? editObj.CompletedBy : ''
+                        };
+                    }
+                });
+                
+                if (formValues) {
+                    showLoader();
+                    let response = id ? await api.run('editRecord', 'Challenges', id, formValues) : await api.run('addRecord', 'Challenges', formValues);
+                    if (response.success) {
+                        Swal.fire('Saved!', 'Weekly challenge updated successfully.', 'success');
+                        loadAdminModule('challenge');
+                    }
+                    hideLoader();
+                }
+            } catch(e) { console.error(e); hideLoader(); }
+        }
+
+        async function showExamModal(id = '') {
+            showLoader();
+            try {
+                const users = await api.run('getAdminData', 'Users');
+                const studentList = users.filter(u => u.Role === 'Student');
+                const uniqueClasses = [...new Set(studentList.map(u => String(u.Class).trim()).filter(Boolean))];
+                
+                let editObj = null;
+                if (id) {
+                    const exams = await api.run('getAdminData', 'Exams');
+                    editObj = exams.find(e => String(e.Id).trim() === String(id).trim());
+                }
+                hideLoader();
+                
+                const htmlStr = `
+                    <div class="text-left space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Exam / Assessment Name</label>
+                            <input type="text" id="exModalName" value="${editObj ? editObj.ExamName : ''}" class="swal2-input w-full mx-0 bg-white" placeholder="e.g. Midterm Mathematics">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Class</label>
+                                <select id="exModalClass" onchange="cascadeExamClassChange(this.value)" class="w-full p-2 border rounded-md outline-none bg-white text-sm">
+                                    <option value="">-- Class --</option>
+                                    ${uniqueClasses.map(c => `<option value="${c}" ${editObj && editObj.Class === c ? 'selected' : ''}>${c}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-800 mb-1">Student</label>
+                                <select id="exModalStudent" class="w-full p-2 border rounded-md outline-none bg-white text-sm">
+                                    <option value="">-- Select Student --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Score (0-100)</label>
+                            <input type="number" min="0" max="100" id="exModalScore" value="${editObj ? editObj.Score : ''}" class="swal2-input w-full mx-0 bg-white" placeholder="Exam Score">
+                        </div>
+                    </div>
+                `;
+                
+                classesCache = studentList;
+                
+                const { value: formValues } = await Swal.fire({
+                    title: id ? 'Edit Exam Record' : 'Record Exam Score',
+                    html: htmlStr,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    didOpen: () => {
+                        if (editObj) {
+                            cascadeExamClassChange(editObj.Class, editObj.StudentEmail);
+                        }
+                    },
+                    preConfirm: () => {
+                        const name = document.getElementById('exModalName').value.trim();
+                        const cls = document.getElementById('exModalClass').value;
+                        const stu = document.getElementById('exModalStudent').value;
+                        const score = document.getElementById('exModalScore').value.trim();
+                        if (!name || !cls || !stu || !score) {
+                            Swal.showValidationMessage('All scoring metrics must be provided.');
+                            return false;
+                        }
+                        return {
+                            ExamName: name,
+                            Class: cls,
+                            StudentEmail: stu,
+                            Score: Number(score)
+                        };
+                    }
+                });
+                
+                if (formValues) {
+                    showLoader();
+                    let response = id ? await api.run('editRecord', 'Exams', id, formValues) : await api.run('addRecord', 'Exams', formValues);
+                    if (response.success) {
+                        Swal.fire('Saved!', 'Exam marks submitted.', 'success');
+                        loadAdminModule('exam');
+                    }
+                    hideLoader();
+                }
+            } catch(e) { console.error(e); hideLoader(); }
+        }
+
+        function cascadeExamClassChange(className, preSelectEmail = '') {
+            const selectStu = document.getElementById('exModalStudent');
+            selectStu.innerHTML = '<option value="">-- Select Student --</option>';
+            if (!className) return;
+            
+            const filtered = classesCache.filter(u => String(u.Class).trim() === String(className).trim());
+            selectStu.innerHTML += filtered.map(u => `<option value="${u.Email}" ${preSelectEmail === u.Email ? 'selected' : ''}>${u.FullName}</option>`).join('');
+        }
+
+        async function showInfoModal(id = '') {
+            showLoader();
+            try {
+                let editObj = null;
+                if (id) {
+                    const announcements = await api.run('getAdminData', 'Info');
+                    editObj = announcements.find(a => String(a.Id).trim() === String(id).trim());
+                }
+                hideLoader();
+                
+                const htmlStr = `
+                    <div class="text-left space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">Announcement Details (Line breaks are supported)</label>
+                            <textarea id="infoModalText" class="swal2-textarea w-full mx-0 bg-white" style="height:120px;" placeholder="Write notice here...">${editObj ? editObj.Announcement : ''}</textarea>
+                        </div>
+                    </div>
+                `;
+                
+                const { value: formValues } = await Swal.fire({
+                    title: id ? 'Edit Notice' : 'Post Announcement',
+                    html: htmlStr,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    preConfirm: () => {
+                        const notice = document.getElementById('infoModalText').value.trim();
+                        if (!notice) {
+                            Swal.showValidationMessage('Message body is blank.');
+                            return false;
+                        }
+                        return {
+                            Announcement: notice,
+                            Date: editObj ? editObj.Date : new Date().toISOString()
+                        };
+                    }
+                });
+                
+                if (formValues) {
+                    showLoader();
+                    let response = id ? await api.run('editRecord', 'Info', id, formValues) : await api.run('addRecord', 'Info', formValues);
+                    if (response.success) {
+                        Swal.fire('Posted!', 'Announcement saved to board.', 'success');
+                        loadAdminModule('info');
+                    }
+                    hideLoader();
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedEmail = localStorage.getItem('loggedInUserEmail');
+            if (savedEmail) {
+                showLoader();
+                try {
+                    // 這裡如果能直接向您的後端或全局變數初始化視窗最好
+                    // 如果您原本有 currentUser 全局變數，請先建立它
+                    if (typeof currentUser === 'undefined') {
+                        window.currentUser = { Email: savedEmail, Role: 'Student' }; 
+                    }
+                    
+                    // 1. 執行您原本登入成功後的初始化畫面函數
+                    if (typeof initStudentView === 'function') initStudentView();
+                    if (typeof switchView === 'function') switchView('student');
+                    
+                    // 2. 確保頁面切換到您指定的種子分頁 (tab-plant)
+                    // 假設您原本切換 Tab 的函數叫 switchTab
+                    if (typeof switchTab === 'function') {
+                        switchTab('plant'); 
+                    } else {
+                        // 如果沒有專門的 switchTab 函數，我們用原生的方式確保它顯示
+                        document.querySelectorAll('.student-tab').forEach(tab => tab.style.display = 'none');
+                        const plantTab = document.getElementById('tab-plant');
+                        if (plantTab) plantTab.style.display = 'block';
+                    }
+                    
+                } catch (err) {
+                    console.error("Auto login failed:", err);
+                }
+                hideLoader();
+                
+                // 既然已經處理完自動登入了，下面原本的綁定按鈕代碼繼續執行...
+            }
+            
+            const startBtn = document.getElementById('btnmathsafariapp');
+            if (startBtn) {
+                startBtn.addEventListener('click', function() {
+                    startBtn.disabled = true;
+                    startBtn.innerText = "Loading Safari Game...";
+                    
+                    // 1. 获取登录成功时锁死的 Email 快取
+                    let currentLoggedInEmail = localStorage.getItem('loggedInUserEmail');
+                    if (!currentLoggedInEmail && typeof currentUser !== 'undefined' && currentUser && currentUser.Email) {
+                        currentLoggedInEmail = currentUser.Email;
+                    }
+                    if (!currentLoggedInEmail) {
+                        currentLoggedInEmail = "Guest";
+                    }
+                    
+                    // 2. 使用您的 api.run 架构，必须加上 .then() 来接收后端返回的 HTML 网页内容！
+                    api.run('loadMathGamePage', currentLoggedInEmail)
+                        .then(function(htmlContent) {
+                            // 成功拿到游戏页面，强制覆盖当前网页
+                            document.open();
+                            document.write(htmlContent);
+                            document.close();
+                        })
+                        .catch(function(err) {
+                            // 如果中途发生错误，弹窗提示并恢复按钮
+                            console.error("Failed to load game:", err);
+                            alert("Failed to load the game, try to press again." + (err.message || err));
+                            startBtn.disabled = false;
+                            startBtn.innerText = "Explore Math Safari";
+                        });
+                }); 
+            }
+        }); 
+    </script>
+</body>
+</html>
