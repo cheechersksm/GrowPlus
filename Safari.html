@@ -231,45 +231,6 @@
         let startTime = 0;
         let totalTimerInterval = null;
         let totalElapsedSeconds = 0;
-
-                // ==================== 音效與音樂配置 ====================
-        const AUDIO_ASSETS = {
-            // 背景音樂 (輕快流暢的循環音樂)
-            bgm: "https://actions.google.com/sounds/v1/music/reggae_marimba.ogg", 
-            // 3, 2, 1 倒數計時音效 (短暫的嗶聲)
-            countdown: "https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg",
-            // 答對了 (清脆的叮咚聲)
-            correct: "https://actions.google.com/sounds/v1/cartoon/slide_whistle_up.ogg",
-            // 答錯了 (低沉的錯誤提示)
-            wrong: "https://actions.google.com/sounds/v1/cartoon/conga_groan.ogg",
-            // 遊戲挑戰成功結算 (煙火歡呼聲)
-            victory: "https://actions.google.com/sounds/v1/ambiences/outdoor_fireworks.ogg"
-        };
-        
-        // 初始化 Audio 物件
-        const sounds = {
-            bgm: new Audio(AUDIO_ASSETS.bgm),
-            countdown: new Audio(AUDIO_ASSETS.countdown),
-            correct: new Audio(AUDIO_ASSETS.correct),
-            wrong: new Audio(AUDIO_ASSETS.wrong),
-            victory: new Audio(AUDIO_ASSETS.victory)
-        };
-        
-        // 讓背景音樂可以自動循環播放，並調小聲一點（才不會蓋過答題特效音）
-        sounds.bgm.loop = true;
-        sounds.bgm.volume = 0.3; // 30% 音量
-        sounds.correct.volume = 0.6;
-        sounds.wrong.volume = 0.6;
-        sounds.countdown.volume = 0.5;
-        sounds.victory.volume = 0.5;
-        
-        // 播放音效的安全輔助函數（防止部分瀏覽器因安全策略攔截報錯）
-        function playSound(audioObject) {
-            if (audioObject) {
-                audioObject.currentTime = 0; // 每次播放都強制重置回 0 秒開頭
-                audioObject.play().catch(err => console.log("Audio play blocked by browser:", err));
-            }
-        }
         
         // Utility: Random Number (Inclusive)
         function getRnd(min, max) {
@@ -378,11 +339,6 @@
         }
 
         function goHome() {
-            // 🎵【新增】：離開遊戲，強制把所有音樂關掉
-            try {
-                sounds.bgm.pause();
-                sounds.bgm.currentTime = 0;
-            } catch(e){}
             showScreen('screen-home');
         }
 
@@ -401,6 +357,7 @@
             settings.qCount = parseInt(document.getElementById('set-questions').value);
             settings.choices = parseInt(document.getElementById('set-choices').value);
             
+            // Build Quiz
             quizData = [];
             for(let i=0; i<settings.qCount; i++) {
                 quizData.push(generateQuestion(settings.op, settings.diff));
@@ -410,24 +367,17 @@
             score = 0;
             totalElapsedSeconds = 0;
             document.getElementById('q-timer').innerText = "00:00";
-        
+
             showScreen('screen-countdown');
-            
-            // 🎵【新增】：在玩家主動點擊 Start 後，順勢啟動背景音樂
-            playSound(sounds.bgm);
-        
             let count = 3;
             document.getElementById('countdown-text').innerText = count;
-            playSound(sounds.countdown); // 🎵 播放第 3 秒的嗶聲
             
             let cTimer = setInterval(() => {
                 count--;
                 if(count > 0) {
                     document.getElementById('countdown-text').innerText = count;
-                    playSound(sounds.countdown); // 🎵 播放第 2, 1 秒的嗶聲
                 } else if(count === 0) {
                     document.getElementById('countdown-text').innerText = "GO!";
-                    playSound(sounds.countdown); // 🎵 播放 GO! 的嗶聲
                 } else {
                     clearInterval(cTimer);
                     startQuiz();
@@ -485,13 +435,7 @@
 
         function handleAnswer(ans) {
             quizData[currentQ].userAns = ans;
-            
-            if(ans === quizData[currentQ].a) {
-                score++;
-                playSound(sounds.correct); // 🎵 答對了！叮咚！
-            } else {
-                playSound(sounds.wrong);   // 🎵 答錯了！嗚呼～
-            }
+            if(ans === quizData[currentQ].a) score++;
             
             currentQ++;
             if(currentQ < settings.qCount) {
@@ -503,10 +447,6 @@
 
         function endQuiz() {
             clearInterval(totalTimerInterval);
-            // 🎵【新增】：遊戲結束，停止輕快的背景音樂，改播盛大的勝利音效
-                sounds.bgm.pause();
-                sounds.bgm.currentTime = 0; 
-                playSound(sounds.victory); // 🎵 歡呼與煙火聲！
             
             // ✨【核心改動】：用結束當下的時間，減去起點時間，算出最完美的毫秒總時長
             let finalElapsedMs = Date.now() - startTime;
