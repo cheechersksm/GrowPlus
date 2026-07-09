@@ -568,8 +568,7 @@
         }
 
         async function forceRedirectToLogin() {
-            const baseUrl = await api.run('getWebAppUrl');
-            window.top.location.href = baseUrl; // Drops url parameters, clean-shunting straight back to index.html
+            window.top.location.href = "https://cheechersksm.github.io/GrowPlus"; // Drops url parameters, clean-shunting straight back to index.html
         }
 
         function getLocalDateString() {
