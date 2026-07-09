@@ -387,24 +387,31 @@
 
         function startQuiz() {
             showScreen('screen-quiz');
-            // Fix layout grid if 8 choices
+            
+            // 調整 grid 佈局
             let grid = document.getElementById('choices-container');
             if(settings.choices === 8) {
                 grid.className = "grid grid-cols-2 md:grid-cols-4 gap-3 mt-auto";
             } else {
                 grid.className = "grid grid-cols-2 gap-4 md:gap-6 mt-auto";
             }
-
-            // Start Timer
+        
+            // ✨【核心改動】：記錄精準的起點時間戳記
+            startTime = Date.now(); 
+        
+            // 每 10 毫秒（0.01秒）就更新一次畫面的計時器，這樣畫面看起來會跳動得很絲滑精密！
             if(totalTimerInterval) clearInterval(totalTimerInterval);
             totalTimerInterval = setInterval(() => {
-                totalElapsedSeconds++;
-                document.getElementById('q-timer').innerText = formatTime(totalElapsedSeconds);
-            }, 1000);
-
+                let currentElapsedMs = Date.now() - startTime;
+                totalElapsedSeconds = currentElapsedMs / 1000; // 得到帶有小數點的精確秒數
+                
+                // 畫面計时（只保留到整數即可，格式如 00:05）
+                document.getElementById('q-timer').innerText = formatTime(Math.floor(totalElapsedSeconds));
+            }, 10); // 10ms 刷新率
+        
             renderQuestion();
         }
-
+        
         function renderQuestion() {
             let data = quizData[currentQ];
             document.getElementById('q-progress').innerText = `${currentQ + 1} / ${settings.qCount}`;
@@ -440,32 +447,39 @@
 
         function endQuiz() {
             clearInterval(totalTimerInterval);
+            
+            // ✨【核心改動】：用結束當下的時間，減去起點時間，算出最完美的毫秒總時長
+            let finalElapsedMs = Date.now() - startTime;
+            totalElapsedSeconds = finalElapsedMs / 1000; // 變成例如：45.327
+        
             showScreen('screen-result');
             
             let scorePercent = Math.round((score / settings.qCount) * 100);
+            
+            // 計算每題平均秒數（保持完整精準度）
             let avg = (totalElapsedSeconds / settings.qCount).toFixed(3);
-
+        
+            // 渲染結果畫面，總時間也給它強制加上三位小数點！
             document.getElementById('res-score').innerText = `${scorePercent}%`;
-            document.getElementById('res-time').innerText = `${totalElapsedSeconds}s`;
+            document.getElementById('res-time').innerText = `${totalElapsedSeconds.toFixed(3)}s`; // 修正這裡！
             document.getElementById('res-avg').innerText = `${avg}s`;
-
+        
             // Reset UI
             document.getElementById('save-msg').classList.add('hidden');
             document.getElementById('submit-btn').disabled = false;
             document.getElementById('submit-btn').classList.remove('opacity-50');
-
-            // 显示登入的 Email（但允许学生自己输入英雄名称）
+        
+            // 顯示登入的 Email
             const nameInput = document.getElementById('player-name');
             if (loggedInEmail) {
                 document.getElementById('email-display').classList.remove('hidden');
                 document.getElementById('user-email-text').innerText = "Player Email: " + loggedInEmail;
             }
             
-            // 清空框框，让玩家填自己的动物英雄名字
             nameInput.value = '';
             nameInput.readOnly = false;
             nameInput.classList.remove('bg-gray-100', 'text-gray-500');
-
+        
             // Build Review
             let rv = document.getElementById('review-list');
             rv.innerHTML = '';
@@ -489,11 +503,12 @@
         async function submitScore() {
             let name = document.getElementById('player-name').value.trim();
             if(!name) { alert("Please enter your hero name!"); return; }
-
+        
             document.getElementById('submit-btn').disabled = true;
             document.getElementById('submit-btn').classList.add('opacity-50');
             document.getElementById('submit-btn').innerText = "Saving...";
-
+        
+            // ✨【核心改動】：將數據加上 parseFloat 確保帶著小數點飛向後端！
             let record = {
                 email: (typeof loggedInEmail !== 'undefined' ? loggedInEmail : localStorage.getItem('loggedInUserEmail')) || 'Guest', 
                 name: name,
@@ -501,12 +516,11 @@
                 difficulty: settings.diff,
                 totalQuestions: settings.qCount,
                 scorePercent: Math.round((score / settings.qCount) * 100),
-                totalTime: totalElapsedSeconds,
-                avgTime: parseFloat((totalElapsedSeconds / settings.qCount))
+                totalTime: parseFloat(totalElapsedSeconds.toFixed(3)), // 帶著小數點
+                avgTime: parseFloat((totalElapsedSeconds / settings.qCount).toFixed(3)) // 帶著小數點
             };
-
+        
             try {
-                // Call your API fetch bridge directly
                 await api.run('saveScore', record);
                 
                 document.getElementById('submit-btn').innerText = "Saved";
