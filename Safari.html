@@ -443,7 +443,7 @@
             showScreen('screen-result');
             
             let scorePercent = Math.round((score / settings.qCount) * 100);
-            let avg = (totalElapsedSeconds / settings.qCount).toFixed(1);
+            let avg = (totalElapsedSeconds / settings.qCount).toFixed(3);
 
             document.getElementById('res-score').innerText = `${scorePercent}%`;
             document.getElementById('res-time').innerText = `${totalElapsedSeconds}s`;
@@ -502,7 +502,7 @@
                 totalQuestions: settings.qCount,
                 scorePercent: Math.round((score / settings.qCount) * 100),
                 totalTime: totalElapsedSeconds,
-                avgTime: parseFloat((totalElapsedSeconds / settings.qCount).toFixed(1))
+                avgTime: parseFloat((totalElapsedSeconds / settings.qCount))
             };
 
             try {
@@ -554,106 +554,104 @@
                 tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center font-bold text-gray-500">No records yet! Be the first! 🥇</td></tr>';
                 return;
             }
-
-            // 1. Get current logged-in student's email
-            const currentUserEmail = (typeof loggedInEmail !== 'undefined' ? loggedInEmail : localStorage.getItem('loggedInUserEmail')) || 'Guest';
-
-            // 2. Filter & Group by unique Email to find the BEST run per person
-            let bestRunsMap = {};
-            data.forEach(item => {
-                let emailKey = (item.email || 'Guest').trim().toLowerCase();
+        
+            // 0. 獲取當前玩家的 Email 狀況
+            let myEmail = localStorage.getItem('loggedInUserEmail') || "";
+            myEmail = myEmail.trim().toLowerCase();
+        
+            // 1. 【聰明去重與保留邏輯】
+            let uniquePlayers = [];
+            let seenEmails = new Set();
+        
+            data.forEach(row => {
+                let playerEmail = (row.email || "").trim().toLowerCase();
                 
-                // Ensure values are numbers for safe sorting math
-                let score = Number(item.scorePercent) || 0;
-                let avgTime = Number(item.avgTime) || 999;
-
-                if (!bestRunsMap[emailKey]) {
-                    // First time seeing this user, store their record
-                    bestRunsMap[emailKey] = item;
-                } else {
-                    // Compare to see if this new run is better than the stored one
-                    let existingScore = Number(bestRunsMap[emailKey].scorePercent) || 0;
-                    let existingTime = Number(bestRunsMap[emailKey].avgTime) || 999;
-
-                    if (score > existingScore) {
-                        bestRunsMap[emailKey] = item; // Higher score wins
-                    } else if (score === existingScore && avgTime < existingTime) {
-                        bestRunsMap[emailKey] = item; // Same score but faster time wins
+                if (playerEmail && playerEmail !== 'guest') {
+                    // A. 如果是有 Email 的註冊玩家：每個人只保留最完美的那一次紀錄
+                    if (!seenEmails.has(playerEmail)) {
+                        seenEmails.add(playerEmail);
+                        uniquePlayers.push(row);
                     }
+                } else {
+                    // B. 如果是 Guest 玩家：不做彼此去重！每一個 Guest 的高分記錄都是獨立的，都有機會進前十
+                    uniquePlayers.push(row);
                 }
             });
-
-            // Convert our unique player map back into an array list
-            let uniquePlayersList = Object.values(bestRunsMap);
-
-            // 3. Sort the unique players: Highest score first, then fastest time
-            uniquePlayersList.sort((a, b) => {
-                let scoreA = Number(a.scorePercent) || 0;
-                let scoreB = Number(b.scorePercent) || 0;
-                let timeA = Number(a.avgTime) || 999;
-                let timeB = Number(b.avgTime) || 999;
-
-                if (scoreB !== scoreA) {
-                    return scoreB - scoreA; 
+        
+            // 2. 重新對混合後的清單做一次精確排序（防萬一：分數高在前，時間短在前）
+            uniquePlayers.sort((a, b) => {
+                if (b.scorePercent !== a.scorePercent) {
+                    return b.scorePercent - a.scorePercent;
                 }
-                return timeA - timeB; 
+                return parseFloat(a.avgTime) - parseFloat(b.avgTime);
             });
-
-            // 4. Assign structural leaderboard rankings (1st, 2nd, 3rd...)
-            let rankedData = uniquePlayersList.map((item, index) => {
-                return {
-                    ...item,
-                    rank: index + 1
-                };
-            });
-
-            // 5. Slice down to the absolute Top 10 unique profiles
-            let top10 = rankedData.slice(0, 10);
-
-            // 6. See if the logged-in student is present inside this Top 10 unique list
-            let userInTop10 = top10.some(item => item.email && item.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
-
-            // 7. If they are not in the Top 10, find their specific rank row out of the total field and append it
-            let finalDisplayList = [...top10];
-            if (!userInTop10 && currentUserEmail !== 'Guest') {
-                let userBestRun = rankedData.find(item => item.email && item.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase());
-                if (userBestRun) {
-                    userBestRun.isUserSpacer = true; // Inject breakout flag
-                    finalDisplayList.push(userBestRun);
-                }
-            }
-
-            // 8. Generate and append table components to HTML panel
-            tbody.innerHTML = finalDisplayList.map((row) => {
-                const isCurrentUser = row.email && row.email.trim().toLowerCase() === currentUserEmail.trim().toLowerCase();
+        
+            // 3. 找出當前玩家在去重後的榜單名次 (如果是 Guest，就找名字和分數完全符合的那一筆)
+            let myRealRankIndex = -1;
+            if (myEmail && myEmail !== 'guest') {
+                // 有登入的玩家：用 Email 比對名次
+                myRealRankIndex = uniquePlayers.findIndex(row => (row.email || "").trim().toLowerCase() === myEmail);
+            } 
+        
+            // 4. 切割出前 10 名展示
+            let top10Players = uniquePlayers.slice(0, 10);
+        
+            // 5. 開始渲染表格
+            top10Players.forEach((row, index) => {
+                let tr = document.createElement('tr');
                 
-                let rowBgClass = isCurrentUser ? "bg-emerald-100/80 font-semibold text-emerald-900" : "hover:bg-gray-50 text-gray-700";
+                // 判斷這一列是不是當前玩家自己
+                let isMe = false;
+                let playerEmail = (row.email || "").trim().toLowerCase();
+                if (myEmail && myEmail !== 'guest') {
+                    isMe = (playerEmail === myEmail);
+                }
+        
+                tr.className = isMe ? 'bg-yellow-50 border-2 border-yellow-300 font-semibold' : (index % 2 === 0 ? 'bg-white' : 'bg-gray-50');
                 
-                let rankDisplay = row.rank;
-                if (row.rank === 1) rankDisplay = "🥇";
-                if (row.rank === 2) rankDisplay = "🥈";
-                if (row.rank === 3) rankDisplay = "🥉";
-
-                let spacerHtml = row.isUserSpacer ? `
-                    <tr class="bg-gray-100">
-                        <td colspan="4" class="p-1 text-center text-xs text-gray-400 italic">... your best standing ...</td>
-                    </tr>
-                ` : '';
-
-                return spacerHtml + `
-                    <tr class="${rowBgClass} border-b border-gray-100 transition-colors text-sm">
-                        <td class="p-3 text-center font-bold">${rankDisplay}</td>
-                        <td class="p-3 font-medium max-w-[120px] truncate">${row.name} ${isCurrentUser ? " (You)" : ""}</td>
-                        <td class="p-3 text-center font-bold text-emerald-600">${row.scorePercent}%</td>
-                        <td class="p-3 text-center">${row.avgTime}s</td>
-                    </tr>
+                let rankIcon = (index + 1).toString();
+                if (index === 0) rankIcon = '🥇 1';
+                if (index === 1) rankIcon = '🥈 2';
+                if (index === 2) rankIcon = '🥉 3';
+        
+                // 格式化平均時間：轉成浮點數並強制顯示 3 位小數點
+                let displayAvgTime = parseFloat(row.avgTime).toFixed(3);
+        
+                tr.innerHTML = `
+                    <td class="p-3 font-black text-gray-700">${rankIcon}</td>
+                    <td class="p-3 font-bold text-gray-800">${row.name} ${isMe ? '<span class="text-xs bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-md ml-1">You</span>' : ''}</td>
+                    <td class="p-3 font-black text-center text-green-600">${row.scorePercent}%</td>
+                    <td class="p-3 font-bold text-center text-blue-600">${displayAvgTime}s</td>
                 `;
-            }).join('');
+                tbody.appendChild(tr);
+            });
+        
+            // 6. 【自身保底機制】如果是有登入的註冊玩家，且掉到了 10 名以外，單獨在下方突顯
+            if (myRealRankIndex >= 10) {
+                let myRecord = uniquePlayers[myRealRankIndex];
+                
+                let dividerTr = document.createElement('tr');
+                dividerTr.innerHTML = `<td colspan="4" class="text-center p-1 text-gray-400 border-t border-dashed">•••</td>`;
+                tbody.appendChild(dividerTr);
+        
+                let meTr = document.createElement('tr');
+                meTr.className = 'bg-yellow-100 border-t-2 border-b-2 border-yellow-400 font-bold shadow-sm';
+                
+                let displayMyTime = parseFloat(myRecord.avgTime).toFixed(3);
+        
+                meTr.innerHTML = `
+                    <td class="p-3 font-black text-yellow-800">🏃‍♂️ ${myRealRankIndex + 1}</td>
+                    <td class="p-3 font-bold text-gray-900">${myRecord.name} <span class="text-xs bg-yellow-400 text-yellow-900 px-1.5 py-0.5 rounded-md ml-1">You</span></td>
+                    <td class="p-3 font-black text-center text-green-700">${myRecord.scorePercent}%</td>
+                    <td class="p-3 font-bold text-center text-blue-700">${displayMyTime}s</td>
+                `;
+                tbody.appendChild(meTr);
+            }
         }
 
         // 1. CRITICAL: Define the missing API runner object for server communication
         // ==================== CONFIGURATION ====================
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbydRg1QQtxTNrkN01kMHokW6DP1j7fqrlwtHeDoCt_F2J8-c1XMdMWx9CI44M8K06gzbA/exec"; 
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec"; 
 
         // ==================== API BRIDGE ====================
         const api = {
