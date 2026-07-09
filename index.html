@@ -153,7 +153,7 @@
         try {
             const res = await api.run('loginUser', email, pass);
             if (res.success) {
-                await api.run('logStudentActivity', res.user.Email, 'Login', `Using github to log in`, 0);
+                await api.run('logStudentActivity', res.user.Email, 'Login', 'Using github to log in', 0);
                 localStorage.setItem('loggedInUserEmail', res.user.Email);
                 window.top.location.href = "Portal.html";
             } else {
