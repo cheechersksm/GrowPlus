@@ -1054,8 +1054,25 @@
             // Find current challenge item in our cache to fetch explanation data
             const cObj = weeklyChallengesCache.find(item => String(item.Id) === String(id));
             
+            // ==================== SMART ANSWER MATCHING ENGINE ====================
+            // 1. Clean the pupil's typed answer: lowercase it and strip out spaces, periods, and colons
+            const cleanStudentAns = userAnsVal.toLowerCase().replace(/[\s\.:]/g, '');
+            
+            // 2. Split the correct answer reference criteria by the vertical pipe "|"
+            const allowedChoices = String(correctAns).split('|');
+            let isCorrect = false;
+
+            // 3. Scan each item variant to search for a clean validation match
+            for (let i = 0; i < allowedChoices.length; i++) {
+                const cleanChoice = allowedChoices[i].toLowerCase().replace(/[\s\.:]/g, '');
+                if (cleanStudentAns === cleanChoice) {
+                    isCorrect = true;
+                    break;
+                }
+            }
+
             // If answer is INCORRECT
-            if(userAnsVal.toLowerCase() !== String(correctAns).trim().toLowerCase()) {
+            if (!isCorrect) {
                 let errorHtml = `<p class="text-gray-700">Check your math and try again.</p>`;
                 
                 // Show dynamic tutorial help reference if configured
@@ -1082,6 +1099,7 @@
             // If answer is CORRECT -> Process background reward logic
             btn.disabled = true; btn.innerText = 'Processing...';
             try {
+                // Sends raw typed answer up to backend script to update 'CompletedBy' string
                 const res = await api.run('submitWeeklyChallenge', currentUser.Email, id, points);
                 if (res.success) {
                     currentUser.Maturity = res.newMaturity;
@@ -1094,6 +1112,7 @@
                     if (cObj && cObj.Explanation) {
                         successHtml += `
                             <div class="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-left text-sm text-gray-600">
+                                <img src="" onerror="setTimeout(() => { if(window.MathJax) MathJax.typeset(); }, 50);" style="display:none;">
                                 <strong class="text-gray-800 block mb-1">Explanation:</strong>
                                 <p>${cObj.Explanation}</p>
                         `;
