@@ -154,7 +154,7 @@
             const res = await api.run('loginUser', email, pass);
             if (res.success) {
                 localStorage.setItem('loggedInUserEmail', res.user.Email);
-                api.run('logStudentActivity', res.user.Email, 'Login', 'Using github to log in', 0)
+                await api.run('logStudentActivity', res.user.Email, 'Login', 'Using github to log in', 0)
                    .catch(err => console.error("Activity logging failed in background:", err));
                 window.top.location.href = "Portal.html";
                 
