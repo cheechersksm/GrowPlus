@@ -143,6 +143,7 @@
     }
 
     // ==================== LOGIN CONTROLLER ====================
+    // Handle submission and routing to App.html
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         document.getElementById('loader').classList.remove('hide');
@@ -151,24 +152,50 @@
         const pass = document.getElementById('loginPassword').value.trim();
 
         try {
-            const res = await api.run('loginUser', email, pass);
-            if (res.success) {
+            // Call backend authentication script
+            const responsePayload = await api.run('loginUser', email, pass);
+            
+            // SAFE UNWRAPPING: Fallback to the object itself if 'data' doesn't exist
+            const res = (responsePayload && responsePayload.data) ? responsePayload.data : responsePayload;
+
+            if (res && res.success) {
+                // Lock token credentials securely inside the localized browser sandbox cache
                 localStorage.setItem('loggedInUserEmail', res.user.Email);
-                await api.run('logStudentActivity', res.user.Email, 'Login', 'Using github to log in', 0)
-                   .catch(err => console.error("Activity logging failed in background:", err));
-                window.top.location.href = "Portal.html";
                 
+                // Safe Activity Log 
+                try {
+                    api.run('logStudentActivity', res.user.Email, 'Login', 'Using bitly to log in', 0);
+                } catch (logErr) {
+                    console.warn("Activity logging skipped or failed:", logErr);
+                }
+                
+                // Dynamic Redirect Routing fallbacks
+                try {
+                    const baseUrl = await api.run('getWebAppUrl');
+                    if (baseUrl) {
+                        window.top.location.href = baseUrl + "?page=app";
+                        return;
+                    }
+                } catch (urlErr) {
+                    console.warn("getWebAppUrl failed, falling back to local navigation context:", urlErr);
+                }
+
+                // Fallback local route redirect
+                const currentUrl = window.location.href.split('?')[0];
+                window.top.location.href = currentUrl + "?page=app";
+
             } else {
                 document.getElementById('loader').classList.add('hide');
-                Swal.fire('Login Error', res.message, 'error');
+                const errorMsg = res && res.message ? res.message : "Invalid credentials entered.";
+                Swal.fire('Login Error', errorMsg, 'error');
             }
         } catch(err) {
             console.error("Login process intercepted an error: ", err);
             document.getElementById('loader').classList.add('hide');
-            Swal.fire('Error', 'Connection failed. Please contact your system admin.', 'error');
+            Swal.fire('Error', 'Connection failed. Please check your configurations.', 'error');
         }
     });
-
+        
     // ==================== ANNOUNCEMENTS ====================
     async function loadAnnouncements() {
         try {
