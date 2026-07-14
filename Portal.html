@@ -147,8 +147,19 @@
                                     Launch Game
                                 </button>
                             </div>
-                            
+                            <div class="glass-panel p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-l-4 border-emerald-500">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-2xl text-emerald-600 font-bold">🦁</div>
+                                    <div>
+                                        <h3 class="font-bold text-emerald-900 text-sm sm:text-base">Conversion Manager</h3>
+                                        <p class="text-[11px] text-gray-500">Master fundamental conversion rules and solve the conversion, addition and subtraction.</p>
+                                    </div>
+                                </div>
+                                <button onclick="launchPracticeApp('mathConversion')" class="w-full sm:w-auto px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-xs shadow-sm transition-all">
+                                    Launch Game
+                                </button>
                             </div>
+                        </div>
 
                         <div class="space-y-4">
                             <div class="glass-panel p-5 border border-amber-200 bg-amber-50/30">
@@ -904,6 +915,9 @@
             if (appKey === 'mathSafari') {
                 // Since Safari.html is in the same folder path on GitHub, link to it directly!
                 const targetGameUrl = "Safari.html";
+            if (appKey === 'mathConversion') {
+                // Since Safari.html is in the same folder path on GitHub, link to it directly!
+                const targetGameUrl = "ConversionM.html";
                 
                 if (window.top && window.top.location) {
                     window.top.location.href = targetGameUrl;
