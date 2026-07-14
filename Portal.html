@@ -915,6 +915,13 @@
             if (appKey === 'mathSafari') {
                 // Since Safari.html is in the same folder path on GitHub, link to it directly!
                 const targetGameUrl = "Safari.html";
+                
+                if (window.top && window.top.location) {
+                    window.top.location.href = targetGameUrl;
+                } else {
+                    window.location.href = targetGameUrl;
+                }
+            }
             if (appKey === 'mathConversion') {
                 // Since Safari.html is in the same folder path on GitHub, link to it directly!
                 const targetGameUrl = "ConversionM.html";
