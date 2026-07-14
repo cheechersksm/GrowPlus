@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Master - Malaysia KSSR Year 4</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --secondary: #6c5ce7;
+            --success: #2ec4b6;
+            --danger: #e71d36;
+            --dark: #011627;
+            --light: #f6f9fc;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .app-container {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+        }
+        h1 { color: var(--primary); margin-bottom: 5px; }
+        .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+        
+        /* Mode Switcher Styles */
+        .mode-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 0.95rem;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .step-title {
+            font-size: 1rem;
+            color: var(--secondary);
+            margin-top: 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .rule-btn {
+            padding: 12px;
+            border: 2px solid #cbd5e1;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .rule-btn:hover:not([disabled]) { border-color: var(--primary); background: #f0f7ff; }
+        .rule-btn.correct { background: var(--success) !important; color: white; border-color: var(--success); }
+        .rule-btn.wrong { background: var(--danger) !important; color: white; border-color: var(--danger); }
+        
+        .input-section {
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 12px;
+            width: 50%;
+            font-size: 1.2rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .submit-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin-left: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .feedback { margin-top: 20px; font-weight: 600; min-height: 24px; font-size: 1.1rem; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <h1>⏱️ Time Master</h1>
+    <div class="subtitle">Malaysia KSSR Year 4 Mathematics</div>
+    
+    <div class="mode-container">
+        <button class="mode-btn active" id="btn-mode1" onclick="switchMode(1)">Mode 1: Unit Conversion</button>
+        <button class="mode-btn" id="btn-mode2" onclick="switchMode(2)">Mode 2: Add / Subtract</button>
+    </div>
+
+    <div id="game-box">
+        <div class="card" id="question-text">Loading game...</div>
+        
+        <div class="step-title" id="step1-title">STEP 1: Choose the correct conversion rule</div>
+        <div class="btn-grid" id="rule-buttons">
+            <button class="rule-btn" onclick="checkRule(10, this)">× 10</button>
+            <button class="rule-btn" onclick="checkRule(12, this)">× 12</button>
+            <button class="rule-btn" onclick="checkRule(24, this)">× 24</button>
+            <button class="rule-btn" onclick="checkRule(60, this)">× 60</button>
+            <button class="rule-btn" onclick="checkRule(100, this)">× 100</button>
+        </div>
+
+        <div class="input-section" id="math-step">
+            <div class="step-title">STEP 2: Calculate the final answer</div>
+            <p id="formula-text" style="color: #555; font-style: italic; margin-bottom: 15px;"></p>
+            <input type="text" id="student-answer" placeholder="Your answer">
+            <button class="submit-btn" onclick="checkFinalAnswer()">Submit</button>
+            <p id="hint-text" style="font-size: 0.85rem; color: #777; margin-top: 5px;"></p>
+        </div>
+
+        <div class="feedback" id="feedback-msg"></div>
+    </div>
+</div>
+
+<script>
+    // --- QUESTION DATABASE (Year 4 KSSR Semakan 2017 Format) ---
+    const mode1Questions = [
+        { q: "Convert 4 Centuries (Abad) to Decades (Dekad)", rule: 10, ans: "40", hint: "Hint: Whole number conversion." },
+        { q: "Convert 0.5 Centuries (Abad) to Years (Tahun)", rule: 100, ans: "50", hint: "Hint: 0.5 x 100" },
+        { q: "Convert 1/2 Hour (Jam) to Minutes (Minit)", rule: 60, ans: "30", hint: "Hint: Half of 60 minutes." },
+        { q: "Convert 3 Days (Hari) to Hours (Jam)", rule: 24, ans: "72", hint: "Hint: 3 days x 24 hours." },
+        { q: "Convert 1.5 Years (Tahun) to Months (Bulan)", rule: 12, ans: "18", hint: "Hint: 1 Year (12) + 0.5 Year (6)" }
+    ];
+
+    const mode2Questions = [
+        { q: "2 Hours + 0.5 Hour = ______ Minutes", rule: 60, ans: "150", hint: "Hint: Convert total hours to minutes. (2.5 hours x 60)" },
+        { q: "1 Century - 2 Decades = ______ Decades", rule: 10, ans: "8", hint: "Hint: 1 Century = 10 Decades. Subtract 2." },
+        { q: "1.5 Days + 1/2 Day = ______ Hours", rule: 24, ans: "48", hint: "Hint: 1.5 + 0.5 = 2 Days total. Convert days to hours." },
+        { q: "3 Years + 6 Months = ______ Months", rule: 12, ans: "42", hint: "Hint: Convert 3 years to months first (3 x 12) then add 6." },
+        { q: "65 Minutes - 0.5 Hour = ______ Minutes", rule: 60, ans: "35", hint: "Hint: 0.5 Hour = 30 minutes. 65 - 30 = ?" }
+    ];
+
+    let currentMode = 1;
+    let currentQ = {};
+    let score = 0;
+
+    function switchMode(modeNum) {
+        currentMode = modeNum;
+        
+        // Update active class on UI buttons
+        document.getElementById("btn-mode1").classList.toggle("active", modeNum === 1);
+        document.getElementById("btn-mode2").classList.toggle("active", modeNum === 2);
+        
+        // Update Step 1 header text slightly for context
+        if(modeNum === 1) {
+            document.getElementById("step1-title").innerText = "STEP 1: Choose the correct conversion rule";
+        } else {
+            document.getElementById("step1-title").innerText = "STEP 1: Identify the main conversion rule needed";
+        }
+
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const pool = (currentMode === 1) ? mode1Questions : mode2Questions;
+        currentQ = pool[Math.floor(Math.random() * pool.length)];
+        
+        document.getElementById("question-text").innerText = currentQ.q;
+        document.getElementById("math-step").style.display = "none";
+        document.getElementById("feedback-msg").innerText = "";
+        document.getElementById("student-answer").value = "";
+        
+        // Reset rule selector buttons
+        let buttons = document.querySelectorAll("#rule-buttons .rule-btn");
+        buttons.forEach(btn => {
+            btn.className = "rule-btn";
+            btn.disabled = false;
+        });
+    }
+
+    function checkRule(selectedRule, buttonElement) {
+        if (selectedRule === currentQ.rule) {
+            buttonElement.className = "rule-btn correct";
+            // Lock other choices
+            document.querySelectorAll("#rule-buttons .rule-btn").forEach(btn => {
+                if(btn !== buttonElement) btn.disabled = true;
+            });
+            
+            // Advance to calculations phase
+            document.getElementById("feedback-msg").style.color = "var(--success)";
+            document.getElementById("feedback-msg").innerText = "Correct Conversion Multiplier! Proceed to Step 2.";
+            
+            document.getElementById("formula-text").innerText = `Use the structural rule ( × ${currentQ.rule} ) to find your final answer.`;
+            document.getElementById("hint-text").innerText = currentQ.hint;
+            document.getElementById("math-step").style.display = "block";
+        } else {
+            buttonElement.className = "rule-btn wrong";
+            document.getElementById("feedback-msg").style.color = "var(--danger)";
+            document.getElementById("feedback-msg").innerText = "Incorrect rule! Check your target units carefully.";
+        }
+    }
+
+    function checkFinalAnswer() {
+        const studentAns = document.getElementById("student-answer").value.trim();
+        const feedback = document.getElementById("feedback-msg");
+
+        if (studentAns === currentQ.ans) {
+            feedback.style.color = "var(--success)";
+            feedback.innerText = "Excellent calculation! 🎉 Loading next question...";
+            score++;
+            
+            // Send statistics data to back-end
+            sendDataToGoogleSheets(currentQ.q, true);
+            setTimeout(loadQuestion, 2500);
+        } else {
+            feedback.style.color = "var(--danger)";
+            feedback.innerText = "Oops! Calculation mistake. Look at the hint and try again.";
+            sendDataToGoogleSheets(currentQ.q, false);
+        }
+    }
+
+    function sendDataToGoogleSheets(question, isCorrect) {
+        const webAppUrl = "https://script.google.com/macros/s/AKfycbxUYGJwNKM6JQjR3s5Kabcc_PJAwQ8t08Xa2ao-iU4JIT08Axv3e2ZAskuOct9gZvQg/exec"; 
+        if(webAppUrl.includes("YOUR_")) return; 
+
+        fetch(webAppUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                studentId: "Student_Year_4",
+                mode: "Mode " + currentMode,
+                question: question,
+                result: isCorrect ? "Correct" : "Incorrect",
+                timestamp: new Date().toISOString()
+            })
+        });
+    }
+
+    // Initialize application on window load
+    window.onload = () => switchMode(1);
+</script>
+</body>
+</html>
