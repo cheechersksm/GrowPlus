@@ -178,6 +178,11 @@
 
         <div class="feedback" id="feedback-msg"></div>
     </div>
+    <div class="flex justify-center mt-4 mb-4">
+        <button id="btnBackToPortal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200 flex items-center gap-2">
+            <span>← Back to GrowPlus</span>
+        </button>
+    </div>
 </div>
 
 <script>
@@ -378,7 +383,23 @@
             })
         });
     }
+   document.getElementById('btnBackToPortal').addEventListener('click', function() {
+        const backBtn = document.getElementById('btnBackToPortal');
+        if (backBtn) {
+            backBtn.disabled = true;
+            backBtn.innerText = "Returning to GrowPlus...";
+        }
 
+        // Target your GitHub-hosted portal file directly
+        const targetUrl = "Portal.html"; 
+        
+        if (window.top && window.top.location) {
+            window.top.location.href = targetUrl;
+        } else {
+            window.location.href = targetUrl;
+        }
+    });
+    
     window.onload = () => switchMode(1);
 </script>
 </body>
