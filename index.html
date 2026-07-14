@@ -163,8 +163,9 @@
                 Swal.fire('Login Error', res.message, 'error');
             }
         } catch(err) {
+            console.error("Login process intercepted an error: ", err);
             document.getElementById('loader').classList.add('hide');
-            Swal.fire('Error', 'Connection failed', 'error');
+            Swal.fire('Error', 'Connection failed. Please contact your system admin.', 'error');
         }
     });
 
