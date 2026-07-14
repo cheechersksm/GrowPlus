@@ -1000,6 +1000,7 @@
                     container.innerHTML = challenges.map(c => {
                         const completedBy = String(c.CompletedBy || '').trim().toLowerCase();
                         const isSolved = completedBy.split(',').map(e => e.trim()).includes(emailLower);
+                        const question = String(c.Question || '').replace(/\r?\n/g, '<br>');
                         
                         // Prepare the resource link block if it exists
                         let resourceLinkHtml = '';
@@ -1035,7 +1036,7 @@
 
                         return `
                             <div class="glass-panel p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                                <div class="text-sm text-gray-800 overflow-x-auto flex-1">${c.Question}</div>
+                                <div class="text-sm text-gray-800 overflow-x-auto flex-1">${question}</div>
                                 ${submissionHtml}
                             </div>`;
                     }).join('');
