@@ -3,7 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Master - Malaysia KSSR Year 4</title>
+    <title>Time Conversion and Operations</title>
+    
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
     <style>
         :root {
             --primary: #4a90e2;
@@ -11,31 +25,37 @@
             --success: #2ec4b6;
             --danger: #e71d36;
             --dark: #011627;
-            --light: #f6f9fc;
+            --light: rgba(246, 249, 252, 0.9);
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light);
+            /* Custom Background Image applied here */
+            background-image: url('https://i.imgur.com/tF86pb8.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: var(--dark);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
         .app-container {
-            background: white;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
             padding: 30px;
             border-radius: 16px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
             width: 100%;
             max-width: 550px;
             text-align: center;
+            margin-top: 20px;
         }
-        h1 { color: var(--primary); margin-bottom: 5px; }
-        .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 20px; }
+        h1 { color: var(--primary); margin-bottom: 5px; font-size: 1.8rem; }
+        .subtitle { color: #555; font-size: 0.9rem; margin-bottom: 20px; font-weight: 600; }
         
-        /* Mode Switcher Styles */
         .mode-container {
             display: flex;
             gap: 10px;
@@ -63,10 +83,11 @@
             border-radius: 12px;
             padding: 25px;
             margin-bottom: 20px;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             font-weight: bold;
-            min-height: 60px;
+            min-height: 80px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
         }
@@ -101,9 +122,8 @@
         .input-section {
             margin-top: 20px;
             display: none;
-            animation: fadeIn 0.5s ease;
         }
-        input[type="text"], input[type="number"] {
+        input[type="text"] {
             padding: 12px;
             width: 50%;
             font-size: 1.2rem;
@@ -123,17 +143,12 @@
             cursor: pointer;
         }
         .feedback { margin-top: 20px; font-weight: 600; min-height: 24px; font-size: 1.1rem; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <h1>⏱️ Time Master</h1>
+    <h1>⏱️ Time Conversion and Operations</h1>
     <div class="subtitle">Malaysia KSSR Year 4 Mathematics</div>
     
     <div class="mode-container">
@@ -142,15 +157,15 @@
     </div>
 
     <div id="game-box">
-        <div class="card" id="question-text">Loading game...</div>
+        <div class="card" id="question-text">Generating dynamic challenge...</div>
         
         <div class="step-title" id="step1-title">STEP 1: Choose the correct conversion rule</div>
         <div class="btn-grid" id="rule-buttons">
-            <button class="rule-btn" onclick="checkRule(10, this)">× 10</button>
-            <button class="rule-btn" onclick="checkRule(12, this)">× 12</button>
-            <button class="rule-btn" onclick="checkRule(24, this)">× 24</button>
-            <button class="rule-btn" onclick="checkRule(60, this)">× 60</button>
-            <button class="rule-btn" onclick="checkRule(100, this)">× 100</button>
+            <button class="rule-btn" id="rule-10" onclick="checkRule(10, this)">× 10</button>
+            <button class="rule-btn" id="rule-12" onclick="checkRule(12, this)">× 12</button>
+            <button class="rule-btn" id="rule-24" onclick="checkRule(24, this)">× 24</button>
+            <button class="rule-btn" id="rule-60" onclick="checkRule(60, this)">× 60</button>
+            <button class="rule-btn" id="rule-100" onclick="checkRule(100, this)">× 100</button>
         </div>
 
         <div class="input-section" id="math-step">
@@ -166,35 +181,127 @@
 </div>
 
 <script>
-    // --- QUESTION DATABASE (Year 4 KSSR Semakan 2017 Format) ---
-    const mode1Questions = [
-        { q: "Convert 4 Centuries (Abad) to Decades (Dekad)", rule: 10, ans: "40", hint: "Hint: Whole number conversion." },
-        { q: "Convert 0.5 Centuries (Abad) to Years (Tahun)", rule: 100, ans: "50", hint: "Hint: 0.5 x 100" },
-        { q: "Convert 1/2 Hour (Jam) to Minutes (Minit)", rule: 60, ans: "30", hint: "Hint: Half of 60 minutes." },
-        { q: "Convert 3 Days (Hari) to Hours (Jam)", rule: 24, ans: "72", hint: "Hint: 3 days x 24 hours." },
-        { q: "Convert 1.5 Years (Tahun) to Months (Bulan)", rule: 12, ans: "18", hint: "Hint: 1 Year (12) + 0.5 Year (6)" }
-    ];
-
-    const mode2Questions = [
-        { q: "2 Hours + 0.5 Hour = ______ Minutes", rule: 60, ans: "150", hint: "Hint: Convert total hours to minutes. (2.5 hours x 60)" },
-        { q: "1 Century - 2 Decades = ______ Decades", rule: 10, ans: "8", hint: "Hint: 1 Century = 10 Decades. Subtract 2." },
-        { q: "1.5 Days + 1/2 Day = ______ Hours", rule: 24, ans: "48", hint: "Hint: 1.5 + 0.5 = 2 Days total. Convert days to hours." },
-        { q: "3 Years + 6 Months = ______ Months", rule: 12, ans: "42", hint: "Hint: Convert 3 years to months first (3 x 12) then add 6." },
-        { q: "65 Minutes - 0.5 Hour = ______ Minutes", rule: 60, ans: "35", hint: "Hint: 0.5 Hour = 30 minutes. 65 - 30 = ?" }
+    // --- CONVERSION RULES DICTIONARY (Malaysia Year 4) ---
+    const unitRules = [
+        { from: "Centuries (Abad)", to: "Decades (Dekad)", rule: 10 },
+        { from: "Centuries (Abad)", to: "Years (Tahun)", rule: 100 },
+        { from: "Decades (Dekad)", to: "Years (Tahun)", rule: 10 },
+        { from: "Years (Tahun)", to: "Months (Bulan)", rule: 12 },
+        { from: "Days (Hari)", to: "Hours (Jam)", rule: 24 },
+        { from: "Hours (Jam)", to: "Minutes (Minit)", rule: 60 }
     ];
 
     let currentMode = 1;
     let currentQ = {};
-    let score = 0;
+
+    // --- RANDOM QUESTION GENERATOR ENGINE ---
+    function generateDynamicQuestion() {
+        // 1. Pick a random conversion setup
+        const conversion = unitRules[Math.floor(Math.random() * unitRules.length)];
+        const formatType = Math.floor(Math.random() * 3); // 0 = Whole, 1 = Fraction, 2 = Decimal
+        
+        let value, valueText, mathValue, answer;
+
+        if (formatType === 0) {
+            // Whole numbers (e.g. 2, 3, 5, etc.)
+            value = Math.floor(Math.random() * 5) + 2; 
+            valueText = `${value}`;
+            mathValue = value;
+        } else if (formatType === 1) {
+            // Fractions (Only KSSR standard fractions like 1/2, 1/4, 1/5, 3/4, 1/10)
+            const fractions = [
+                { text: "\\frac{1}{2}", val: 0.5 },
+                { text: "\\frac{1}{4}", val: 0.25 },
+                { text: "\\frac{3}{4}", val: 0.75 },
+                { text: "\\frac{1}{5}", val: 0.2 },
+                { text: "\\frac{1}{10}", val: 0.1 }
+            ];
+            // Filter out decimals that would result in fractional outcomes (e.g. 1/4 of 10 = 2.5)
+            const viableFractions = fractions.filter(f => (f.val * conversion.rule) % 1 === 0);
+            const selection = viableFractions[Math.floor(Math.random() * viableFractions.length)] || fractions[0];
+            
+            valueText = `$${selection.text}$`;
+            mathValue = selection.val;
+        } else {
+            // Decimals (Only standard KSSR decimals like 0.5, 1.5, 0.2, 2.5)
+            const decimals = [0.5, 1.5, 0.2, 2.5, 0.1];
+            const viableDecimals = decimals.filter(d => (d * conversion.rule) % 1 === 0);
+            const selection = viableDecimals[Math.floor(Math.random() * viableDecimals.length)] || 0.5;
+            
+            valueText = `${selection}`;
+            mathValue = selection;
+        }
+
+        answer = mathValue * conversion.rule;
+
+        if (currentMode === 1) {
+            // MODE 1: Directly Convert
+            currentQ = {
+                qText: `Convert ${valueText} ${conversion.from} to ${conversion.to}`,
+                qPlain: `Convert ${mathValue} ${conversion.from} to ${conversion.to}`,
+                rule: conversion.rule,
+                ans: answer.toString(),
+                hint: `Hint: Multiply the value by the conversion factor (${mathValue} × ${conversion.rule}).`
+            };
+        } else {
+            // MODE 2: Add or Subtract
+            const isAddition = Math.random() < 0.5;
+            let offsetVal, offsetText, finalAns;
+
+            // Generate a secondary unit-matched value to add/subtract
+            if (conversion.rule === 60) {
+                offsetVal = [10, 15, 20, 30][Math.floor(Math.random() * 4)];
+                offsetText = `${offsetVal} Minutes (Minit)`;
+            } else if (conversion.rule === 12) {
+                offsetVal = [2, 3, 4, 6][Math.floor(Math.random() * 4)];
+                offsetText = `${offsetVal} Months (Bulan)`;
+            } else if (conversion.rule === 10) {
+                offsetVal = [1, 2, 3, 5][Math.floor(Math.random() * 4)];
+                offsetText = `${offsetVal} Decades/Years`;
+            } else {
+                offsetVal = Math.floor(Math.random() * 5) + 1;
+                offsetText = `${offsetVal} ${conversion.to}`;
+            }
+
+            if (isAddition) {
+                finalAns = answer + offsetVal;
+                currentQ = {
+                    qText: `${valueText} ${conversion.from} + ${offsetVal} ${conversion.to} = ______ ${conversion.to}`,
+                    qPlain: `${mathValue} ${conversion.from} + ${offsetVal} ${conversion.to}`,
+                    rule: conversion.rule,
+                    ans: finalAns.toString(),
+                    hint: `Hint: Convert ${valueText} into ${conversion.to} first, then add ${offsetVal}.`
+                };
+            } else {
+                // Ensure subtraction results in a positive number
+                if (answer <= offsetVal) {
+                    answer += offsetVal + 5;
+                    mathValue = answer / conversion.rule;
+                    valueText = (formatType === 1) ? `$${mathValue}$` : `${mathValue}`;
+                }
+                finalAns = answer - offsetVal;
+                currentQ = {
+                    qText: `${valueText} ${conversion.from} - ${offsetVal} ${conversion.to} = ______ ${conversion.to}`,
+                    qPlain: `${mathValue} ${conversion.from} - ${offsetVal} ${conversion.to}`,
+                    rule: conversion.rule,
+                    ans: finalAns.toString(),
+                    hint: `Hint: Convert ${valueText} into ${conversion.to} first, then subtract ${offsetVal}.`
+                };
+            }
+        }
+
+        // Render Question Card
+        document.getElementById("question-text").innerHTML = currentQ.qText;
+        
+        // Trigger MathJax to compile LaTeX fractions instantly
+        MathJax.typesetPromise();
+    }
 
     function switchMode(modeNum) {
         currentMode = modeNum;
-        
-        // Update active class on UI buttons
         document.getElementById("btn-mode1").classList.toggle("active", modeNum === 1);
         document.getElementById("btn-mode2").classList.toggle("active", modeNum === 2);
         
-        // Update Step 1 header text slightly for context
         if(modeNum === 1) {
             document.getElementById("step1-title").innerText = "STEP 1: Choose the correct conversion rule";
         } else {
@@ -205,41 +312,36 @@
     }
 
     function loadQuestion() {
-        const pool = (currentMode === 1) ? mode1Questions : mode2Questions;
-        currentQ = pool[Math.floor(Math.random() * pool.length)];
-        
-        document.getElementById("question-text").innerText = currentQ.q;
         document.getElementById("math-step").style.display = "none";
         document.getElementById("feedback-msg").innerText = "";
         document.getElementById("student-answer").value = "";
         
-        // Reset rule selector buttons
         let buttons = document.querySelectorAll("#rule-buttons .rule-btn");
         buttons.forEach(btn => {
             btn.className = "rule-btn";
             btn.disabled = false;
         });
+
+        generateDynamicQuestion();
     }
 
     function checkRule(selectedRule, buttonElement) {
         if (selectedRule === currentQ.rule) {
             buttonElement.className = "rule-btn correct";
-            // Lock other choices
             document.querySelectorAll("#rule-buttons .rule-btn").forEach(btn => {
                 if(btn !== buttonElement) btn.disabled = true;
             });
             
-            // Advance to calculations phase
             document.getElementById("feedback-msg").style.color = "var(--success)";
-            document.getElementById("feedback-msg").innerText = "Correct Conversion Multiplier! Proceed to Step 2.";
+            document.getElementById("feedback-msg").innerText = "Correct! Move on to the calculation.";
             
-            document.getElementById("formula-text").innerText = `Use the structural rule ( × ${currentQ.rule} ) to find your final answer.`;
+            document.getElementById("formula-text").innerText = `Use the rule ( × ${currentQ.rule} ) to complete Step 2.`;
             document.getElementById("hint-text").innerText = currentQ.hint;
             document.getElementById("math-step").style.display = "block";
         } else {
             buttonElement.className = "rule-btn wrong";
             document.getElementById("feedback-msg").style.color = "var(--danger)";
-            document.getElementById("feedback-msg").innerText = "Incorrect rule! Check your target units carefully.";
+            document.getElementById("feedback-msg").innerText = "Not that rule! Check your units again.";
         }
     }
 
@@ -249,21 +351,18 @@
 
         if (studentAns === currentQ.ans) {
             feedback.style.color = "var(--success)";
-            feedback.innerText = "Excellent calculation! 🎉 Loading next question...";
-            score++;
-            
-            // Send statistics data to back-end
-            sendDataToGoogleSheets(currentQ.q, true);
+            feedback.innerText = "Superb job! That's correct! 🎉 Preparing next question...";
+            sendDataToGoogleSheets(currentQ.qPlain, true);
             setTimeout(loadQuestion, 2500);
         } else {
             feedback.style.color = "var(--danger)";
-            feedback.innerText = "Oops! Calculation mistake. Look at the hint and try again.";
-            sendDataToGoogleSheets(currentQ.q, false);
+            feedback.innerText = `Incorrect. Try again! Double check your math.`;
+            sendDataToGoogleSheets(currentQ.qPlain, false);
         }
     }
 
     function sendDataToGoogleSheets(question, isCorrect) {
-        const webAppUrl = "https://script.google.com/macros/s/AKfycbxUYGJwNKM6JQjR3s5Kabcc_PJAwQ8t08Xa2ao-iU4JIT08Axv3e2ZAskuOct9gZvQg/exec"; 
+        const webAppUrl = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"; 
         if(webAppUrl.includes("YOUR_")) return; 
 
         fetch(webAppUrl, {
@@ -280,7 +379,6 @@
         });
     }
 
-    // Initialize application on window load
     window.onload = () => switchMode(1);
 </script>
 </body>
