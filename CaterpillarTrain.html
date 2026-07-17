@@ -377,99 +377,111 @@
       return arr;
     }
 
-    function generateQuestionItem(mode) {
-      let prompt = "", answer = "", options = [];
+function generateQuestionItem(mode) {
+  let prompt = "", answer = "", options = [];
+  let attempts = 0; // Safety valve to prevent infinite loops
+  
+  if (mode === 'decimal') {
+    const type = Math.floor(Math.random() * 3); // 0: Length, 1: Mass, 2: Vol
+    if(type === 0) {
+      const paths = [['mm','cm',10], ['cm','m',100], ['m','km',1000]];
+      const pick = paths[Math.floor(Math.random()*paths.length)];
+      const baseVal = (Math.random() * 50).toFixed(Math.floor(Math.random()*3)+1);
       
-      if (mode === 'decimal') {
-        const type = Math.floor(Math.random() * 3); // 0: Length, 1: Mass, 2: Vol
-        if(type === 0) {
-          // Length conversion decimals (up to 3 places)
-          const paths = [['mm','cm',10], ['cm','m',100], ['m','km',1000]];
-          const pick = paths[Math.floor(Math.random()*paths.length)];
-          const baseVal = (Math.random() * 50).toFixed(Math.floor(Math.random()*3)+1);
-          
-          if(Math.random() > 0.5) { // high to low unit
-            prompt = `Convert $${baseVal}\\text{ ${pick[1]}}$ into $\\text{${pick[0]}}$`;
-            answer = (parseFloat(baseVal) * pick[2]).toFixed(3).replace(/\.?0+$/, "");
-          } else { // low to high unit
-            prompt = `Convert $${baseVal}\\text{ ${pick[0]}}$ into $\\text{${pick[1]}}$`;
-            answer = (parseFloat(baseVal) / pick[2]).toFixed(3).replace(/\.?0+$/, "");
-          }
-        } else if(type === 1) { // Mass (g <-> kg)
-          const baseVal = (Math.random() * 10).toFixed(3).replace(/\.?0+$/, "");
-          if(Math.random() > 0.5) {
-            prompt = `Convert $${baseVal}\\text{ kg}$ into $\\text{g}$`;
-            answer = String(parseFloat(baseVal) * 1000);
-          } else {
-            prompt = `Convert $${baseVal}\\text{ g}$ into $\\text{kg}$`;
-            answer = String(parseFloat(baseVal) / 1000);
-          }
-        } else { // Volume (ml <-> L)
-          const baseVal = (Math.random() * 10).toFixed(3).replace(/\.?0+$/, "");
-          if(Math.random() > 0.5) {
-            prompt = `Convert $${baseVal}\\text{ L}$ into $\\text{ml}$`;
-            answer = String(parseFloat(baseVal) * 1000);
-          } else {
-            prompt = `Convert $${baseVal}\\text{ ml}$ into $\\text{L}$`;
-            answer = String(parseFloat(baseVal) / 1000);
-          }
-        }
-      } 
-      else if (mode === 'fraction') {
-        // Simple and compound fractions standard formatting rules
-        const fractionsSet = [
-          {f: "\\frac{1}{2}", v: 0.5}, {f: "\\frac{1}{4}", v: 0.25}, 
-          {f: "\\frac{3}{4}", v: 0.75}, {f: "\\frac{1}{5}", v: 0.2},
-          {f: "1\\frac{1}{2}", v: 1.5}, {f: "2\\frac{1}{4}", v: 2.25}
-        ];
-        const pickFrac = fractionsSet[Math.floor(Math.random()*fractionsSet.length)];
-        const paths = [['mm','cm',10], ['cm','m',100], ['m','km',1000]];
-        const path = paths[Math.floor(Math.random()*paths.length)];
-        
-        prompt = `Convert $${pickFrac.f}\\text{ ${path[1]}}$ into $\\text{${path[0]}}$`;
-        answer = `$${pickFrac.v * path[2]}\\text{ ${path[0]}}$`;
-        
-        options.push(answer);
-        while(options.length < config.choicesCount) {
-          let dev = (pickFrac.v * path[2]) + (Math.floor(Math.random()*5)+1) * (Math.random() > 0.5 ? 10 : -5);
-          let candidate = `$${Math.abs(dev)}\\text{ ${path[0]}}$`;
-          if(!options.includes(candidate)) options.push(candidate);
-        }
+      if(Math.random() > 0.5) { 
+        prompt = `Convert $${baseVal}\\text{ ${pick[1]}}$ into $\\text{${pick[0]}}$`;
+        answer = (parseFloat(baseVal) * pick[2]).toFixed(3).replace(/\.?0+$/, "");
+      } else { 
+        prompt = `Convert $${baseVal}\\text{ ${pick[0]}}$ into $\\text{${pick[1]}}$`;
+        answer = (parseFloat(baseVal) / pick[2]).toFixed(3).replace(/\.?0+$/, "");
       }
-      else if (mode === 'addition' || mode === 'subtraction') {
-        // Multi step expressions
-        const v1 = Math.floor(Math.random()*20)+1;
-        const v2 = Math.floor(Math.random()*20)+1;
-        const op = mode === 'addition' ? '+' : '-';
-        prompt = `Calculate: $${v1}\\text{ cm} ${op} ${v2}\\text{ mm} = ? \\text{ mm}$`;
-        
-        let calculation = (mode === 'addition') ? (v1 * 10 + v2) : (v1 * 10 - v2);
-        answer = `$${calculation}\\text{ mm}$`;
-        
-        options.push(answer);
-        while(options.length < config.choicesCount) {
-          let candidate = `$${Math.abs(calculation + Math.floor(Math.random()*15 - 7))}\\text{ mm}$`;
-          if(!options.includes(candidate)) options.push(candidate);
-        }
+    } else if(type === 1) { 
+      const baseVal = (Math.random() * 10).toFixed(3).replace(/\.?0+$/, "");
+      if(Math.random() > 0.5) {
+        prompt = `Convert $${baseVal}\\text{ kg}$ into $\\text{g}$`;
+        answer = String(parseFloat(baseVal) * 1000);
+      } else {
+        prompt = `Convert $${baseVal}\\text{ g}$ into $\\text{kg}$`;
+        answer = String(parseFloat(baseVal) / 1000);
       }
-
-      // Populate processing array loop patterns for pure values (Decimals Mode)
-      if(options.length === 0) {
-        options.push(answer);
-        while(options.length < config.choicesCount) {
-          let numAns = parseFloat(answer);
-          let offset = (Math.random() * (numAns * 0.5 || 5)).toFixed(2);
-          let candidate = String((numAns + parseFloat(offset) * (Math.random() > 0.5 ? 1 : -1)).toFixed(3).replace(/\.?0+$/, ""));
-          if(candidate !== answer && !options.includes(candidate) && parseFloat(candidate) >= 0) {
-            options.push(candidate);
-          }
-        }
+    } else { 
+      const baseVal = (Math.random() * 10).toFixed(3).replace(/\.?0+$/, "");
+      if(Math.random() > 0.5) {
+        prompt = `Convert $${baseVal}\\text{ L}$ into $\\text{ml}$`;
+        answer = String(parseFloat(baseVal) * 1000);
+      } else {
+        prompt = `Convert $${baseVal}\\text{ ml}$ into $\\text{L}$`;
+        answer = String(parseFloat(baseVal) / 1000);
       }
-
-      // Scaffold complete sequence parameters array randomly
-      options.sort(() => Math.random() - 0.5);
-      return { prompt, answer, options, selected: null, timeSpent: 0 };
     }
+
+    // Freeze-proof Option Generator for Decimals
+    options.push(answer);
+    while(options.length < config.choicesCount && attempts < 100) {
+      attempts++;
+      let numAns = parseFloat(answer);
+      let offset = (Math.random() * 30 + 0.1) * (Math.random() > 0.5 ? 1 : -1);
+      let candidateVal = Math.abs(numAns + offset);
+      let candidate = String(candidateVal.toFixed(3).replace(/\.?0+$/, ""));
+      if(candidate !== answer && !options.includes(candidate)) {
+        options.push(candidate);
+      }
+    }
+    // Hard backup if uniqueness threshold fails
+    while(options.length < config.choicesCount) {
+      options.push(String((parseFloat(answer) + options.length * 1.5).toFixed(3).replace(/\.?0+$/, "")));
+    }
+  } 
+  else if (mode === 'fraction') {
+    const fractionsSet = [
+      {f: "\\frac{1}{2}", v: 0.5}, {f: "\\frac{1}{4}", v: 0.25}, 
+      {f: "\\frac{3}{4}", v: 0.75}, {f: "\\frac{1}{5}", v: 0.2},
+      {f: "1\\frac{1}{2}", v: 1.5}, {f: "2\\frac{1}{4}", v: 2.25}
+    ];
+    const pickFrac = fractionsSet[Math.floor(Math.random()*fractionsSet.length)];
+    const paths = [['mm','cm',10], ['cm','m',100], ['m','km',1000]];
+    const path = paths[Math.floor(Math.random()*paths.length)];
+    
+    prompt = `Convert $${pickFrac.f}\\text{ ${path[1]}}$ into $\\text{${path[0]}}$`;
+    answer = `$${pickFrac.v * path[2]}\\text{ ${path[0]}}$`;
+    
+    options.push(answer);
+    while(options.length < config.choicesCount && attempts < 100) {
+      attempts++;
+      let dev = (pickFrac.v * path[2]) + (Math.floor(Math.random() * 50) + 1) * (Math.random() > 0.5 ? 2 : -2);
+      let candidate = `$${Math.abs(dev)}\\text{ ${path[0]}}$`;
+      if(!options.includes(candidate)) options.push(candidate);
+    }
+    while(options.length < config.choicesCount) {
+      options.push(`$${Math.abs(pickFrac.v * path[2] + options.length * 10)}\\text{ ${path[0]}}$`);
+    }
+  }
+  else if (mode === 'addition' || mode === 'subtraction') {
+    const v1 = Math.floor(Math.random()*20)+1;
+    const v2 = Math.floor(Math.random()*20)+1;
+    const op = mode === 'addition' ? '+' : '-';
+    prompt = `Calculate: $${v1}\\text{ cm} ${op} ${v2}\\text{ mm} = ? \\text{ mm}$`;
+    
+    let calculation = (mode === 'addition') ? (v1 * 10 + v2) : (v1 * 10 - v2);
+    answer = `$${calculation}\\text{ mm}$`;
+    
+    options.push(answer);
+    while(options.length < config.choicesCount && attempts < 100) {
+      attempts++;
+      let dev = calculation + (Math.floor(Math.random() * 80) - 40);
+      let candidate = `$${Math.abs(dev)}\\text{ mm}$`;
+      if(!options.includes(candidate) && dev !== calculation) {
+        options.push(candidate);
+      }
+    }
+    while(options.length < config.choicesCount) {
+      options.push(`$${Math.abs(calculation + options.length * 5)}\\text{ mm}$`);
+    }
+  }
+
+  options.sort(() => Math.random() - 0.5);
+  return { prompt, answer, options, selected: null, timeSpent: 0 };
+}
 
     // Review Sheet Factory
     function buildReviewData() {
