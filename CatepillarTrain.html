@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caterpillar Math Train Express</title>
+  <!-- Google Fonts & MathJax -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+  
+  <style>
+    :root {
+      --primary: #FFDE4D;
+      --secondary: #FF4E88;
+      --accent: #399918;
+      --sky: #A1EEF6;
+      --dark: #2C3E50;
+      --border-val: 4px solid #000;
+      --shadow-val: 5px 5px 0px #000;
+      --shadow-active: 2px 2px 0px #000;
+    }
+
+    * { box-sizing: border-box; font-family: 'Quicksand', sans-serif; font-weight: 700; }
+    body { background-color: var(--sky); margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    
+    /* 2.5D Layered Panels */
+    .panel {
+      background: white;
+      border: var(--border-val);
+      box-shadow: var(--shadow-val);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 700px;
+      transform: translate(-2px, -2px);
+      transition: all 0.2s ease;
+    }
+
+    h1, h2, h3 { font-family: 'Fredoka One', cursive; color: var(--dark); text-align: center; margin-top: 0; }
+    h1 { font-size: 2.5rem; text-shadow: 3px 3px 0px var(--primary); -webkit-text-stroke: 1px #000; }
+
+    label { display: block; margin: 15px 0 5px; color: var(--dark); }
+    select, input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      border: var(--border-val);
+      border-radius: 8px;
+      background: #fff;
+      margin-bottom: 15px;
+    }
+
+    /* 2.5D Buttons */
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 15px;
+      font-size: 1.3rem;
+      background: var(--primary);
+      border: var(--border-val);
+      border-radius: 12px;
+      box-shadow: var(--shadow-val);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s ease;
+      user-select: none;
+    }
+    .btn:hover { transform: translate(1px, 1px); box-shadow: 4px 4px 0px #000; }
+    .btn:active { transform: translate(4px, 4px); box-shadow: var(--shadow-active); }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-secondary { background: var(--secondary); color: white; }
+
+    /* Caterpillar Train Progress Bar */
+    .track-container {
+      background: #e0e0e0;
+      border: var(--border-val);
+      border-radius: 20px;
+      height: 45px;
+      position: relative;
+      margin: 20px 0 35px;
+      overflow: visible;
+    }
+    .railway {
+      position: absolute;
+      top: 50%; width: 100%; height: 4px;
+      background: repeating-linear-gradient(90deg, #8B4513, #8B4513 10px, transparent 10px, transparent 20px);
+      transform: translateY(-50%);
+    }
+    .caterpillar-train {
+      position: absolute;
+      left: 0%;
+      top: -10px;
+      display: flex;
+      align-items: center;
+      transition: left 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .caterpillar-segment {
+      width: 24px; height: 24px;
+      background: var(--accent);
+      border: 2px solid #000;
+      border-radius: 50%;
+      margin-right: -6px;
+      box-shadow: 1px 2px 0px rgba(0,0,0,0.2);
+    }
+    .caterpillar-head {
+      width: 28px; height: 28px;
+      background: #4ef01b;
+      border: 2px solid #000;
+      border-radius: 50%;
+      position: relative;
+    }
+    .caterpillar-head::after {
+      content: '👀';
+      font-size: 12px;
+      position: absolute;
+      top: 2px; right: 2px;
+    }
+
+    /* Options Grid Layout */
+    .options-grid {
+      display: grid;
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-8 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+    @media (max-width: 600px) { .grid-8 { grid-template-columns: 1fr 1fr; } }
+
+    .option-card {
+      background: #fff;
+      border: var(--border-val);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      font-size: 1.25rem;
+      cursor: pointer;
+      box-shadow: var(--shadow-val);
+      transition: all 0.1s ease;
+    }
+    .option-card:hover { transform: translate(1px, 1px); box-shadow: 4px 4px 0px #000; }
+    .option-card:active { transform: translate(4px, 4px); box-shadow: var(--shadow-active); }
+    
+    /* Utility States */
+    .hidden { display: none !important; }
+    .review-item { border-bottom: 2px dashed #000; padding: 15px 0; }
+    .correct { color: var(--accent); }
+    .wrong { color: var(--secondary); }
+
+    /* Leaderboard Layout */
+    .table-container { overflow-x: auto; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: var(--border-val); }
+    th, td { padding: 12px; border: 2px solid #000; text-align: center; }
+    th { background: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: Configuration Menu -->
+  <div id="screen-setup" class="panel">
+    <h1>🐛 Caterpillar Express 🚂</h1>
+    <h2>Math Unit Conversions</h2>
+    
+    <label for="player-name">🎟️ Pupil Name:</label>
+    <input type="text" id="player-name" placeholder="Enter your name..." autocomplete="off">
+    
+    <label for="game-mode">🕹️ Game Mode:</label>
+    <select id="game-mode">
+      <option value="decimal">Conversion in decimal form</option>
+      <option value="fraction">Conversion in fraction form</option>
+      <option value="addition">Addition (Decimals & Fractions)</option>
+      <option value="subtraction">Subtraction (Decimals & Fractions)</option>
+    </select>
+
+    <label for="quest-count">📋 Questions Volume:</label>
+    <select id="quest-count">
+      <option value="10">10 Questions</option>
+      <option value="20">20 Questions</option>
+    </select>
+
+    <label for="choice-count">⚡ Difficulty (Choices):</label>
+    <select id="choice-count">
+      <option value="4">4 Choice Answers</option>
+      <option value="8">8 Choice Answers</option>
+    </select>
+    
+    <button class="btn btn-accent" style="margin-top: 20px;" onclick="startGame()">All Aboard! Start Train ➔</button>
+  </div>
+
+  <!-- Screen 2: Game Board -->
+  <div id="screen-game" class="panel hidden">
+    <!-- Moving Train Track Progress Area -->
+    <div class="track-container">
+      <div class="railway"></div>
+      <div id="train" class="caterpillar-train">
+        <div class="caterpillar-segment"></div>
+        <div class="caterpillar-segment"></div>
+        <div class="caterpillar-segment"></div>
+        <div class="caterpillar-head"></div>
+      </div>
+    </div>
+
+    <div style="text-align: space-between; display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <span id="question-index">Question 1 of 10</span>
+      <span id="current-score">Score: 0</span>
+    </div>
+
+    <div id="question-box" style="font-size: 1.6rem; text-align: center; padding: 25px; background: #f9f9f9; border: var(--border-val); border-radius: 12px; margin-bottom: 20px;">
+      <!-- Dynamic Question Placed Here -->
+    </div>
+
+    <div id="options-box" class="options-grid">
+      <!-- Choice Nodes Injected Dynamically -->
+    </div>
+  </div>
+
+  <!-- Screen 3: Results & Metrics Engine -->
+  <div id="screen-result" class="panel hidden">
+    <h1>🏁 Destination Reached!</h1>
+    <h2 id="final-score-text">You scored 0/10</h2>
+    <p style="text-align:center; font-size:1.2rem;" id="final-time-text">Average speed: 0.000 ms per question</p>
+
+    <button class="btn btn-accent" id="save-score-btn" onclick="submitToLeaderboard()">💾 Save Score to Leaderboard</button>
+    <button class="btn btn-secondary" style="margin-top: 15px;" onclick="showTab('review')">📝 Review Questions</button>
+    <button class="btn" style="margin-top: 15px; background:#fff;" onclick="resetToMenu()">🔄 Play Again</button>
+  </div>
+
+  <!-- Screen 4: Leaderboard / Review Hub -->
+  <div id="screen-board" class="panel hidden">
+    <h2 id="board-title">Leaderboard Hub</h2>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <button class="btn btn-accent" style="font-size:1rem; padding:8px;" onclick="showTab('leaderboard')">🏆 High Scores</button>
+      <button class="btn btn-secondary" style="font-size:1rem; padding:8px;" onclick="showTab('review')">🔍 Test Review</button>
+    </div>
+
+    <div id="tab-leaderboard-content">
+      <label for="filter-mode">Filter Board Mode:</label>
+      <select id="filter-mode" onchange="renderLeaderboardView()">
+        <option value="decimal">Conversion in decimal form</option>
+        <option value="fraction">Conversion in fraction form</option>
+        <option value="addition">Addition</option>
+        <option value="subtraction">Subtraction</option>
+      </select>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Name</th>
+              <th>Score</th>
+              <th>Total Qs</th>
+              <th>Avg Time (ms)</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-rows">
+            <!-- Dynamically injected row sets -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-review-content" class="hidden">
+      <div id="review-list" style="max-height: 400px; overflow-y: auto; text-align: left;">
+        <!-- Error tracking and verification logic injection point -->
+      </div>
+    </div>
+
+    <button class="btn" style="margin-top: 25px;" onclick="resetToMenu()">🏠 Return to Station</button>
+  </div>
+
+  <script>
+    // BACKEND DEPLOYMENT CONFIGURATION LINK
+    const GAS_WEB_APP_URL = "YOUR_DEPLOYED_GAS_WEB_APP_URL_HERE";
+
+    let config = { name: "", mode: "", totalQuestions: 10, choicesCount: 4 };
+    let gameState = { currentIdx: 0, score: 0, questions: [], startTime: 0, totalDuration: 0 };
+    let cachedLeaderboard = [];
+
+    // System Unit Configuration Matrix
+    const lengthUnits = ['mm', 'cm', 'm', 'km'];
+    const weightUnits = ['g', 'kg'];
+    const volumeUnits = ['ml', 'L'];
+
+    function startGame() {
+      const nameInput = document.getElementById('player-name').value.trim();
+      if(!nameInput) { alert("Please input your name traveler!"); return; }
+      
+      config.name = nameInput;
+      config.mode = document.getElementById('game-mode').value;
+      config.totalQuestions = parseInt(document.getElementById('quest-count').value);
+      config.choicesCount = parseInt(document.getElementById('choice-count').value);
+
+      gameState.currentIdx = 0;
+      gameState.score = 0;
+      gameState.totalDuration = 0;
+      gameState.questions = generateQuestionsBatch(config.totalQuestions, config.mode);
+
+      document.getElementById('screen-setup').classList.add('hidden');
+      document.getElementById('screen-game').classList.remove('hidden');
+      
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if (gameState.currentIdx >= config.totalQuestions) {
+        endGame();
+        return;
+      }
+      
+      // Update HUD elements
+      document.getElementById('question-index').innerText = `Question ${gameState.currentIdx + 1} of ${config.totalQuestions}`;
+      document.getElementById('current-score').innerText = `Score: ${gameState.score}`;
+      
+      // Animate progress bar (Caterpillar positions)
+      const progressPercent = (gameState.currentIdx / config.totalQuestions) * 90; 
+      document.getElementById('train').style.left = `${progressPercent}%`;
+
+      const q = gameState.questions[gameState.currentIdx];
+      const qBox = document.getElementById('question-box');
+      qBox.innerHTML = q.prompt;
+
+      // Layout management based on total elements
+      const optBox = document.getElementById('options-box');
+      optBox.className = `options-grid grid-${config.choicesCount}`;
+      optBox.innerHTML = "";
+
+      q.options.forEach(opt => {
+        const d = document.createElement('div');
+        d.className = "option-card";
+        d.innerHTML = opt;
+        d.onclick = () => handleAnswer(opt);
+        optBox.appendChild(d);
+      });
+
+      // Rerender LaTeX elements dynamically
+      MathJax.typesetPromise([qBox, optBox]).catch((err) => console.log(err));
+      gameState.startTime = performance.now();
+    }
+
+    function handleAnswer(selectedVal) {
+      const delta = performance.now() - gameState.startTime;
+      gameState.totalDuration += delta;
+
+      const q = gameState.questions[gameState.currentIdx];
+      q.selected = selectedVal;
+      q.timeSpent = delta;
+
+      if(selectedVal === q.answer) {
+        gameState.score++;
+      }
+
+      gameState.currentIdx++;
+      loadQuestion();
+    }
+
+    function endGame() {
+      document.getElementById('screen-game').classList.add('hidden');
+      document.getElementById('screen-result').classList.remove('hidden');
+
+      const avgTime = gameState.totalDuration / config.totalQuestions;
+
+      document.getElementById('final-score-text').innerText = `You scored ${gameState.score} / ${config.totalQuestions}`;
+      document.getElementById('final-time-text').innerText = `Average speed: ${avgTime.toFixed(3)} ms per question`;
+      document.getElementById('save-score-btn').disabled = false;
+      document.getElementById('save-score-btn').innerText = "💾 Save Score to Leaderboard";
+      
+      buildReviewData();
+      fetchLeaderboardData(); 
+    }
+
+    // Question Engine Logic Blueprint
+    function generateQuestionsBatch(count, mode) {
+      let arr = [];
+      for(let i=0; i<count; i++) {
+        arr.push(generateQuestionItem(mode));
+      }
+      return arr;
+    }
+
+    function generateQuestionItem(mode) {
+      let prompt = "", answer = "", options = [];
+      
+      if (mode === 'decimal') {
+        const type = Math.floor(Math.random() * 3); // 0: Length, 1: Mass, 2: Vol
+        if(type === 0) {
+          // Length conversion decimals (up to 3 places)
+          const paths = [['mm','cm',10], ['cm','m',100], ['m','km',1000]];
+          const pick = paths[Math.floor(Math.random()*paths.length)];
+          const baseVal = (Math.random() * 50).toFixed(Math.floor(Math.random()*3)+1);
+          
+          if(Math.random() > 0.5) { // high to low unit
+            prompt = `Convert $${baseVal}\\text{ ${pick[1]}}$ into $\\text{${pick[0]}}$`;
+            answer = (parseFloat(baseVal) * pick[2]).toFixed(3).replace(/\.?0+$/, "");
+          } else { // low to high unit
+            prompt = `Convert $${baseVal}\\text{ ${pick[0]}}$ into $\\text{${pick[1]}}$`;
+            answer = (parseFloat(baseVal) / pick[2]).toFixed(3).replace(/\.?0+$/, "");
+          }
+        } else if(type === 1) { // Mass (g <-> kg)
+          const baseVal = (Math.random() * 10).toFixed(3).replace(/\.?0+$/, "");
+          if(Math.random() > 0.5) {
+            prompt = `Convert $${baseVal}\\text{ kg}$ into $\\text{g}$`;
+            answer = String(parseFloat(baseVal) * 1000);
+          } else {
+            prompt = `Convert $${baseVal}\\text{ g}$ into $\\text{kg}$`;
+            answer = String(parseFloat(baseVal) / 1000);
+          }
+        } else { // Volume (ml <-> L)
+          const baseVal = (Math.random() * 10).toFixed(3).replace(/\.?0+$/, "");
+          if(Math.random() > 0.5) {
+            prompt = `Convert $${baseVal}\\text{ L}$ into $\\text{ml}$`;
+            answer = String(parseFloat(baseVal) * 1000);
+          } else {
+            prompt = `Convert $${baseVal}\\text{ ml}$ into $\\text{L}$`;
+            answer = String(parseFloat(baseVal) / 1000);
+          }
+        }
+      } 
+      else if (mode === 'fraction') {
+        // Simple and compound fractions standard formatting rules
+        const fractionsSet = [
+          {f: "\\frac{1}{2}", v: 0.5}, {f: "\\frac{1}{4}", v: 0.25}, 
+          {f: "\\frac{3}{4}", v: 0.75}, {f: "\\frac{1}{5}", v: 0.2},
+          {f: "1\\frac{1}{2}", v: 1.5}, {f: "2\\frac{1}{4}", v: 2.25}
+        ];
+        const pickFrac = fractionsSet[Math.floor(Math.random()*fractionsSet.length)];
+        const paths = [['mm','cm',10], ['cm','m',100], ['m','km',1000]];
+        const path = paths[Math.floor(Math.random()*paths.length)];
+        
+        prompt = `Convert $${pickFrac.f}\\text{ ${path[1]}}$ into $\\text{${path[0]}}$`;
+        answer = `$${pickFrac.v * path[2]}\\text{ ${path[0]}}$`;
+        
+        options.push(answer);
+        while(options.length < config.choicesCount) {
+          let dev = (pickFrac.v * path[2]) + (Math.floor(Math.random()*5)+1) * (Math.random() > 0.5 ? 10 : -5);
+          let candidate = `$${Math.abs(dev)}\\text{ ${path[0]}}$`;
+          if(!options.includes(candidate)) options.push(candidate);
+        }
+      }
+      else if (mode === 'addition' || mode === 'subtraction') {
+        // Multi step expressions
+        const v1 = Math.floor(Math.random()*20)+1;
+        const v2 = Math.floor(Math.random()*20)+1;
+        const op = mode === 'addition' ? '+' : '-';
+        prompt = `Calculate: $${v1}\\text{ cm} ${op} ${v2}\\text{ mm} = ? \\text{ mm}$`;
+        
+        let calculation = (mode === 'addition') ? (v1 * 10 + v2) : (v1 * 10 - v2);
+        answer = `$${calculation}\\text{ mm}$`;
+        
+        options.push(answer);
+        while(options.length < config.choicesCount) {
+          let candidate = `$${Math.abs(calculation + Math.floor(Math.random()*15 - 7))}\\text{ mm}$`;
+          if(!options.includes(candidate)) options.push(candidate);
+        }
+      }
+
+      // Populate processing array loop patterns for pure values (Decimals Mode)
+      if(options.length === 0) {
+        options.push(answer);
+        while(options.length < config.choicesCount) {
+          let numAns = parseFloat(answer);
+          let offset = (Math.random() * (numAns * 0.5 || 5)).toFixed(2);
+          let candidate = String((numAns + parseFloat(offset) * (Math.random() > 0.5 ? 1 : -1)).toFixed(3).replace(/\.?0+$/, ""));
+          if(candidate !== answer && !options.includes(candidate) && parseFloat(candidate) >= 0) {
+            options.push(candidate);
+          }
+        }
+      }
+
+      // Scaffold complete sequence parameters array randomly
+      options.sort(() => Math.random() - 0.5);
+      return { prompt, answer, options, selected: null, timeSpent: 0 };
+    }
+
+    // Review Sheet Factory
+    function buildReviewData() {
+      const box = document.getElementById('review-list');
+      box.innerHTML = "";
+      
+      gameState.questions.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = "review-item";
+        
+        const status = (q.selected === q.answer) ? "<b class='correct'>✓ Correct</b>" : "<b class='wrong'>✗ Incorrect</b>";
+        item.innerHTML = `
+          <p><b>Q${idx+1}:</b> ${q.prompt}</p>
+          <p>Your choice: ${q.selected || 'None'} | Correct Answer: ${q.answer}</p>
+          <p>Status: ${status} | Speed: ${(q.timeSpent/1000).toFixed(3)}s</p>
+        `;
+        box.appendChild(item);
+      });
+      MathJax.typesetPromise([box]);
+    }
+
+    // GAS Pipeline Operations Interface
+    function submitToLeaderboard() {
+      if(!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("YOUR_DEPLOYED")) {
+        alert("GAS Web App link not configured. Cannot save dataset entries!");
+        return;
+      }
+      
+      const btn = document.getElementById('save-score-btn');
+      btn.disabled = true;
+      btn.innerText = "Transmitting metrics...";
+
+      const payload = {
+        name: config.name,
+        mode: config.mode,
+        score: gameState.score,
+        total: config.totalQuestions,
+        avgTime: (gameState.totalDuration / config.totalQuestions)
+      };
+
+      fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        alert("Score logged successfully inside ecosystem database!");
+        btn.innerText = "✅ Track Saved";
+        showTab('leaderboard');
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Error mapping cross-origin assets.");
+        btn.disabled = false;
+        btn.innerText = "💾 Try Saving Again";
+      });
+    }
+
+    function fetchLeaderboardData() {
+      if(!GAS_WEB_APP_URL || GAS_WEB_APP_URL.includes("YOUR_DEPLOYED")) return;
+
+      fetch(GAS_WEB_APP_URL)
+      .then(res => res.json())
+      .then(data => {
+        cachedLeaderboard = data;
+        renderLeaderboardView();
+      })
+      .catch(e => console.log("Failed downloading ranks matrix:", e));
+    }
+
+    function renderLeaderboardView() {
+      const activeFilter = document.getElementById('filter-mode').value;
+      const container = document.getElementById('leaderboard-rows');
+      container.innerHTML = "";
+
+      // Sort and filter operational pipelines arrays
+      const filtered = cachedLeaderboard.filter(item => item.mode === activeFilter);
+
+      if(filtered.length === 0) {
+        container.innerHTML = `<tr><td colspan="5">No structural data points listed under this game mode.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>${escapeHtml(row.name)}</td>
+          <td>${row.score}</td>
+          <td>${row.total}</td>
+          <td>${parseFloat(row.avgTime).toFixed(3)} ms</td>
+        `;
+        container.appendChild(tr);
+      });
+    }
+
+    function showTab(target) {
+      document.getElementById('screen-result').classList.add('hidden');
+      document.getElementById('screen-board').classList.remove('hidden');
+
+      if(target === 'leaderboard') {
+        document.getElementById('tab-leaderboard-content').classList.remove('hidden');
+        document.getElementById('tab-review-content').classList.add('hidden');
+        document.getElementById('board-title').innerText = "🏆 High Scores Station";
+        document.getElementById('filter-mode').value = config.mode;
+        renderLeaderboardView();
+      } else {
+        document.getElementById('tab-leaderboard-content').classList.add('hidden');
+        document.getElementById('tab-review-content').classList.remove('hidden');
+        document.getElementById('board-title').innerText = "🔍 Pupil Test Review";
+      }
+    }
+
+    function resetToMenu() {
+      document.getElementById('screen-result').classList.add('hidden');
+      document.getElementById('screen-board').classList.add('hidden');
+      document.getElementById('screen-setup').classList.remove('hidden');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
