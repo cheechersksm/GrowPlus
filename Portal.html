@@ -709,6 +709,7 @@
             document.getElementById('stuAvatar').innerText = currentUser.Avatar || '🧑‍🎓';
             document.getElementById('stuAvatarBg').style.backgroundColor = currentUser.BgColor || '#d1fae5';
             document.getElementById('stuNickname').innerText = currentUser.Nickname || currentUser.FullName;
+            document.getElementById('stuCoins').innerText = currentUser.Coins || 0;
             updatePlantUI(currentUser.Maturity, currentUser.Level);
             
             const lastCheckVal = currentUser.LastCheckIn ? String(currentUser.LastCheckIn).substring(0, 10) : "";
