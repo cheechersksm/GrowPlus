@@ -69,7 +69,12 @@
                 </div>
                 <div>
                     <p id="stuNickname" class="font-bold text-gray-800 leading-tight">Student</p>
-                    <p class="text-xs text-emerald-600 font-medium">Lv. <span id="stuLvl">1</span> <i class="ph-fill ph-drop text-blue-400"></i> <span id="stuMat">0</span>/600</p>
+                    <p class="text-xs text-emerald-600 font-medium flex items-center gap-1">Lv. <span id="stuLvl">1</span> 
+                        <span class="text-gray-300">|</span>
+                        <i class="ph-fill ph-drop text-blue-400"></i> <span id="stuMat">0</span>/600
+                        <span class="text-gray-300">|</span>
+                        <i class="ph-fill ph-coin text-yellow-500"></i> <span id="stuCoins" class="font-bold">0</span> GP
+                    </p>
                 </div>
             </div>
             <button onclick="handleLogout()" class="text-gray-400 hover:text-red-500"><i class="ph ph-sign-out text-2xl"></i></button>
@@ -147,6 +152,7 @@
                                     Launch Game
                                 </button>
                             </div>
+
                             <div class="glass-panel p-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-l-4 border-emerald-500">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-2xl text-emerald-600 font-bold">🔁</div>
@@ -217,6 +223,7 @@
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold"><i class="ph ph-backpack text-orange-500 mr-2"></i>My Backpack</h2>
                     <button onclick="showStudentTab('sendgift')" class="text-sm bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-medium"><i class="ph ph-gift mr-1"></i>Send Gift</button>
+                    <button onclick="openMarketplace()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded shadow flex items-center gap-2">🏪 Marketplace</button>
                 </div>
                 <div id="backpackContainer" class="grid grid-cols-3 gap-3 animate-fade-in"></div>
             </div>
@@ -248,6 +255,58 @@
                         <textarea id="giftMsg" maxlength="60" rows="2" class="w-full p-2 rounded border outline-none" oninput="document.getElementById('msgCount').innerText = 60 - this.value.length"></textarea>
                     </div>
                     <button id="btnSendGift" onclick="sendGift()" class="btn-green w-full py-2 rounded font-bold mt-2">Send Gift</button>
+                </div>
+            </div>
+            
+            <!-- Pupil Marketplace Overlay -->
+            <div id="pupilMarketplace" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 overflow-y-auto">
+                <div class="bg-white max-w-4xl mx-auto mt-10 rounded-xl shadow-2xl p-6 relative">
+                    <button onclick="closeMarketplace()" class="absolute top-4 right-4 text-gray-500 hover:text-red-500 text-2xl">✖</button>
+                    
+                    <h2 class="text-2xl font-bold text-emerald-800 mb-4">Harvest Marketplace 🛒</h2>
+                    
+                    <!-- Marketplace Navigation -->
+                    <div class="flex gap-4 border-b pb-2 mb-4">
+                        <button onclick="switchMarketTab('shop')" class="font-bold text-emerald-600 border-b-2 border-emerald-600 px-2" id="tab-shop">Shop</button>
+                        <button onclick="switchMarketTab('orders')" class="text-gray-500 hover:text-emerald-500 px-2" id="tab-orders">My Orders</button>
+                    </div>
+
+                    <!-- SHOP TAB -->
+                    <div id="market-shop-view">
+                        <div id="marketItemsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Items will be injected here via JS -->
+                        </div>
+                        
+                        <!-- Floating Cart Summary -->
+                        <div class="mt-6 bg-emerald-50 p-4 rounded-lg border border-emerald-200 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-emerald-800">Your Cart (<span id="cartCount">0</span> items)</h3>
+                                <p class="text-sm font-bold text-yellow-600" id="cartTotal">Total: 0 GP</p>
+                            </div>
+                            <button onclick="checkoutCart()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2 rounded-lg shadow-md transition-all flex items-center gap-2">
+                                <i class="ph-fill ph-shopping-cart"></i> Checkout
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- MY ORDERS TAB -->
+                    <div id="market-orders-view" class="hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th class="p-3 rounded-tl-lg">Order ID</th>
+                                        <th class="p-3">Items</th>
+                                        <th class="p-3">Total Paid</th>
+                                        <th class="p-3 rounded-tr-lg">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="myOrdersTableBody">
+                                    <!-- Orders injected here via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -374,6 +433,7 @@
                 <a href="#" onclick="showAdminTab('challenge')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="challenge"><i class="ph ph-target mr-3"></i>Challenges</a>
                 <a href="#" onclick="showAdminTab('exam')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="exam"><i class="ph ph-exam mr-3"></i>Exams</a>
                 <a href="#" onclick="showAdminTab('info')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="info"><i class="ph ph-megaphone mr-3"></i>Info</a>
+                <a href="#" onclick="showAdminTab('marketplace')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="marketplace"><i class="ph ph-storefront mr-3"></i>Marketplace</a>
             </nav>
         </div>
 
@@ -442,6 +502,48 @@
                     </table>
                 </div>
             </div>
+
+                        <!-- Teacher "Add Item" Modal Popup -->
+            <div id="addItemModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+                <div class="bg-white w-full max-w-md p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-xl font-bold mb-4 text-emerald-800">Add Marketplace Item</h3>
+                    
+                    <div class="space-y-4">
+                        <!-- Item Image -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Item Image</label>
+                            <input type="file" id="itemImage" accept="image/*" class="w-full p-2 border rounded-lg text-sm bg-gray-50 focus:bg-white">
+                        </div>
+                        
+                        <!-- Item Name -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Item Name</label>
+                            <input type="text" id="itemName" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="e.g. Keychain, Sticker, Pen">
+                        </div>
+                        
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Description</label>
+                            <textarea id="itemDesc" class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none" rows="2" placeholder="Brief description of the item..."></textarea>
+                        </div>
+                        
+                        <!-- Item Cost in GP Coins -->
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Cost (GP Coins)</label>
+                            <div class="relative">
+                                <input type="number" id="itemCost" min="1" class="w-full p-2.5 pl-3 pr-12 border rounded-lg text-sm font-bold text-amber-600 focus:ring-2 focus:ring-amber-500 outline-none" placeholder="e.g. 40">
+                                <span class="absolute right-3 top-2.5 text-xs font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded">GP</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Actions -->
+                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
+                        <button onclick="closeAddItemModal()" class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg font-semibold text-sm transition">Cancel</button>
+                        <button onclick="submitNewMarketItem()" class="px-5 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-bold text-sm shadow-md transition">Save Item</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -482,6 +584,7 @@
         let curriculumCache = [];
         let classesCache = [];
         let studentsCache = {};
+        let cart = [];
 
         // Auto-authenticates and recovers user data on load using the browser sandbox session cache
         window.onload = async function() {
@@ -573,7 +676,7 @@
             
             // 6. ULTIMATE FALLBACK: If the browser blocks top window changes, 
             // convert the inner container into an explicit clickable panel.
-            const baseUrl = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+            const baseUrl = "https://cheechersksm.github.io/GrowPlus";
             
             document.body.innerHTML = `
               <div style="font-family: 'Poppins', sans-serif; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: #f0fdf4; color: #166534; padding: 20px;">
@@ -1226,7 +1329,9 @@
                             </div>`;
                     }).join('');
                 }
-            } catch(e) {}
+            } catch(e) {                
+                console.error("Error loading assignments:", e);
+                }
             hideLoader();
         }
 
@@ -1267,12 +1372,26 @@
                 container.innerHTML = currentBackpack.map(b => {
                     const typeLabel = b.Type || 'Item';
                     const fullMessage = b.Message || '';
+
+                    // Generate Sell Button conditionally if the item is a Harvest
+                    let sellBtnHtml = '';
+                    const currentType = (b.Type || '').toLowerCase();
+
+                    // Show sell button if it's either a Harvest OR a Gift
+                    if (currentType === 'harvest' || currentType === 'gift') {
+                        sellBtnHtml = `
+                            <button onclick="sellHarvest('${b.Id}')" class="mt-3 w-full py-1.5 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold rounded shadow-sm text-[10px] transition flex items-center justify-center gap-1">
+                                <i class="ph-fill ph-coin"></i> Sell (60 GP)
+                            </button>
+                        `;
+                    }
                     
                     return `
                         <div class="glass-panel p-4 text-center flex flex-col justify-between items-center relative border border-emerald-100 min-h-[140px] hover:shadow-md transition duration-200">
                             <span class="absolute top-1.5 right-1.5 text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${typeLabel}</span>
                             <div class="text-sm font-semibold text-gray-800 my-auto pt-4 break-words w-full px-1">${fullMessage}</div>
                             <div class="text-[10px] text-gray-500 font-medium mt-2">From: ${b.SenderName || 'System'}</div>
+                            ${sellBtnHtml}
                         </div>
                     `;
                 }).join('');
@@ -1305,6 +1424,40 @@
                 
             } catch(e) { console.error(e); }
             hideLoader();
+        }
+
+        async function sellHarvest(itemId) {
+            Swal.fire({
+                title: 'Sell Harvest?',
+                text: "You will trade this harvest for 60 GP. This action cannot be undone.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#9ca3af',
+                confirmButtonText: 'Yes, sell it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    showLoader();
+                    try {
+                        // Call the new backend function
+                        const res = await api.run('sellHarvestItem', currentUser.Email, itemId);
+                        if (res.success) {
+                            // Update frontend state
+                            currentUser.Coins = res.newCoinsTotal;
+                            document.getElementById('stuCoins').innerText = currentUser.Coins;
+                            
+                            Swal.fire('Sold!', '60 GP has been added to your account.', 'success');
+                            loadBackpack(); // Refresh the visual backpack
+                        } else {
+                            Swal.fire('Failed', res.message, 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire('Error', 'Could not connect to the server.', 'error');
+                    }
+                    hideLoader();
+                }
+            });
         }
 
         async function loadLeaderboard() {
@@ -1811,8 +1964,159 @@
                     `).join('');
                 }
 
+            else if (type === 'Marketplace' || type === 'marketplace') {
+                    title.innerText = 'Pupil Orders & Marketplace Management';
+                    
+                    btnAdd.classList.remove('hide');
+                    btnAdd.innerText = '+ Add New Item';
+                    btnAdd.onclick = () => openAddItemModal();
+
+                    // Set up main headers for Orders Table
+                    thead.innerHTML = `
+                        <tr>
+                            <th class="p-3">Order ID</th>
+                            <th class="p-3">Pupil</th>
+                            <th class="p-3">Items</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3 text-center">Actions</th>
+                        </tr>
+                    `;
+
+                    // Load student orders with mapped Full Names
+                    await loadAdminOrdersWithNames(tbody);
+
+                    // Render Marketplace Items Section underneath the Orders Table
+                    renderMarketplaceItemsSection(customCtrl);
+                }
+
             } catch(e) { console.error(e); }
             hideLoader();
+        }
+
+        // Helper function to render orders directly into the main table body
+        async function loadAdminOrdersWithNames(tbody) {
+            try {
+                // Fetch orders and users simultaneously
+                const [orders, users] = await Promise.all([
+                    api.run('getAdminData', 'MarketOrders'),
+                    api.run('getAdminData', 'Users')
+                ]);
+
+                if (!orders || orders.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400 italic">No orders found.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = orders.map(order => {
+                    const orderId = order.OrderId || order.Id || '-';
+                    const email = order.PupilEmail || order.Email || order.Pupil || '';
+                    
+                    // Look up pupil full name from Users database
+                    const matchingUser = users.find(u => String(u.Email).trim().toLowerCase() === String(email).trim().toLowerCase());
+                    
+                    const pupilDisplay = matchingUser 
+                        ? `${matchingUser.FullName} <span class="text-xs text-gray-400 font-normal">(${matchingUser.Class || 'No Class'})</span>` 
+                        : (email || 'Unknown Pupil');
+
+                    const items = order.Items || '-';
+                    const status = order.Status || 'Pending';
+
+                    let badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                    if (status === 'Processing') {
+                        badgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
+                    } else if (status === 'Done' || status === 'Completed') {
+                        badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                    }
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50 transition">
+                            <td class="p-3 font-mono text-xs font-bold text-gray-700">${orderId}</td>
+                            <td class="p-3 text-gray-800 font-semibold">${pupilDisplay}</td>
+                            <td class="p-3 text-gray-600">${items}</td>
+                            <td class="p-3">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                                    ${status}
+                                </span>
+                            </td>
+                            <td class="p-3 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    ${status !== 'Processing' && status !== 'Done' && status !== 'Completed' ? `
+                                        <button onclick="updateOrderStatus('${orderId}', 'Processing')" 
+                                            class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold shadow-sm transition">
+                                            Process
+                                        </button>
+                                    ` : ''}
+                                    
+                                    ${status !== 'Done' && status !== 'Completed' ? `
+                                        <button onclick="updateOrderStatus('${orderId}', 'Done')" 
+                                            class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow-sm transition">
+                                            Done
+                                        </button>
+                                    ` : `
+                                        <span class="text-xs text-emerald-600 font-bold flex items-center justify-center gap-1">
+                                            Completed
+                                        </span>
+                                    `}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).reverse().join('');
+
+            } catch (err) {
+                console.error('Failed to load orders:', err);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Error loading orders.</td></tr>`;
+            }
+        }
+
+        async function renderMarketplaceItemsSection(container) {
+            container.classList.remove('hide');
+            container.innerHTML = `
+                <div class="mt-8 border-t pt-6 w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-gray-800">Current Marketplace Items</h3>
+                    </div>
+                    <div id="adminItemsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <p class="text-gray-400 text-sm">Loading items...</p>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const items = await api.run('getAdminData', 'MarketItems');
+                const grid = document.getElementById('adminItemsGrid');
+
+                if (!items || items.length === 0) {
+                    grid.innerHTML = `<p class="text-gray-400 italic col-span-full">No items added to the marketplace yet.</p>`;
+                    return;
+                }
+
+                grid.innerHTML = items.map(item => `
+                    <div class="bg-white border rounded-xl p-4 shadow-sm flex gap-4 items-center relative">
+                        <img src="${item.ImageUrl || 'https://via.placeholder.com/80?text=No+Image'}" 
+                            alt="${item.Name}" 
+                            class="w-20 h-20 object-cover rounded-lg border bg-gray-50 flex-shrink-0" />
+                        
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-gray-800 text-base truncate">${item.Name}</h4>
+                            <p class="text-xs text-gray-500 line-clamp-2 my-1">${item.Description || 'No description'}</p>
+                            <span class="inline-block bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-2 py-0.5 rounded">
+                                ${item.Cost || item.Points || 0} GP
+                            </span>
+                        </div>
+
+                        <button onclick="deleteAdminRecord('MarketItems', '${item.Id}', 'Marketplace')" 
+                                class="text-red-400 hover:text-red-600 p-1 self-start" title="Delete Item">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+
+            } catch (e) {
+                console.error('Failed to load marketplace items list:', e);
+            }
         }
 
         async function saveLiveGrade(assignmentId, studentEmail, submissionId, btn) {
@@ -2355,6 +2659,430 @@
                 }); 
             }
         }); 
+
+        // --- PUPIL MARKETPLACE LOGIC ---
+        let pupilCart = [];
+
+        function openMarketplace() {
+            document.getElementById('pupilMarketplace').classList.remove('hidden');
+            loadMarketItems(); // Fetch items from GAS
+        }
+
+        function closeMarketplace() {
+            document.getElementById('pupilMarketplace').classList.add('hidden');
+        }
+
+        // FETCH & RENDER ITEMS FROM GAS
+        async function loadMarketItems() {
+            const grid = document.getElementById('marketItemsGrid');
+            if (!grid) return;
+            
+            grid.innerHTML = '<p class="text-gray-400 text-sm col-span-full">Loading marketplace items...</p>';
+            
+            try {
+                const items = await api.run('getMarketItems');
+                
+                if (!items || items.length === 0) {
+                    grid.innerHTML = '<p class="text-gray-500 text-sm col-span-full">No items available right now. Check back later!</p>';
+                    return;
+                }
+                
+                grid.innerHTML = items.map(item => `
+                    <div class="border border-gray-100 rounded-xl p-4 bg-white shadow-sm flex flex-col justify-between">
+                        <div>
+                            <img src="${item.imageUrl}" class="w-full h-32 object-cover rounded-lg mb-3 bg-gray-100" alt="${item.name}">
+                            <h4 class="font-bold text-gray-800">${item.name}</h4>
+                            <p class="text-xs text-gray-500 mb-3 line-clamp-2">${item.desc}</p>
+                        </div>
+                        <div>
+                            <div class="mb-3">
+                                <span class="inline-block bg-emerald-50 text-emerald-700 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-100">
+                                    Req: ${item.costValue} (${item.costType})
+                                </span>
+                            </div>
+                            <button onclick="addToCart('${item.id}', '${item.name}', '${item.costValue}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2 rounded-lg font-bold transition">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (err) {
+                grid.innerHTML = '<p class="text-red-500 text-sm col-span-full">Failed to load marketplace items from server.</p>';
+                console.error("Error loading market items:", err);
+            }
+        }
+
+        function switchMarketTab(tab) {
+            if(tab === 'shop') {
+                document.getElementById('market-shop-view').classList.remove('hidden');
+                document.getElementById('market-orders-view').classList.add('hidden');
+                document.getElementById('tab-shop').classList.add('font-bold', 'text-emerald-600', 'border-b-2', 'border-emerald-600');
+                document.getElementById('tab-orders').classList.remove('font-bold', 'text-emerald-600', 'border-b-2', 'border-emerald-600');
+            } else {
+                document.getElementById('market-shop-view').classList.add('hidden');
+                document.getElementById('market-orders-view').classList.remove('hidden');
+                document.getElementById('tab-orders').classList.add('font-bold', 'text-emerald-600', 'border-b-2', 'border-emerald-600');
+                document.getElementById('tab-shop').classList.remove('font-bold', 'text-emerald-600', 'border-b-2', 'border-emerald-600');
+                loadMyOrders();
+            }
+        }
+
+        // --- UPDATED CART LOGIC ---
+        function addToCart(itemId, itemName, costValue) {
+            // Extract the numeric value from strings like "5" or "5 (Points)"
+            const numericCost = parseFloat(costValue) || 0;
+            
+            // Check if item is already in cart, if so increase quantity or push new
+            pupilCart.push({ 
+                id: itemId, 
+                name: itemName, 
+                cost: numericCost 
+            });
+            
+            updateCartUI();
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `${itemName} added to cart!`,
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+
+        function updateCartUI() {
+            // 1. Update item count
+            document.getElementById('cartCount').innerText = pupilCart.length;
+            
+            // 2. Calculate total harvest cost
+            const totalCost = pupilCart.reduce((sum, item) => sum + item.cost, 0);
+            
+            // 3. Update total text on UI
+            const totalElement = document.getElementById('cartTotal');
+            if (totalElement) {
+                totalElement.innerText = `Total: ${totalCost} Harvests`;
+            }
+        }
+
+        async function checkoutCart() {
+            // 1. Check if pupilCart exists and has items
+            if (!pupilCart || pupilCart.length === 0) {
+                return Swal.fire('Cart Empty', 'Please add items to your cart first.', 'warning');
+            }
+
+            // 2. Calculate total using item.cost (matching pupilCart's structure)
+            const totalCost = pupilCart.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
+
+            // 3. Check GP Balance
+            if ((currentUser.Coins || 0) < totalCost) {
+                return Swal.fire('Insufficient GP', `You need ${totalCost} GP, but only have ${currentUser.Coins || 0} GP.`, 'error');
+            }
+
+            showLoader();
+            try {
+                // Send pupilCart to backend
+                const res = await api.run('processCheckout', currentUser.Email, pupilCart, totalCost);
+                
+                if (res.success) {
+                    currentUser.Coins = res.newCoinsTotal;
+                    document.getElementById('stuCoins').innerText = currentUser.Coins;
+                    
+                    // Clear pupilCart and reset UI
+                    pupilCart = []; 
+                    updateCartUI();
+                    
+                    Swal.fire('Success!', 'Your order has been placed.', 'success');
+                } else {
+                    Swal.fire('Checkout Failed', res.message, 'error');
+                }
+            } catch (err) {
+                console.error('Checkout error:', err);
+                Swal.fire('Error', 'Could not process transaction.', 'error');
+            }
+            hideLoader();
+        }
+
+        async function loadMyOrders() {
+            try {
+                // Ensure this reads from 'MarketOrders'
+                const allOrders = await api.run('getAdminData', 'MarketOrders'); 
+                
+                // Filter orders for the logged-in student
+                const myOrders = allOrders.filter(o => 
+                    String(o.PupilEmail || o.Email).trim().toLowerCase() === String(currentUser.Email).trim().toLowerCase()
+                );
+
+                const container = document.getElementById('myOrdersTableBody'); // Ensure ID matches your HTML <tbody>
+                if (!container) return;
+
+                if (myOrders.length === 0) {
+                    container.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-gray-400">No orders found.</td></tr>`;
+                    return;
+                }
+
+                container.innerHTML = myOrders.map(o => {
+                    const status = o.Status || 'Pending';
+
+                    // Match teacher badge styling & states
+                    let badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                    if (status === 'Processing') {
+                        badgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
+                    } else if (status === 'Done' || status === 'Completed') {
+                        badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                    }
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50 transition">
+                            <td class="py-2 px-3 font-semibold font-mono text-xs text-gray-700">${o.OrderId || o.Id}</td>
+                            <td class="py-2 px-3 text-gray-800">${o.Items}</td>
+                            <td class="py-2 px-3 font-bold text-amber-600">${o.TotalPaid || o.Cost} GP</td>
+                            <td class="py-2 px-3">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                                    ${status}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load orders:', err);
+            }
+        }
+
+        // --- TEACHER ADMIN LOGIC ---
+
+        function openAddItemModal() {
+            document.getElementById('addItemModal').classList.remove('hidden');
+        }
+
+        function closeAddItemModal() {
+            document.getElementById('addItemModal').classList.add('hidden');
+        }
+
+        function toggleCostUI() {
+            const costType = document.querySelector('input[name="costType"]:checked').value;
+            if (costType === 'Points') {
+                document.getElementById('costAmountDiv').classList.remove('hidden');
+                document.getElementById('costSpecificDiv').classList.add('hidden');
+            } else {
+                document.getElementById('costAmountDiv').classList.add('hidden');
+                document.getElementById('costSpecificDiv').classList.remove('hidden');
+            }
+        }
+
+        // 1. Fetch and load orders into the Admin Table
+        async function loadAdminOrders() {
+            const tbody = document.getElementById('adminOrdersTableBody');
+            if (!tbody) return;
+
+            try {
+                // Fetch data from the MarketOrders sheet
+                const orders = await api.run('getAdminData', 'MarketOrders');
+
+                if (!orders || orders.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-gray-400 italic">No orders found.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Render each row matching your HTML table structure
+                tbody.innerHTML = orders.map(order => {
+                    const orderId = order.OrderId || order.Id || '-';
+                    const pupil = order.PupilEmail || order.Email || order.Pupil || 'Unknown';
+                    const items = order.Items || '-';
+                    const status = order.Status || 'Pending';
+
+                    // Badge styling according to status
+                    let badgeClass = 'bg-yellow-100 text-yellow-800 border-yellow-300';
+                    if (status === 'Processing') {
+                        badgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
+                    } else if (status === 'Done' || status === 'Completed') {
+                        badgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                    }
+
+                    return `
+                        <tr class="border-b hover:bg-gray-50 transition">
+                            <td class="p-3 font-mono text-xs font-bold text-gray-700">${orderId}</td>
+                            <td class="p-3 text-gray-800 font-medium">${pupil}</td>
+                            <td class="p-3 text-gray-600">${items}</td>
+                            <td class="p-3">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                                    ${status}
+                                </span>
+                            </td>
+                            <td class="p-3">
+                                <div class="flex items-center gap-1.5">
+                                    ${status !== 'Processing' && status !== 'Done' ? `
+                                        <button onclick="updateOrderStatus('${orderId}', 'Processing')" 
+                                            class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold shadow-sm transition">
+                                            Process
+                                        </button>
+                                    ` : ''}
+                                    
+                                    ${status !== 'Done' ? `
+                                        <button onclick="updateOrderStatus('${orderId}', 'Done')" 
+                                            class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow-sm transition">
+                                            Done
+                                        </button>
+                                    ` : `
+                                        <span class="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                                            <i class="ph-fill ph-check-circle"></i> Completed
+                                        </span>
+                                    `}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).reverse().join(''); // Reverse so newest orders appear at the top
+
+            } catch (err) {
+                console.error('Failed to load admin orders:', err);
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Error loading orders.</td></tr>`;
+            }
+        }
+
+        // 2. Action handler to update status in backend
+        async function updateOrderStatus(orderId, newStatus) {
+            Swal.fire({
+                title: `Mark as ${newStatus}?`,
+                text: `Update status for order ${orderId}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: newStatus === 'Done' ? '#10b981' : '#2563eb',
+                confirmButtonText: 'Yes, update!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    showLoader();
+                    try {
+                        const res = await api.run('updateOrderStatusInSheet', orderId, newStatus);
+                        if (res.success) {
+                            Swal.fire({
+                                toast: true,
+                                position: 'top-end',
+                                icon: 'success',
+                                title: `Order updated to ${newStatus}`,
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                            loadAdminOrders(); // Refresh table view
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire('Error', 'Could not update order status.', 'error');
+                    }
+                    hideLoader();
+                }
+            });
+        }
+
+        async function submitNewMarketItem() {
+            const name = document.getElementById('itemName').value.trim();
+            const desc = document.getElementById('itemDesc').value.trim();
+            const cost = document.getElementById('itemCost').value;
+            const imageFile = document.getElementById('itemImage').files[0];
+
+            if (!name || !cost) {
+                return Swal.fire('Missing Details', 'Please fill in both the item name and GP cost.', 'warning');
+            }
+
+            showLoader();
+
+            try {
+                let imageUrl = '';
+
+                // Optional: Convert uploaded image file to Base64 (or upload to server)
+                if (imageFile) {
+                    imageUrl = await convertFileToBase64(imageFile);
+                }
+
+                const payload = {
+                    Name: name,
+                    Description: desc,
+                    CostType: 'GP',        // Matches your GP economy update
+                    CostValue: parseInt(cost, 10), // The GP amount entered
+                    ImageUrl: imageUrl,
+                    Visible: 'TRUE'          // Ensures the item shows up for pupils
+                };
+
+                await api.run('addMarketItem', payload);
+
+                closeAddItemModal();
+                Swal.fire('Success!', 'New marketplace item added.', 'success');
+
+                // Reset inputs
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemDesc').value = '';
+                document.getElementById('itemCost').value = '';
+                document.getElementById('itemImage').value = '';
+
+                // Refresh section list
+                const customCtrl = document.getElementById('adminCustomControls');
+                renderMarketplaceItemsSection(customCtrl);
+
+            } catch (err) {
+                console.error('Failed to add market item:', err);
+                Swal.fire('Error', 'Could not save the item. Please try again.', 'error');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // Helper to convert file input to base64 data string
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function openMarketplaceModal() {
+          // 1. Show the modal
+          document.getElementById('marketplaceModal').classList.remove('hidden');
+          
+          // 2. Clear & set loading state
+          const grid = document.getElementById('marketItemsGrid'); // Target container for items
+          if (grid) grid.innerHTML = '<p class="text-gray-400 text-sm col-span-full">Loading items...</p>';
+          
+          try {
+            // 3. Fetch items from backend
+            const items = await api.run('getMarketItems');
+            
+            if (!items || items.length === 0) {
+              grid.innerHTML = '<p class="text-gray-500 text-sm col-span-full">No items available right now.</p>';
+              return;
+            }
+            
+            // 4. Render items into HTML
+            grid.innerHTML = items.map(item => `
+              <div class="border border-gray-100 rounded-xl p-4 bg-white shadow-sm flex flex-col justify-between">
+                <img src="${item.imageUrl}" class="w-full h-32 object-cover rounded-lg mb-3" alt="${item.name}">
+                <div>
+                  <h4 class="font-bold text-gray-800">${item.name}</h4>
+                  <p class="text-xs text-gray-500 mb-2">${item.desc}</p>
+                  <span class="inline-block bg-emerald-100 text-emerald-800 text-xs px-2 py-1 rounded font-semibold mb-3">
+                    Req: ${item.costValue} (${item.costType})
+                  </span>
+                </div>
+                <button onclick="addToCart('${item.id}', '${item.name}', '${item.costValue}')" class="w-full btn-green text-xs py-2 rounded-lg font-bold">
+                  Add to Cart
+                </button>
+              </div>
+            `).join('');
+            
+          } catch (err) {
+            if (grid) grid.innerHTML = '<p class="text-red-500 text-sm col-span-full">Failed to load marketplace items.</p>';
+            console.error(err);
+          }
+        }
+
     </script>
 </body>
 </html>
