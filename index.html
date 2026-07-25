@@ -253,21 +253,36 @@
                 document.getElementById('parentHomework').innerHTML = hwHtml || '<p class="text-sm text-gray-400 italic">No tasks found.</p>';
                 
                 const exHtml = res.exams.map(e => {
-                    let badgeClass = 'bg-gray-100 text-gray-700 border-gray-300';
-                    if (e.Grade === 'E') badgeClass = 'bg-orange-100 text-orange-700 border-orange-200';
-                    if (e.Grade === 'F') badgeClass = 'bg-red-100 text-red-700 border-red-200';
-                    if (e.Grade === 'A' || e.Grade === 'B' || e.Grade === 'C' || e.Grade === 'D') badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
-                    
-                    return `
-                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <span class="font-medium text-gray-700">${e.ExamName}</span>
-                            <div class="text-right">
-                                <span class="font-bold text-gray-900">${e.Score}%</span>
-                                <span class="ml-2 text-xs font-bold px-2 py-1 border rounded-md ${badgeClass}">Grade ${e.Grade}</span>
+                        // 1. Declare nameLower inside the loop for each exam object
+                        const nameLower = String(e.ExamName || '').toLowerCase();
+                        
+                        // 2. Perform the double condition check
+                        const isMidTerm2026 = nameLower.includes('mid') && nameLower.includes('2026');
+
+                        // 3. Set badge color
+                        let badgeClass = 'bg-gray-100 text-gray-700 border-gray-300';
+                        if (e.Grade === 'E') badgeClass = 'bg-orange-100 text-orange-700 border-orange-200';
+                        if (e.Grade === 'F') badgeClass = 'bg-red-100 text-red-700 border-red-200';
+                        if (e.Grade === 'A' || e.Grade === 'B' || e.Grade === 'C' || e.Grade === 'D') badgeClass = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+
+                        return `
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                <span class="font-medium text-gray-700">${e.ExamName}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-gray-900">${e.Score}%</span>
+                                    <span class="text-xs font-bold px-2 py-1 border rounded-md ${badgeClass}">Grade ${e.Grade}</span>
+                                    
+                                    ${isMidTerm2026 ? `
+                                        <button onclick="goToExamDashboard('${ic}')" 
+                                            class="ml-1 px-3 py-1 bg-pink-600 hover:bg-pink-700 text-white rounded-md text-xs font-bold shadow-sm transition flex items-center gap-1">
+                                            <i class="ph ph-chart-bar"></i> Analyze
+                                        </button>
+                                    ` : ''}
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                
                 document.getElementById('parentExams').innerHTML = exHtml || '<p class="text-sm text-gray-400 italic">No exam entries.</p>';
             } else {
                 Swal.fire('No student found', res.message, 'warning');
@@ -276,6 +291,22 @@
             console.error(e); 
         }
         btn.innerText = 'Search'; btn.disabled = false;
+    }
+    
+    function goToExamDashboard(icNumber) {
+            if (!icNumber) {
+                alert("IC Number missing.");
+                return;
+            }
+
+            // Automatically grabs the current GAS web app base URL (/exec)
+            const baseUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec"
+            
+            // Builds the full URL targeting page=exam and appending the pupil IC
+            const finalUrl = `${baseUrl}?page=MidTerm2026&ic=${encodeURIComponent(icNumber)}`;
+            
+            // Opens the exam analysis dashboard in a new browser tab
+            window.open(finalUrl, "_blank");
     }
 </script>
 </body>
