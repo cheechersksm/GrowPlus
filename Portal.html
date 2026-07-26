@@ -1367,7 +1367,11 @@
                 const bp = await api.run('getAdminData', 'Backpack');
                 const users = await api.run('getAdminData', 'Users');
                 
-                currentBackpack = bp.filter(b => String(b.OwnerEmail).trim().toLowerCase() === String(currentUser.Email).trim().toLowerCase());
+                // Ensure we only show items that belong to the user AND have not been sold
+                currentBackpack = bp.filter(b => 
+                    String(b.OwnerEmail).trim().toLowerCase() === String(currentUser.Email).trim().toLowerCase() && 
+                    String(b.Status).toUpperCase() !== 'FALSE'
+                );
                 
                 const container = document.getElementById('backpackContainer');
                 container.innerHTML = currentBackpack.map(b => {
