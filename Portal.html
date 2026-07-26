@@ -2711,8 +2711,13 @@
         async function loadMarketItems() {
             const grid = document.getElementById('marketItemsGrid');
             if (!grid) return;
-            
-            grid.innerHTML = '<p class="text-gray-400 text-sm col-span-full">Loading marketplace items...</p>';
+
+            grid.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-10 text-emerald-600 gap-2">
+                    <i class="ph ph-spinner animate-spin text-3xl"></i>
+                    <span class="text-xs font-semibold text-gray-500">Loading marketplace items...</span>
+                </div>
+                `
             
             try {
                 const items = await api.run('getMarketItems');
@@ -2800,42 +2805,79 @@
             }
         }
 
+        // State guard variable to prevent duplicate requests
+        let isCheckingOut = false;
+        
         async function checkoutCart() {
+            // Prevent double execution if a checkout process is already in flight
+            if (isCheckingOut) return;
+        
             // 1. Check if pupilCart exists and has items
             if (!pupilCart || pupilCart.length === 0) {
                 return Swal.fire('Cart Empty', 'Please add items to your cart first.', 'warning');
             }
-
-            // 2. Calculate total using item.cost (matching pupilCart's structure)
+        
+            // 2. Calculate total using item.cost
             const totalCost = pupilCart.reduce((sum, item) => sum + (Number(item.cost) || 0), 0);
-
+        
             // 3. Check GP Balance
             if ((currentUser.Coins || 0) < totalCost) {
                 return Swal.fire('Insufficient GP', `You need ${totalCost} GP, but only have ${currentUser.Coins || 0} GP.`, 'error');
             }
-
-            showLoader();
+        
+            // Target the Checkout button to lock and show processing UI
+            const btnCheckout = document.getElementById('btnCheckout') || document.querySelector('button[onclick*="checkoutCart"]');
+            const originalBtnText = btnCheckout ? btnCheckout.innerHTML : 'Checkout';
+        
             try {
+                // Lock state and update button UX
+                isCheckingOut = true;
+                if (btnCheckout) {
+                    btnCheckout.disabled = true;
+                    btnCheckout.classList.add('opacity-50', 'cursor-not-allowed');
+                    btnCheckout.innerHTML = `<i class="ph ph-spinner animate-spin mr-1"></i> Processing...`;
+                }
+        
+                showLoader();
+        
                 // Send pupilCart to backend
                 const res = await api.run('processCheckout', currentUser.Email, pupilCart, totalCost);
                 
                 if (res.success) {
                     currentUser.Coins = res.newCoinsTotal;
-                    document.getElementById('stuCoins').innerText = currentUser.Coins;
+                    const coinsElem = document.getElementById('stuCoins');
+                    if (coinsElem) coinsElem.innerText = currentUser.Coins;
                     
                     // Clear pupilCart and reset UI
                     pupilCart = []; 
-                    updateCartUI();
+                    if (typeof updateCartUI === 'function') updateCartUI();
                     
-                    Swal.fire('Success!', 'Your order has been placed.', 'success');
+                    // SweetAlert alert on success, then switch immediately to My Orders
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Your order has been placed.',
+                        icon: 'success',
+                        confirmButtonColor: '#059669'
+                    }).then(() => {
+                        switchMarketTab('orders'); // Straight to My Orders view
+                    });
+        
                 } else {
                     Swal.fire('Checkout Failed', res.message, 'error');
                 }
             } catch (err) {
                 console.error('Checkout error:', err);
                 Swal.fire('Error', 'Could not process transaction.', 'error');
+            } finally {
+                // Unlock state and restore button UI
+                isCheckingOut = false;
+                if (btnCheckout) {
+                    btnCheckout.disabled = false;
+                    btnCheckout.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btnCheckout.innerHTML = originalBtnText;
+                }
+                hideLoader();
             }
-            hideLoader();
         }
 
         async function loadMyOrders() {
