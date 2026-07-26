@@ -1388,7 +1388,8 @@
                     }
                     
                     return `
-                        <div class="glass-panel p-4 text-center flex flex-col justify-between items-center relative border border-emerald-100 min-h-[140px] hover:shadow-md transition duration-200">
+                        <div id="backpack-card-${b.Id}" 
+                        class="glass-panel p-4 text-center flex flex-col justify-between items-center relative border border-emerald-100 min-h-[140px] hover:shadow-md transition duration-200">
                             <span class="absolute top-1.5 right-1.5 text-[9px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">${typeLabel}</span>
                             <div class="text-sm font-semibold text-gray-800 my-auto pt-4 break-words w-full px-1">${fullMessage}</div>
                             <div class="text-[10px] text-gray-500 font-medium mt-2">From: ${b.SenderName || 'System'}</div>
@@ -1427,7 +1428,13 @@
             hideLoader();
         }
 
+        // State tracker to prevent duplicate requests on the same item
+        const sellingInProgress = new Set();
+        
         async function sellHarvest(itemId) {
+            // 1. Guard against double execution if already processing this item
+            if (sellingInProgress.has(itemId)) return;
+        
             Swal.fire({
                 title: 'Sell Harvest?',
                 text: "You will trade this harvest for 60 GP. This action cannot be undone.",
@@ -1438,25 +1445,52 @@
                 confirmButtonText: 'Yes, sell it!'
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    // Lock this item ID to prevent rapid multi-clicks
+                    sellingInProgress.add(itemId);
+        
+                    // 2. Optimistically remove/hide the card element immediately from UI
+                    const itemCard = document.getElementById(`backpack-card-${itemId}`);
+                    if (itemCard) {
+                        itemCard.style.opacity = '0.4';
+                        itemCard.style.pointerEvents = 'none'; // Disable any further clicks
+                    }
+        
                     showLoader();
                     try {
-                        // Call the new backend function
+                        // Call backend function
                         const res = await api.run('sellHarvestItem', currentUser.Email, itemId);
+                        
                         if (res.success) {
-                            // Update frontend state
+                            // Update user coin balance
                             currentUser.Coins = res.newCoinsTotal;
-                            document.getElementById('stuCoins').innerText = currentUser.Coins;
-                            
+                            const coinsElem = document.getElementById('stuCoins');
+                            if (coinsElem) coinsElem.innerText = currentUser.Coins;
+        
                             Swal.fire('Sold!', '60 GP has been added to your account.', 'success');
-                            loadBackpack(); // Refresh the visual backpack
+                            
+                            // Reload backpack to get accurate server state
+                            await loadBackpack();
                         } else {
+                            // Revert UI if backend rejected the sale
+                            if (itemCard) {
+                                itemCard.style.opacity = '1';
+                                itemCard.style.pointerEvents = 'auto';
+                            }
                             Swal.fire('Failed', res.message, 'error');
                         }
                     } catch (err) {
                         console.error(err);
+                        // Revert UI on network failure
+                        if (itemCard) {
+                            itemCard.style.opacity = '1';
+                            itemCard.style.pointerEvents = 'auto';
+                        }
                         Swal.fire('Error', 'Could not connect to the server.', 'error');
+                    } finally {
+                        // Unlock item processing flag
+                        sellingInProgress.delete(itemId);
+                        hideLoader();
                     }
-                    hideLoader();
                 }
             });
         }
