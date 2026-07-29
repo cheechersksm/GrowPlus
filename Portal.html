@@ -1301,6 +1301,8 @@
                 
                 const emailLower = currentUser.Email.trim().toLowerCase();
                 const targetedAssignments = allAss.filter(a => {
+                    const visibleVal = String(a.Visible || '').trim().toUpperCase();
+                    if (visibleVal === 'FALSE') return false;
                     const targetStr = String(a.AssignedTo || '').trim();
                     if (!targetStr || targetStr.toLowerCase() === 'all') return true;
                     const targetEmails = targetStr.toLowerCase().split(',').map(e => e.trim());
@@ -2140,7 +2142,7 @@
                             <h4 class="font-bold text-gray-800 text-base truncate">${item.Name}</h4>
                             <p class="text-xs text-gray-500 line-clamp-2 my-1">${item.Description || 'No description'}</p>
                             <span class="inline-block bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-2 py-0.5 rounded">
-                                ${item.Cost || item.Points || 0} GP
+                                ${item.Cost || item.CostValue} GP
                             </span>
                         </div>
 
@@ -2708,7 +2710,22 @@
         }
 
         function closeMarketplace() {
+            // 1. Hide the modal overlay
             document.getElementById('pupilMarketplace').classList.add('hidden');
+
+            // 2. Reset the cart array
+            pupilCart = [];
+
+            // 3. Update the UI elements (Count & Total GP)
+            if (typeof updateCartUI === 'function') {
+                updateCartUI();
+            } else {
+                // Fallback UI reset if updateCartUI isn't available
+                const cartCount = document.getElementById('cartCount');
+                const cartTotal = document.getElementById('cartTotal');
+                if (cartCount) cartCount.innerText = '0';
+                if (cartTotal) cartTotal.innerText = 'Total: 0 GP';
+            }
         }
 
         // FETCH & RENDER ITEMS FROM GAS
@@ -3075,26 +3092,34 @@
             showLoader();
 
             try {
-                let imageUrl = '';
+                let base64Data = '';
+                let fileName = '';
 
-                // Optional: Convert uploaded image file to Base64 (or upload to server)
+                // Convert selected file to base64 string for transmission
                 if (imageFile) {
-                    imageUrl = await convertFileToBase64(imageFile);
+                    base64Data = await convertFileToBase64(imageFile);
+                    fileName = imageFile.name;
                 }
 
                 const payload = {
                     Name: name,
                     Description: desc,
-                    CostType: 'GP',        // Matches your GP economy update
-                    CostValue: parseInt(cost, 10), // The GP amount entered
-                    ImageUrl: imageUrl,
-                    Visible: 'TRUE'          // Ensures the item shows up for pupils
+                    CostType: 'GP',
+                    CostValue: parseInt(cost, 10),
+                    base64Image: base64Data, // Pass to backend for Drive upload
+                    fileName: fileName,     // Original filename
+                    Visible: 'TRUE'
                 };
 
-                await api.run('addMarketItem', payload);
+                // Send payload to Apps Script backend
+                const res = await api.run('addMarketItem', payload);
+
+                if (res && res.success === false) {
+                    throw new Error(res.message || 'Backend returned an error');
+                }
 
                 closeAddItemModal();
-                Swal.fire('Success!', 'New marketplace item added.', 'success');
+                Swal.fire('Success!', 'New marketplace item added to Drive & Catalog.', 'success');
 
                 // Reset inputs
                 document.getElementById('itemName').value = '';
