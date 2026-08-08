@@ -2,6 +2,10 @@
 <html>
 <head>
   <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Tailwind CSS CDN for Portal button styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
       --mcneil: #2563EB; 
@@ -97,7 +101,7 @@
       background: #f8fafc;
       border: 2px solid #cbd5e1;
       border-radius: 8px;
-      margain: 8px 0;
+      margin: 8px 0;
       padding: 10px;
     }
     .op-category-header {
@@ -136,6 +140,7 @@
 
   <button class="btn-2d btn-play" onclick="startCountdown()">▶ PLAY NOW</button>
   <button class="btn-2d btn-trophy" onclick="openStandings()">🏆 HOUSE STANDINGS</button>
+  
   <div class="flex justify-center mt-4 mb-4">
     <button id="btnBackToPortal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200 flex items-center gap-2">
       <span>← Back to GrowPlus</span>
@@ -188,13 +193,56 @@
 </div>
 
 <script>
-  // 1. Safe Email Retrieval Logic
-  var userEmail = "<?= userEmail ?>"; 
-  if (!userEmail || userEmail === "<?= userEmail ?>" || userEmail === "undefined" || userEmail === "INSERT_USER_EMAIL_HERE") {
-      userEmail = localStorage.getItem('loggedInUserEmail') || "";
-  }
+  // ==================== CONFIGURATION & API BRIDGE ====================
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";[cite: 3]
 
-  // 2. Global State Variables
+  const api = {[cite: 3]
+    run: async function(functionName, ...args) {[cite: 3]
+      try {
+        const response = await fetch(GAS_WEB_APP_URL, {[cite: 3]
+          method: 'POST',[cite: 3]
+          body: JSON.stringify({[cite: 3]
+            func: functionName,[cite: 3]
+            args: args[cite: 3]
+          }),
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',[cite: 3]
+          }
+        });
+        
+        const result = await response.json();[cite: 3]
+        if (result.error) {[cite: 3]
+          throw new Error(result.error);[cite: 3]
+        }
+        return result.data;[cite: 3]
+      } catch (error) {
+        console.error("Game API Call failed for " + functionName + ":", error);[cite: 3]
+        throw error;[cite: 3]
+      }
+    }
+  };
+
+  // Setup Portal Navigation Listener
+  document.addEventListener("DOMContentLoaded", function() {
+    const backBtn = document.getElementById('btnBackToPortal');
+    if (backBtn) {
+      backBtn.addEventListener('click', function() {[cite: 3]
+        backBtn.disabled = true;[cite: 3]
+        backBtn.innerText = "Returning to GrowPlus...";[cite: 3]
+
+        const targetUrl = "Portal.html";[cite: 3]
+        
+        if (window.top && window.top.location) {[cite: 3]
+          window.top.location.href = targetUrl;[cite: 3]
+        } else {
+          window.location.href = targetUrl;[cite: 3]
+        }
+      });
+    }
+  });
+
+  // ==================== APP LOGIC ====================
+  var userEmail = localStorage.getItem('loggedInUserEmail') || "";
   var currentName = "";
   var currentHouse = "";
   var selectedOp = "";
@@ -205,9 +253,15 @@
   var startTime = 0;
   var timerInterval;
 
-  window.onload = function() {
+  window.onload = async function() {
     if (userEmail) {
-      google.script.run.withSuccessHandler(populateUser).getUserData(userEmail);
+      try {
+        const userData = await api.run('getUserData', userEmail);
+        populateUser(userData);
+      } catch (err) {
+        console.warn("Failed to fetch profile via API:", err);
+        showGuestForm();
+      }
     } else {
       showGuestForm();
     }
@@ -236,14 +290,18 @@
     `;
   }
 
-  function selectOp(op, btn) {
+  async function selectOp(op, btn) {
     selectedOp = op;
     document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     document.getElementById('record-text').innerText = "Checking...";
-    google.script.run.withSuccessHandler(res => {
+    
+    try {
+      const res = await api.run('getBestRecord', userEmail, currentName, op);
       document.getElementById('record-text').innerHTML = `<b>${res}</b>`;
-    }).getBestRecord(userEmail, currentName, op);
+    } catch (err) {
+      document.getElementById('record-text').innerText = "Unable to fetch record";
+    }
   }
 
   function showScreen(id) {
@@ -256,15 +314,22 @@
   function goHome() { 
     showScreen('screen-home'); 
     if(selectedOp) {
-      selectOp(selectedOp, document.querySelector('.op-btn.selected'));
+      let activeBtn = document.querySelector('.op-btn.selected');
+      if (activeBtn) selectOp(selectedOp, activeBtn);
     }
   }
 
   // --- STANDINGS LOGIC ---
-  function openStandings() {
+  async function openStandings() {
     showScreen('screen-standings');
     document.getElementById('standings-list').innerHTML = "<p>Loading standings...</p>";
-    google.script.run.withSuccessHandler(renderStandings).getHouseStandings();
+    
+    try {
+      const data = await api.run('getHouseStandings');
+      renderStandings(data);
+    } catch (err) {
+      document.getElementById('standings-list').innerHTML = "<p>Failed to load standings.</p>";
+    }
   }
 
   function renderStandings(data) {
@@ -457,7 +522,7 @@
     else endQuiz();
   }
 
-  function endQuiz() {
+  async function endQuiz() {
     clearInterval(timerInterval);
     let totalSecs = ((Date.now() - startTime) / 1000).toFixed(2);
     showScreen('screen-result');
@@ -475,9 +540,12 @@
       duration: parseFloat(totalSecs)
     };
 
-    google.script.run.withSuccessHandler(() => {
+    try {
+      await api.run('saveScoreAS', record);
       document.getElementById('save-status').innerText = "✅ Record Saved!";
-    }).saveScoreAS(record);
+    } catch (err) {
+      document.getElementById('save-status').innerText = "❌ Failed to save record.";
+    }
   }
 </script>
 </body>
