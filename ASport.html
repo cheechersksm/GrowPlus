@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root {
+      --mcneil: #2563EB; 
+      --playne: #DC2626; 
+      --pope: #16A34A; 
+      --pring: #EAB308;
+    }
+    
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Comic Sans MS', sans-serif;
+      background-image: url('https://i.imgur.com/VhbpFIf.png');
+      background-size: cover; background-attachment: fixed;
+      display: flex; justify-content: center;
+    }
+
+    .app-container {
+      width: 100%; max-width: 420px;
+      background: rgba(255, 255, 255, 0.96);
+      min-height: 100vh; padding: 20px;
+      box-sizing: border-box; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .hidden { display: none !important; }
+    .banner { width: 100%; border-radius: 12px; margin-bottom: 10px; }
+    .subtitle { font-size: 13px; color: #4b5563; margin-top: -10px; margin-bottom: 15px; font-weight: bold; }
+    
+    .info-box {
+      border: 3px solid #333; border-radius: 10px;
+      padding: 10px; margin: 15px 0; text-align: left;
+      font-weight: bold; background: #fff;
+    }
+
+    /* 2.5D Button Styles */
+    .btn-2d {
+      display: inline-block; width: 100%; padding: 14px; margin: 8px 0;
+      font-size: 18px; font-weight: bold; color: white;
+      border: none; border-radius: 12px; cursor: pointer;
+      text-transform: uppercase; transition: all 0.1s;
+    }
+    .btn-play { background: #0056b3; box-shadow: 0 6px #003d82; }
+    .btn-play:active { transform: translateY(6px); box-shadow: 0 0 #003d82; }
+    
+    .btn-trophy { background: #EAB308; color: #333; box-shadow: 0 6px #CA8A04; }
+    .btn-trophy:active { transform: translateY(6px); box-shadow: 0 0 #CA8A04; }
+
+    .btn-green { background: #16A34A; box-shadow: 0 6px #15803d; margin-top:15px;}
+    .btn-green:active { transform: translateY(6px); box-shadow: 0 0 #15803d; }
+
+    .op-grid { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .op-btn {
+      width: 60px; height: 60px; font-size: 36px; border-radius: 12px;
+      border: none; color: white; cursor: pointer; box-shadow: 0 6px rgba(0,0,0,0.2);
+    }
+    .op-btn:active, .op-btn.selected { transform: translateY(6px); box-shadow: 0 0 rgba(0,0,0,0.2); border: 3px solid #333; }
+    .add, .sub, .mul, .div { background: #33CC99; }
+    .add.selected, .sub.selected, .mul.selected, .div.selected { background: #CC66FF; }
+
+    .guest-input { width: 100%; padding: 8px; margin: 5px 0; border: 2px solid #ccc; border-radius: 6px; box-sizing: border-box;}
+
+    /* Quiz styles */
+    .timer-text { color: #DC2626; font-size: 22px; font-weight: bold; }
+    .q-text { font-size: 46px; font-weight: bold; margin: 25px 0; }
+    .ans-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ans-btn {
+      background: #EAB308; color: #333; font-size: 28px; font-weight: bold;
+      border: none; border-radius: 12px; padding: 18px;
+      box-shadow: 0 6px #CA8A04; cursor: pointer;
+    }
+    .ans-btn:active { transform: translateY(6px); box-shadow: 0 0 #CA8A04; }
+    .countdown { font-size: 90px; font-weight: bold; color: #DC2626; margin-top: 40px; }
+
+    /* Leaderboard & Standings Styles */
+    .house-card {
+      border: 3px solid #333; border-radius: 12px;
+      margin: 12px 0; padding: 12px; text-align: left;
+      background: white; box-shadow: 0 4px rgba(0,0,0,0.1);
+    }
+    .house-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+    .house-title { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+    .house-badge { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+    
+    .badge-mcneil { background-color: var(--mcneil); }
+    .badge-playne { background-color: var(--playne); }
+    .badge-pope { background-color: var(--pope); }
+    .badge-pring { background-color: var(--pring); }
+
+    .house-stats { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    
+    /* Operation Category Box */
+    .op-category-box {
+      background: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 8px;
+      margain: 8px 0;
+      padding: 10px;
+    }
+    .op-category-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .player-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
+    .player-table th, .player-table td { border: 1px solid #cbd5e1; padding: 5px; text-align: center; }
+    .player-table th { background: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<!-- HOME SCREEN -->
+<div class="app-container" id="screen-home">
+  <h2 style="margin-bottom: 5px;">Arithmetic Sport Carnival</h2>
+  <div class="subtitle">Test your arithmetic speed and score big for your Sport House this Sports Day!</div>
+  
+  <img src="https://i.imgur.com/5fSeLju.jpg" alt="Banner" class="banner">
+  
+  <div class="info-box" id="user-info">Loading profile...</div>
+
+  <div class="info-box" style="text-align: center;">
+    <p style="margin-top:0; margin-bottom: 8px;">Select Operation:</p>
+    <div class="op-grid">
+      <button class="op-btn add" onclick="selectOp('Addition', this)">+</button>
+      <button class="op-btn sub" onclick="selectOp('Subtraction', this)">-</button>
+      <button class="op-btn mul" onclick="selectOp('Multiplication', this)">×</button>
+      <button class="op-btn div" onclick="selectOp('Division', this)">÷</button>
+    </div>
+    <div id="record-display">Current record: <br><span id="record-text">Select an operation</span></div>
+  </div>
+
+  <button class="btn-2d btn-play" onclick="startCountdown()">▶ PLAY NOW</button>
+  <button class="btn-2d btn-trophy" onclick="openStandings()">🏆 HOUSE STANDINGS</button>
+  <div class="flex justify-center mt-4 mb-4">
+    <button id="btnBackToPortal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200 flex items-center gap-2">
+      <span>← Back to GrowPlus</span>
+    </button>
+  </div>
+</div>
+
+<!-- COUNTDOWN SCREEN -->
+<div class="app-container hidden" id="screen-countdown">
+  <div class="countdown" id="cd-text">3</div>
+  <h2>Get Ready!</h2>
+</div>
+
+<!-- QUIZ SCREEN -->
+<div class="app-container hidden" id="screen-quiz">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="font-size: 18px; font-weight: bold;">Q: <span id="q-progress">1/10</span></div>
+    <div class="timer-text">⏱️ <span id="q-timer">00.00</span>s</div>
+  </div>
+  
+  <div class="q-text" id="q-container">5 + 5 = ?</div>
+  <div class="ans-grid" id="choices-container"></div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div class="app-container hidden" id="screen-result">
+  <h2>🎉 Challenge Complete!</h2>
+  
+  <div class="info-box" style="text-align: center;">
+    <p>Score: <span id="res-score" style="font-size: 28px; color: green;">10/10</span></p>
+    <p>Time: <span id="res-time" style="font-size: 28px; color: blue;">45.2 s</span></p>
+  </div>
+
+  <p id="save-status" style="color: #0056b3; font-weight: bold;">Saving your record...</p>
+
+  <button class="btn-2d btn-green" onclick="goHome()">🏠 Back to Home</button>
+  <button class="btn-2d btn-trophy" onclick="openStandings()">🏆 View Standings</button>
+</div>
+
+<!-- STANDINGS / LEADERBOARD SCREEN -->
+<div class="app-container hidden" id="screen-standings">
+  <h2>🏆 Sport House Standings</h2>
+  <p style="font-size: 12px; color: #555; margin-bottom: 15px;">
+    *Rankings sum the <b>Top 8 Mathletes across all 4 operations</b> (32 max records per house).
+  </p>
+
+  <div id="standings-list">Loading house standings...</div>
+
+  <button class="btn-2d btn-green" onclick="goHome()">🏠 Back to Home</button>
+</div>
+
+<script>
+  // 1. Safe Email Retrieval Logic
+  var userEmail = "<?= userEmail ?>"; 
+  if (!userEmail || userEmail === "<?= userEmail ?>" || userEmail === "undefined" || userEmail === "INSERT_USER_EMAIL_HERE") {
+      userEmail = localStorage.getItem('loggedInUserEmail') || "";
+  }
+
+  // 2. Global State Variables
+  var currentName = "";
+  var currentHouse = "";
+  var selectedOp = "";
+  
+  var quizData = [];
+  var currentQ = 0;
+  var score = 0;
+  var startTime = 0;
+  var timerInterval;
+
+  window.onload = function() {
+    if (userEmail) {
+      google.script.run.withSuccessHandler(populateUser).getUserData(userEmail);
+    } else {
+      showGuestForm();
+    }
+  };
+
+  function populateUser(userData) {
+    if (userData && userData.name) {
+      currentName = userData.name; 
+      currentHouse = userData.house;
+      document.getElementById('user-info').innerHTML = `NAME: ${currentName}<br>HOUSE: ${currentHouse}`;
+    } else { 
+      showGuestForm(); 
+    }
+  }
+
+  function showGuestForm() {
+    document.getElementById('user-info').innerHTML = `
+      <input type="text" id="gName" class="guest-input" placeholder="Type your Name..." oninput="currentName = this.value">
+      <select id="gHouse" class="guest-input" onchange="currentHouse = this.value">
+        <option value="">-- Select Sport House --</option>
+        <option value="McNeil">McNeil</option>
+        <option value="Playne">Playne</option>
+        <option value="Pope">Pope</option>
+        <option value="Pring">Pring</option>
+      </select>
+    `;
+  }
+
+  function selectOp(op, btn) {
+    selectedOp = op;
+    document.querySelectorAll('.op-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('record-text').innerText = "Checking...";
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('record-text').innerHTML = `<b>${res}</b>`;
+    }).getBestRecord(userEmail, currentName, op);
+  }
+
+  function showScreen(id) {
+    ['screen-home', 'screen-countdown', 'screen-quiz', 'screen-result', 'screen-standings'].forEach(s => {
+      document.getElementById(s).classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function goHome() { 
+    showScreen('screen-home'); 
+    if(selectedOp) {
+      selectOp(selectedOp, document.querySelector('.op-btn.selected'));
+    }
+  }
+
+  // --- STANDINGS LOGIC ---
+  function openStandings() {
+    showScreen('screen-standings');
+    document.getElementById('standings-list').innerHTML = "<p>Loading standings...</p>";
+    google.script.run.withSuccessHandler(renderStandings).getHouseStandings();
+  }
+
+  function renderStandings(data) {
+    let container = document.getElementById('standings-list');
+    if (!data || data.length === 0) {
+      container.innerHTML = "<p>No records recorded yet!</p>";
+      return;
+    }
+
+    let html = "";
+    data.forEach((item, index) => {
+      let hLower = item.house.toLowerCase();
+      let rankMedal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `#${index + 1}`;
+      
+      html += `
+        <div class="house-card">
+          <!-- Level 1: House Summary -->
+          <div class="house-header" onclick="toggleVisibility('house-${hLower}')">
+            <div class="house-title">
+              <span>${rankMedal}</span>
+              <span class="house-badge badge-${hLower}"></span>
+              <span>${item.house}</span>
+            </div>
+            <div style="font-size: 18px; font-weight: bold; color: #0056b3;">
+              ${item.totalScore} / 320 pts
+            </div>
+          </div>
+          
+          <div class="house-stats" onclick="toggleVisibility('house-${hLower}')">
+            <span>⏱️ Total Time: ${item.totalDuration}s</span>
+            <span style="color: #0056b3;">▼ View Categories</span>
+          </div>
+
+          <!-- Level 2: Collapsible Operation Categories -->
+          <div id="house-${hLower}" class="hidden" style="margin-top:10px;">
+            <hr style="border: 0.5px solid #ddd;">
+      `;
+
+      const opIcons = {
+        'Addition': '➕ Addition',
+        'Subtraction': '➖ Subtraction',
+        'Multiplication': '✖️ Multiplication',
+        'Division': '➗ Division'
+      };
+
+      Object.keys(item.categories).forEach(opName => {
+        let opData = item.categories[opName];
+        let opId = `${hLower}-${opName.toLowerCase()}`;
+
+        html += `
+          <div class="op-category-box">
+            <div class="op-category-header" onclick="toggleVisibility('op-${opId}')">
+              <span style="font-weight:bold; font-size: 14px;">${opIcons[opName] || opName}</span>
+              <span style="font-size:13px; font-weight:bold; color:#16A34A;">
+                ${opData.totalScore}/80 pts (${opData.totalDuration}s) ▼
+              </span>
+            </div>
+
+            <!-- Level 3: Collapsible Top 8 Mathletes List -->
+            <div id="op-${opId}" class="hidden" style="margin-top:6px;">
+              ${renderPlayerTable(opData.top8Players)}
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function renderPlayerTable(players) {
+    if (!players || players.length === 0) return "<p style='font-size:12px; color:#777; margin: 4px 0;'>No records in this category yet.</p>";
+
+    let rows = players.map((p, idx) => `
+      <tr>
+        <td>#${idx + 1}</td>
+        <td style="text-align: left; font-weight: bold;">${p.name}</td>
+        <td>${p.score}/10</td>
+        <td>${p.duration}s</td>
+      </tr>
+    `).join('');
+
+    return `
+      <table class="player-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Mathlete</th>
+            <th>Score</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function toggleVisibility(id) {
+    let el = document.getElementById(id);
+    if (el) el.classList.toggle('hidden');
+  }
+
+  // --- GAME LOGIC ---
+  function getRnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+  function generateQuestion(op) {
+    let qText = '', ans = 0;
+    if (op === 'Addition') {
+      let n1 = getRnd(1, 9), n2 = getRnd(1, 9);
+      qText = `${n1} + ${n2}`; ans = n1 + n2;
+    } else if (op === 'Subtraction') {
+      let n1 = getRnd(10, 19), n2 = getRnd(1, 9);
+      qText = `${n1} - ${n2}`; ans = n1 - n2;
+    } else if (op === 'Multiplication') {
+      let n1 = getRnd(1, 9), n2 = getRnd(1, 9);
+      qText = `${n1} × ${n2}`; ans = n1 * n2;
+    } else if (op === 'Division') {
+      let n2 = getRnd(2, 9);
+      let ansCalc = getRnd(2, Math.floor(99/n2));
+      let n1 = ansCalc * n2;
+      qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+    }
+    return { q: qText, a: ans };
+  }
+
+  function getChoices(correct) {
+    let options = new Set();
+    options.add(correct);
+    while(options.size < 4) {
+      let shift = getRnd(1, 5) * (Math.random() > 0.5 ? 1 : -1);
+      let fake = correct + shift;
+      if (fake >= 0) options.add(fake);
+    }
+    return Array.from(options).sort(() => Math.random() - 0.5);
+  }
+
+  function startCountdown() {
+    if (!currentName || !currentHouse) return alert("Enter name and select house!");
+    if (!selectedOp) return alert("Select an operation!");
+
+    quizData = Array.from({length: 10}, () => generateQuestion(selectedOp));
+    currentQ = 0; score = 0;
+    
+    showScreen('screen-countdown');
+    let count = 3;
+    document.getElementById('cd-text').innerText = count;
+    let cdTimer = setInterval(() => {
+      count--;
+      if(count > 0) document.getElementById('cd-text').innerText = count;
+      else { clearInterval(cdTimer); startQuiz(); }
+    }, 1000);
+  }
+
+  function startQuiz() {
+    showScreen('screen-quiz');
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      let elapsed = (Date.now() - startTime) / 1000;
+      document.getElementById('q-timer').innerText = elapsed.toFixed(2);
+    }, 50);
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    let data = quizData[currentQ];
+    document.getElementById('q-progress').innerText = `${currentQ + 1}/10`;
+    document.getElementById('q-container').innerText = `${data.q} = ?`;
+    
+    let choicesContainer = document.getElementById('choices-container');
+    choicesContainer.innerHTML = '';
+    
+    getChoices(data.a).forEach(c => {
+      let btn = document.createElement('button');
+      btn.className = 'ans-btn';
+      btn.innerText = c;
+      btn.onclick = () => handleAnswer(c, data.a);
+      choicesContainer.appendChild(btn);
+    });
+  }
+
+  function handleAnswer(selected, correct) {
+    if(selected === correct) score++;
+    currentQ++;
+    if(currentQ < 10) renderQuestion();
+    else endQuiz();
+  }
+
+  function endQuiz() {
+    clearInterval(timerInterval);
+    let totalSecs = ((Date.now() - startTime) / 1000).toFixed(2);
+    showScreen('screen-result');
+    
+    document.getElementById('res-score').innerText = `${score}/10`;
+    document.getElementById('res-time').innerText = `${totalSecs} s`;
+    document.getElementById('save-status').innerText = "Saving your record...";
+
+    let record = {
+      email: userEmail || "Guest",
+      name: currentName,
+      house: currentHouse,
+      operation: selectedOp,
+      score: score,
+      duration: parseFloat(totalSecs)
+    };
+
+    google.script.run.withSuccessHandler(() => {
+      document.getElementById('save-status').innerText = "✅ Record Saved!";
+    }).saveScoreAS(record);
+  }
+</script>
+</body>
+</html>
