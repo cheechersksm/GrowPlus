@@ -196,28 +196,28 @@
   // ==================== CONFIGURATION & API BRIDGE ====================
   const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
 
-  const api = { 
+  const api = {
     run: async function(functionName, ...args) {
       try {
-        const response = await fetch(GAS_WEB_APP_URL, { 
-          method: 'POST', 
-          body: JSON.stringify({ 
-            func: functionName, 
-            args: args 
+        const response = await fetch(GAS_WEB_APP_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            func: functionName,
+            args: args
           }),
           headers: {
-            'Content-Type': 'text/plain;charset=utf-8', 
+            'Content-Type': 'text/plain;charset=utf-8',
           }
         });
         
-        const result = await response.json(); 
-        if (result.error) { 
-          throw new Error(result.error); 
+        const result = await response.json();
+        if (result.error) {
+          throw new Error(result.error);
         }
-        return result.data; 
+        return result.data;
       } catch (error) {
-        console.error("Game API Call failed for " + functionName + ":", error); 
-        throw error; 
+        console.error("Game API Call failed for " + functionName + ":", error);
+        throw error;
       }
     }
   };
@@ -226,23 +226,28 @@
   document.addEventListener("DOMContentLoaded", function() {
     const backBtn = document.getElementById('btnBackToPortal');
     if (backBtn) {
-      backBtn.addEventListener('click', function() { 
-        backBtn.disabled = true; 
-        backBtn.innerText = "Returning to GrowPlus..."; 
+      backBtn.addEventListener('click', function() {
+        backBtn.disabled = true;
+        backBtn.innerText = "Returning to GrowPlus...";
 
-        const targetUrl = "Portal.html"; 
+        const targetUrl = "Portal.html";
         
-        if (window.top && window.top.location) { 
-          window.top.location.href = targetUrl; 
+        if (window.top && window.top.location) {
+          window.top.location.href = targetUrl;
         } else {
-          window.location.href = targetUrl; 
+          window.location.href = targetUrl;
         }
       });
     }
   });
 
   // ==================== APP LOGIC ====================
-  var userEmail = localStorage.getItem('loggedInUserEmail') || "";
+  let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+  if (loggedInEmail === "" || loggedInEmail === "INSERT_USER_EMAIL_HERE" || loggedInEmail === "Guest") {
+      loggedInEmail = localStorage.getItem('loggedInUserEmail') || null;
+  }
+  var userEmail = loggedInEmail || "";
+
   var currentName = "";
   var currentHouse = "";
   var selectedOp = "";
