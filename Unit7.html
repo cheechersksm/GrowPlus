@@ -802,9 +802,34 @@
             loggedInEmail = localStorage.getItem('loggedInUserEmail') || null;
         }
 
-        const APP_CONFIG = {
-            GAS_WEB_APP_URL: "", // Google Apps Script Web App Deployment URL
-            USER_DATA_ENDPOINT: ""
+        // ==================== CONFIGURATION ====================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec"; 
+
+        // ==================== API BRIDGE ====================
+        const api = {
+            run: async function(functionName, ...args) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            func: functionName, 
+                            args: args 
+                        }),
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    return result.data;
+                } catch (error) {
+                    console.error("Game API Call failed for " + functionName + ":", error);
+                    throw error;
+                }
+            }
         };
 
         // User State Object
@@ -827,14 +852,14 @@
             completedTopics: []
         };
 
-        function getUserProfile() {
-            // Checks if running under Google Apps Script environment
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(onUserProfileLoaded)
-                    .getUserProfile(currentUser.email);
-            } else {
-                // Standalone Mock Mode
+        async function getUserProfile() {
+            try {
+                // Utilizing the new API Bridge
+                const profileData = await api.run("getUserProfile", currentUser.email);
+                onUserProfileLoaded(profileData);
+            } catch (e) {
+                // Standalone Mock Mode / Error Fallback
+                console.warn("Could not fetch user profile, entering standalone mode.", e);
                 if (currentUser.email && currentUser.email !== "Guest") {
                     currentUser.name = "Loading Name...";
                     currentUser.userClass = "Loading Class...";
@@ -853,7 +878,7 @@
             }
         }
 
-        function savePracticeResult(topic, score, total) {
+        async function savePracticeResult(topic, score, total) {
             const perc = Math.round((score / total) * 100);
             
             if (topic === 'coordinates' || topic === 'mixed') {
@@ -874,13 +899,17 @@
             // Save local storage backup
             localStorage.setItem('mathApp_progress', JSON.stringify(userProgress));
 
-            // Sync with GAS backend if available
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.savePracticeResult({
-                    email: currentUser.email,
-                    subtopic: topic, // Sends 'coordinates', 'ratio', or 'proportion'
-                    score: score     // Sends current attempt score
-                });
+            // Sync with GAS backend using the API Bridge
+            if (!currentUser.isGuest) {
+                try {
+                    await api.run("savePracticeResult", {
+                        email: currentUser.email,
+                        subtopic: topic, // Sends 'coordinates', 'ratio', or 'proportion'
+                        score: score     // Sends current attempt score
+                    });
+                } catch (e) {
+                    console.error("Failed to automatically sync result to server.", e);
+                }
             }
 
             renderProgressScreen();
@@ -1680,93 +1709,119 @@
                 const targetB = baseB * factor;
                 return {
                     id: `p_y5_${idx}_${Date.now()}`,
-                    question: `If the ratio of red counters to blue counters is ${baseA} : ${baseB}, how many blue counters are there if there are ${targetA} red counters?`,
-                    choices: [`${targetB}`, `${targetB + 5}`, `${targetA + baseB}`, `${targetB - 3}`],
+                    question: `Determine the missing value to make an equivalent ratio: ${baseA} : ${baseB} = ${targetA} : ?`,
+                    choices: [`${targetB}`, `${targetB - 2}`, `${targetB + 5}`, `${baseB + targetA}`],
                     answer: `${targetB}`,
-                    explanation: `Since red counters increased from ${baseA} to ${targetA} (multiplied by ${factor}), blue counters must be ${baseB} × ${factor} = ${targetB}.`
+                    explanation: `Since ${baseA} × ${factor} = ${targetA}, you must multiply the other side by ${factor}. ${baseB} × ${factor} = ${targetB}.`
                 };
             } else {
-                const gA = 4;
-                const gB = 12;
-                const tA = (idx % 4) + 5;
-                const ans = tA * 3;
+                const partsTarget = 3 + (idx % 2);
+                const partsKnown = 2 + (idx % 2);
+                const valKnown = partsKnown * (4 + (idx % 3));
+                const factor = valKnown / partsKnown;
+                const ans = partsTarget * factor;
                 return {
                     id: `p_y6_${idx}_${Date.now()}`,
-                    question: `Given the proportion ${gA} : ${gB} = ${tA} : ?, determine the unknown quantity (?).`,
-                    choices: [`${ans}`, `${ans + 6}`, `${tA + gB}`, `${ans - 4}`],
-                    answer: `${ans}`,
-                    explanation: `Answer = (${tA} ÷ ${gA}) × ${gB} = ${ans}.`
+                    question: `A recipe needs flour and sugar in a ratio of ${partsTarget} : ${partsKnown}. If you use ${valKnown}g of sugar, how much flour is needed?`,
+                    choices: [`${ans}g`, `${ans + 10}g`, `${valKnown + partsTarget}g`, `${ans - 5}g`],
+                    answer: `${ans}g`,
+                    explanation: `${partsKnown} parts = ${valKnown}g, so 1 part = ${factor}g. Flour is ${partsTarget} parts = ${partsTarget} × ${factor} = ${ans}g.`
                 };
             }
         }
 
+        // Shuffle Array
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
         function startPracticeSession() {
+            document.getElementById('practiceSetupCard').classList.add('hidden');
+            document.getElementById('practiceActiveCard').classList.remove('hidden');
+
             currentQuizQuestions = generateQuestions();
             currentQuestionIdx = 0;
             quizScore = 0;
             quizSeconds = 0;
 
-            document.getElementById('practiceSetupCard').classList.add('hidden');
-            document.getElementById('practiceActiveCard').classList.remove('hidden');
-
             if (quizTimerInterval) clearInterval(quizTimerInterval);
             quizTimerInterval = setInterval(() => {
                 quizSeconds++;
-                const mins = Math.floor(quizSeconds / 60).toString().padStart(2, '0');
-                const secs = (quizSeconds % 60).toString().padStart(2, '0');
-                document.getElementById('quizTimer').innerText = `⏱️ ${mins}:${secs}`;
+                const m = Math.floor(quizSeconds / 60).toString().padStart(2, '0');
+                const s = (quizSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('quizTimer').innerText = `⏱️ ${m}:${s}`;
             }, 1000);
 
-            renderQuestion();
+            loadQuestion();
         }
 
-        function renderQuestion() {
+        function loadQuestion() {
             const q = currentQuizQuestions[currentQuestionIdx];
             document.getElementById('quizQNum').innerText = currentQuestionIdx + 1;
             document.getElementById('quizProgressBar').style.width = `${((currentQuestionIdx + 1) / 10) * 100}%`;
             document.getElementById('quizQuestionText').innerText = q.question;
 
-            const feedbackBox = document.getElementById('quizFeedbackBox');
-            feedbackBox.classList.add('hidden');
-            document.getElementById('quizNextBtn').classList.add('hidden');
+            const optContainer = document.getElementById('quizOptionsContainer');
+            optContainer.innerHTML = '';
+            
+            const shuffledChoices = shuffle([...q.choices]);
+            const letters = ['A', 'B', 'C', 'D'];
 
-            const container = document.getElementById('quizOptionsContainer');
-            container.innerHTML = '';
-
-            const shuffledChoices = [...q.choices].sort(() => Math.random() - 0.5);
-
-            shuffledChoices.forEach((choice, idx) => {
-                const label = ['A', 'B', 'C', 'D'][idx];
+            shuffledChoices.forEach((choice, i) => {
                 const btn = document.createElement('button');
-                btn.className = "quizOptionBtn w-full p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-medium text-xs text-slate-800 text-left flex items-center gap-3 transition active:scale-98";
-                btn.onclick = () => selectAnswer(choice, q.answer, q.explanation, btn);
+                btn.className = `w-full text-left p-3 rounded-xl border border-slate-200 font-medium text-xs text-slate-700 bg-white hover:bg-indigo-50 hover:border-indigo-200 transition relative overflow-hidden quiz-option-btn`;
                 btn.innerHTML = `
-                    <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-slate-600 text-[11px] shrink-0">${label}</span>
+                    <span class="inline-block w-6 h-6 rounded bg-slate-100 text-slate-500 text-center font-bold mr-2 text-[10px] leading-6">${letters[i]}</span>
                     <span>${choice}</span>
                 `;
-                container.appendChild(btn);
+                btn.onclick = () => selectAnswer(btn, choice, q.answer, q.explanation);
+                optContainer.appendChild(btn);
             });
+
+            document.getElementById('quizFeedbackBox').classList.add('hidden');
+            document.getElementById('quizNextBtn').classList.add('hidden');
         }
 
-        function selectAnswer(selected, correct, explanation, clickedBtn) {
-            // Disable all option buttons
-            const btns = document.querySelectorAll('.quizOptionBtn');
-            btns.forEach(b => b.disabled = true);
+        function selectAnswer(btn, selected, correct, explanation) {
+            // Disable all buttons
+            const btns = document.querySelectorAll('.quiz-option-btn');
+            btns.forEach(b => { b.disabled = true; });
 
-            const feedbackBox = document.getElementById('quizFeedbackBox');
-            feedbackBox.classList.remove('hidden');
-
+            const feedback = document.getElementById('quizFeedbackBox');
+            feedback.classList.remove('hidden');
+            
             if (selected === correct) {
                 quizScore++;
-                clickedBtn.classList.remove('bg-slate-50', 'border-slate-200');
-                clickedBtn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-900', 'font-bold');
-                feedbackBox.className = "p-3 rounded-xl text-xs leading-relaxed bg-emerald-50 border border-emerald-200 text-emerald-900";
-                feedbackBox.innerHTML = `<strong>✅ Correct!</strong> ${explanation}`;
+                btn.classList.replace('bg-white', 'bg-emerald-50');
+                btn.classList.replace('border-slate-200', 'border-emerald-500');
+                btn.classList.replace('text-slate-700', 'text-emerald-800');
+                btn.innerHTML += `<i class="fa-solid fa-circle-check absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 text-lg"></i>`;
+                
+                feedback.className = "p-3 rounded-xl text-xs leading-relaxed bg-emerald-50 text-emerald-800 border border-emerald-200";
+                feedback.innerHTML = `<b>✅ Correct!</b> ${explanation}`;
             } else {
-                clickedBtn.classList.remove('bg-slate-50', 'border-slate-200');
-                clickedBtn.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-900', 'font-bold');
-                feedbackBox.className = "p-3 rounded-xl text-xs leading-relaxed bg-rose-50 border border-rose-200 text-rose-900";
-                feedbackBox.innerHTML = `<strong>❌ Incorrect.</strong> Correct answer is <strong>${correct}</strong>. ${explanation}`;
+                btn.classList.replace('bg-white', 'bg-rose-50');
+                btn.classList.replace('border-slate-200', 'border-rose-500');
+                btn.classList.replace('text-slate-700', 'text-rose-800');
+                btn.innerHTML += `<i class="fa-solid fa-circle-xmark absolute right-3 top-1/2 -translate-y-1/2 text-rose-500 text-lg"></i>`;
+
+                // Highlight correct
+                btns.forEach(b => {
+                    if (b.innerText.substring(3).trim() === correct) {
+                        b.classList.replace('bg-white', 'bg-emerald-50');
+                        b.classList.replace('border-slate-200', 'border-emerald-500');
+                        b.innerHTML += `<i class="fa-solid fa-circle-check absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500 text-lg opacity-50"></i>`;
+                    }
+                });
+
+                feedback.className = "p-3 rounded-xl text-xs leading-relaxed bg-rose-50 text-rose-800 border border-rose-200";
+                feedback.innerHTML = `<b>❌ Incorrect.</b> ${explanation}`;
             }
 
             document.getElementById('quizNextBtn').classList.remove('hidden');
@@ -1774,117 +1829,134 @@
 
         function nextQuestion() {
             currentQuestionIdx++;
-            if (currentQuestionIdx < 10) {
-                renderQuestion();
-            } else {
+            if (currentQuestionIdx >= 10) {
                 finishQuiz();
+            } else {
+                loadQuestion();
             }
         }
 
         function finishQuiz() {
-            if (quizTimerInterval) clearInterval(quizTimerInterval);
-
+            clearInterval(quizTimerInterval);
+            
             savePracticeResult(activePracTopic, quizScore, 10);
 
-            const perc = Math.round((quizScore / 10) * 100);
-            document.getElementById('resultScoreText').innerText = `${perc}%`;
+            // Show Modal
+            document.getElementById('quizResultModal').classList.remove('hidden');
+            
+            const pct = Math.round((quizScore / 10) * 100);
+            document.getElementById('resultScoreText').innerText = `${pct}%`;
             document.getElementById('resultFractionText').innerText = `${quizScore} / 10 Correct`;
 
-            if (perc >= 80) {
-                document.getElementById('resultEmoji').innerText = "🎉";
-                document.getElementById('resultTitle').innerText = "Outstanding!";
-                document.getElementById('resultSubtitle').innerText = "You have mastered this topic standard!";
-            } else if (perc >= 50) {
+            if (pct >= 80) {
+                document.getElementById('resultEmoji').innerText = "🏆";
+                document.getElementById('resultTitle').innerText = "Excellent Job!";
+                document.getElementById('resultTitle').className = "font-display font-bold text-2xl text-emerald-600";
+            } else if (pct >= 50) {
                 document.getElementById('resultEmoji').innerText = "👍";
-                document.getElementById('resultTitle').innerText = "Good Effort!";
-                document.getElementById('resultSubtitle').innerText = "Keep practicing to score 100%!";
+                document.getElementById('resultTitle').innerText = "Good Try!";
+                document.getElementById('resultTitle').className = "font-display font-bold text-2xl text-amber-500";
             } else {
                 document.getElementById('resultEmoji').innerText = "💪";
-                document.getElementById('resultTitle').innerText = "Keep Trying!";
-                document.getElementById('resultSubtitle').innerText = "Review the Notes & Demo board to improve!";
+                document.getElementById('resultTitle').innerText = "Keep Practicing!";
+                document.getElementById('resultTitle').className = "font-display font-bold text-2xl text-slate-600";
             }
 
-            document.getElementById('quizResultModal').classList.remove('hidden');
-        }
-
-        function closeResultModal() {
-            document.getElementById('quizResultModal').classList.add('hidden');
             document.getElementById('practiceActiveCard').classList.add('hidden');
             document.getElementById('practiceSetupCard').classList.remove('hidden');
         }
 
+        function closeResultModal() {
+            document.getElementById('quizResultModal').classList.add('hidden');
+        }
+
         function renderProgressScreen() {
             document.getElementById('progBestScore').innerText = `${userProgress.bestScore}%`;
-            
-            const totalComps = (userProgress.coordAttempts > 0 ? 1 : 0) + 
-                               (userProgress.ratioAttempts > 0 ? 1 : 0) + 
-                               (userProgress.propAttempts > 0 ? 1 : 0);
-            document.getElementById('progCompletedCount').innerText = totalComps;
+            const totalCompletions = userProgress.coordAttempts + userProgress.ratioAttempts + userProgress.propAttempts;
+            document.getElementById('progCompletedCount').innerText = totalCompletions;
 
             // Coordinates
             document.getElementById('progCoordScore').innerText = `${userProgress.coordScore} / 10`;
             document.getElementById('progCoordBar').style.width = `${(userProgress.coordScore / 10) * 100}%`;
             document.getElementById('progCoordAttempts').innerText = userProgress.coordAttempts;
-            document.getElementById('progCoordStatus').innerText = userProgress.coordAttempts > 0 ? "Completed" : "Not Started";
+            if (userProgress.coordAttempts > 0) document.getElementById('progCoordStatus').innerText = "Attempted";
 
             // Ratio
             document.getElementById('progRatioScore').innerText = `${userProgress.ratioScore} / 10`;
             document.getElementById('progRatioBar').style.width = `${(userProgress.ratioScore / 10) * 100}%`;
             document.getElementById('progRatioAttempts').innerText = userProgress.ratioAttempts;
-            document.getElementById('progRatioStatus').innerText = userProgress.ratioAttempts > 0 ? "Completed" : "Not Started";
+            if (userProgress.ratioAttempts > 0) document.getElementById('progRatioStatus').innerText = "Attempted";
 
             // Proportion
             document.getElementById('progPropScore').innerText = `${userProgress.propScore} / 10`;
             document.getElementById('progPropBar').style.width = `${(userProgress.propScore / 10) * 100}%`;
             document.getElementById('progPropAttempts').innerText = userProgress.propAttempts;
-            document.getElementById('progPropStatus').innerText = userProgress.propAttempts > 0 ? "Completed" : "Not Started";
+            if (userProgress.propAttempts > 0) document.getElementById('progPropStatus').innerText = "Attempted";
         }
 
         function updateHomeProgressBars() {
-            const coordPct = Math.round((userProgress.coordScore / 10) * 100);
-            const ratioPct = Math.round((userProgress.ratioScore / 10) * 100);
-            const propPct = Math.round((userProgress.propScore / 10) * 100);
+            const cPct = (userProgress.coordScore / 10) * 100;
+            const rPct = (userProgress.ratioScore / 10) * 100;
+            const pPct = (userProgress.propScore / 10) * 100;
 
-            document.getElementById('homeCoordProgBadge').innerText = `${coordPct}%`;
-            document.getElementById('homeCoordBar').style.width = `${coordPct}%`;
+            document.getElementById('homeCoordBar').style.width = `${cPct}%`;
+            document.getElementById('homeCoordProgBadge').innerText = `${cPct}%`;
 
-            document.getElementById('homeRatioProgBadge').innerText = `${ratioPct}%`;
-            document.getElementById('homeRatioBar').style.width = `${ratioPct}%`;
+            document.getElementById('homeRatioBar').style.width = `${rPct}%`;
+            document.getElementById('homeRatioProgBadge').innerText = `${rPct}%`;
 
-            document.getElementById('homePropProgBadge').innerText = `${propPct}%`;
-            document.getElementById('homePropBar').style.width = `${propPct}%`;
+            document.getElementById('homePropBar').style.width = `${pPct}%`;
+            document.getElementById('homePropProgBadge').innerText = `${pPct}%`;
         }
 
         function showGuestModal() {
+            const modal = document.getElementById('guestModal');
             const content = document.getElementById('modalUserContent');
+
             content.innerHTML = `
-                <div class="p-3 bg-indigo-50 rounded-xl space-y-1">
-                    <div><strong>Name:</strong> ${currentUser.name}</div>
-                    <div><strong>Class:</strong> ${currentUser.userClass}</div>
-                    <div><strong>Email:</strong> ${currentUser.email}</div>
+                <div class="bg-indigo-50 p-4 rounded-xl border border-indigo-100 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center text-xl font-bold">
+                        ${currentUser.name.charAt(0)}
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800 text-sm">${currentUser.name}</div>
+                        <div class="text-[10px] text-slate-500">${currentUser.email}</div>
+                    </div>
                 </div>
+                
+                <div class="space-y-2 mt-4">
+                    <div class="flex justify-between bg-slate-50 p-2 rounded border border-slate-100">
+                        <span class="font-bold">Class:</span>
+                        <span>${currentUser.userClass}</span>
+                    </div>
+                    <div class="flex justify-between bg-slate-50 p-2 rounded border border-slate-100">
+                        <span class="font-bold">App Mode:</span>
+                        <span>${currentUser.isGuest ? "Standalone Guest Mode" : "Google Classroom Synced"}</span>
+                    </div>
+                </div>
+
                 ${currentUser.isGuest ? `
-                    <div class="text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Guest User Mode. Please log in through the main school application portal to save records directly to Google Sheets.
+                    <div class="mt-4 text-[10px] text-amber-700 bg-amber-50 p-2.5 rounded border border-amber-200 italic">
+                        Since you are not running this via the designated Google Apps Script URL, your progress will only be saved locally on this browser.
                     </div>
-                ` : `
-                    <div class="text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
-                        <i class="fa-solid fa-circle-check mr-1"></i> Connected to Google Sheets (CoorRecord).
-                    </div>
-                `}
+                ` : ''}
             `;
-            document.getElementById('guestModal').classList.remove('hidden');
+            modal.classList.remove('hidden');
         }
 
         function closeGuestModal() {
             document.getElementById('guestModal').classList.add('hidden');
         }
 
-        function syncProgressWithGAS() {
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-                google.script.run.withSuccessHandler(() => {
-                    alert('Progress successfully synced with CoorRecord Spreadsheet!');
-                }).savePracticeResult({
+        async function syncProgressWithGAS() {
+            if (currentUser.isGuest) {
+                showGuestModal();
+                return;
+            }
+
+            try {
+                // Utilizing the API bridge for specific manual sync
+                await api.run("savePracticeResult", {
                     email: currentUser.email,
                     name: currentUser.name,
                     class: currentUser.userClass,
@@ -1893,20 +1965,21 @@
                     propScore: userProgress.propScore,
                     totalScore: userProgress.bestScore
                 });
-            } else {
-                showGuestModal();
+                alert('Progress successfully synced with Spreadsheet via API!');
+            } catch (e) {
+                console.error(e);
+                alert('Sync failed. Please check your connection or try again later.');
             }
         }
 
+        // Initialize App
         window.onload = function() {
-            getUserProfile();
             loadUserProgress();
             renderNotes();
+            getUserProfile();
             initCoordinateEvents();
-            drawCoordinateGrid();
-            updateRatioDemo();
-            updatePropDemo();
-        };
+        }
+
     </script>
 </body>
 </html>
