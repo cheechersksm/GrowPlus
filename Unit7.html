@@ -1,0 +1,1912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coordinate & Ratio | Topic 7 Mathematics</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Fredoka & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        .font-display {
+            font-family: 'Fredoka', cursive, sans-serif;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Teacher Demo Mode Enlargements */
+        .teacher-mode {
+            font-size: 1.15rem !important;
+        }
+        .teacher-mode .demo-card {
+            padding: 1.5rem !important;
+        }
+        .teacher-mode .text-xl {
+            font-size: 1.5rem !important;
+        }
+        .teacher-mode .text-2xl {
+            font-size: 2rem !important;
+        }
+        .teacher-mode .text-3xl {
+            font-size: 2.5rem !important;
+        }
+
+        /* Dynamic Canvas Grid Styling */
+        #coordCanvas {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+            cursor: crosshair;
+        }
+
+        /* Animated Progress Rings */
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Sticky App Header -->
+    <header class="sticky top-0 z-40 bg-indigo-600 text-white shadow-md border-b border-indigo-700">
+        <div class="max-w-2xl mx-auto px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-yellow-300 font-bold text-xl border border-white/20 shadow-inner">
+                    <i class="fa-solid fa-shapes"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-lg leading-tight tracking-wide">Coordinate & Ratio</h1>
+                    <p class="text-xs text-indigo-200 font-medium">Topic 7 Mathematics · DSKP</p>
+                </div>
+            </div>
+            
+            <!-- User Profile Display -->
+            <div id="userBadge" class="flex items-center gap-2 bg-indigo-700/80 hover:bg-indigo-700 px-3 py-1.5 rounded-full border border-indigo-500/50 cursor-pointer transition text-xs shadow-sm" onclick="showGuestModal()">
+                <div class="w-6 h-6 rounded-full bg-yellow-400 text-indigo-900 font-bold flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="text-right">
+                    <div id="userName" class="font-semibold text-white leading-tight">Loading Name...</div>
+                    <div id="userClass" class="text-[10px] text-indigo-200">Loading Class...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Notice Banner (If local/standalone mode) -->
+        <div id="gasNoticeBanner" class="bg-amber-500 text-amber-950 text-[11px] px-4 py-1 text-center font-medium hidden">
+            <i class="fa-solid fa-circle-info mr-1"></i> Running in Standalone Prototype Mode. User records saved locally.
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 max-w-2xl w-full mx-auto p-4 pb-24">
+
+        <!-- ================= HOME SECTION ================= -->
+        <section id="view-home" class="space-y-5">
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute -right-4 -bottom-4 opacity-10 text-9xl font-black select-none pointer-events-none">
+                    XY
+                </div>
+                <div class="relative z-10">
+                    <span class="bg-white/20 backdrop-blur-md text-xs px-2.5 py-1 rounded-full font-medium inline-block mb-2">
+                        🇲🇾 KSSR Semakan 2017
+                    </span>
+                    <h2 class="font-display text-2xl font-bold leading-tight">Primary Math Portal</h2>
+                    <p class="text-xs text-indigo-100 mt-1 max-w-sm">Master Coordinates, Ratios, and Proportion for Year 4, 5, and 6 with visual games and practice!</p>
+                    
+                    <div class="mt-4 flex gap-2">
+                        <button onclick="switchTab('demo')" class="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 px-4 py-2 rounded-xl font-bold text-xs shadow-md flex items-center gap-1.5 transition active:scale-95">
+                            <i class="fa-solid fa-chalkboard-user"></i> Demo Board
+                        </button>
+                        <button onclick="switchTab('practice')" class="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-semibold text-xs border border-white/30 backdrop-blur-sm flex items-center gap-1.5 transition active:scale-95">
+                            <i class="fa-solid fa-pen-to-square"></i> Start Practice
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="font-display font-bold text-slate-700 text-lg flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-indigo-500"></i> Learning Modules
+            </h3>
+
+            <!-- 3 TOPIC CARDS -->
+            <div class="grid gap-4">
+
+                <!-- 1. Coordinates Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-2xl font-bold">
+                                📍
+                            </div>
+                            <div>
+                                <h4 class="font-display font-bold text-slate-800 text-lg">Coordinates</h4>
+                                <p class="text-xs text-slate-500">First Quadrant, Distance & Scale</p>
+                            </div>
+                        </div>
+                        <span id="homeCoordProgBadge" class="bg-indigo-50 text-indigo-600 text-xs font-bold px-2.5 py-1 rounded-lg border border-indigo-100">
+                            0%
+                        </span>
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-3 gap-1.5 text-[11px] text-slate-600 font-medium">
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 4: (x,y) Axis</div>
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 5: Distance</div>
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 6: Map Scale</div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div id="homeCoordBar" class="bg-indigo-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <button onclick="openNoteTopic('Coordinates')" class="flex-1 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition text-center">
+                            📖 Learn
+                        </button>
+                        <button onclick="openDemoTopic('coordinates')" class="flex-1 py-1.5 text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl transition text-center">
+                            📊 Demo
+                        </button>
+                        <button onclick="startSpecificPractice('coordinates')" class="flex-1 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition text-center shadow-sm">
+                            ✏️ Practice
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Ratio Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center text-2xl font-bold">
+                                ⚖️
+                            </div>
+                            <div>
+                                <h4 class="font-display font-bold text-slate-800 text-lg">Ratio</h4>
+                                <p class="text-xs text-slate-500">Comparing Quantities & Simplest Form</p>
+                            </div>
+                        </div>
+                        <span id="homeRatioProgBadge" class="bg-amber-50 text-amber-600 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-100">
+                            0%
+                        </span>
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-3 gap-1.5 text-[11px] text-slate-600 font-medium">
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 4: 1:1 to 1:1000</div>
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 5: Parts:Whole</div>
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 6: Simplify</div>
+                    </div>
+
+                    <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div id="homeRatioBar" class="bg-amber-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <button onclick="openNoteTopic('Ratio')" class="flex-1 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-xl transition text-center">
+                            📖 Learn
+                        </button>
+                        <button onclick="openDemoTopic('ratio')" class="flex-1 py-1.5 text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl transition text-center">
+                            📊 Demo
+                        </button>
+                        <button onclick="startSpecificPractice('ratio')" class="flex-1 py-1.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition text-center shadow-sm">
+                            ✏️ Practice
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Proportion Card -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">
+                                🔢
+                            </div>
+                            <div>
+                                <h4 class="font-display font-bold text-slate-800 text-lg">Proportion</h4>
+                                <p class="text-xs text-slate-500">Unitary Method & Unknown Values</p>
+                            </div>
+                        </div>
+                        <span id="homePropProgBadge" class="bg-emerald-50 text-emerald-600 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-100">
+                            0%
+                        </span>
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-3 gap-1.5 text-[11px] text-slate-600 font-medium">
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 4: Unitary</div>
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 5: Proportions</div>
+                        <div class="bg-slate-50 px-2 py-1 rounded border border-slate-100 text-center">Year 6: Find Unknowns</div>
+                    </div>
+
+                    <div class="mt-3 w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div id="homePropBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+
+                    <div class="mt-3 flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <button onclick="openNoteTopic('Proportion')" class="flex-1 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition text-center">
+                            📖 Learn
+                        </button>
+                        <button onclick="openDemoTopic('proportion')" class="flex-1 py-1.5 text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 rounded-xl transition text-center">
+                            📊 Demo
+                        </button>
+                        <button onclick="startSpecificPractice('proportion')" class="flex-1 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition text-center shadow-sm">
+                            ✏️ Practice
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= NOTES SECTION ================= -->
+        <section id="view-notes" class="space-y-4 hidden">
+            <!-- Year Selector Filter -->
+            <div class="flex bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200">
+                <button onclick="setNotesYear(4)" id="noteYearBtn4" class="noteYearBtn flex-1 py-2 text-xs font-bold rounded-xl transition bg-indigo-600 text-white shadow-sm">
+                    Year 4
+                </button>
+                <button onclick="setNotesYear(5)" id="noteYearBtn5" class="noteYearBtn flex-1 py-2 text-xs font-bold text-slate-600 rounded-xl transition hover:bg-slate-100">
+                    Year 5
+                </button>
+                <button onclick="setNotesYear(6)" id="noteYearBtn6" class="noteYearBtn flex-1 py-2 text-xs font-bold text-slate-600 rounded-xl transition hover:bg-slate-100">
+                    Year 6
+                </button>
+            </div>
+
+            <!-- Topic Tabs -->
+            <div class="flex gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
+                <button onclick="setNotesTopic('Coordinates')" id="noteTabCoordinates" class="noteTopicTab px-4 py-1.5 text-xs font-bold rounded-full bg-indigo-100 text-indigo-700 whitespace-nowrap">
+                    📍 Coordinates
+                </button>
+                <button onclick="setNotesTopic('Ratio')" id="noteTabRatio" class="noteTopicTab px-4 py-1.5 text-xs font-bold rounded-full text-slate-600 bg-slate-200 hover:bg-slate-300 whitespace-nowrap">
+                    ⚖️ Ratio
+                </button>
+                <button onclick="setNotesTopic('Proportion')" id="noteTabProportion" class="noteTopicTab px-4 py-1.5 text-xs font-bold rounded-full text-slate-600 bg-slate-200 hover:bg-slate-300 whitespace-nowrap">
+                    🔢 Proportion
+                </button>
+            </div>
+
+            <!-- Dynamic Notes Content Card -->
+            <div id="notesContentContainer" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+                <!-- Content loaded dynamically via JS -->
+            </div>
+        </section>
+
+        <!-- ================= DEMONSTRATION BOARD SECTION ================= -->
+        <section id="view-demo" class="space-y-4 hidden">
+            
+            <!-- Header & Teacher Mode Toggle -->
+            <div class="bg-slate-800 text-white p-4 rounded-2xl flex items-center justify-between shadow-md">
+                <div>
+                    <h3 class="font-display font-bold text-lg flex items-center gap-2">
+                        <i class="fa-solid fa-chalkboard-user text-yellow-400"></i> Demonstration Board
+                    </h3>
+                    <p class="text-xs text-slate-300">Interactive visual tool for classrooms & self-study</p>
+                </div>
+                <button id="teacherModeToggle" onclick="toggleTeacherMode()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-xl border border-slate-500 text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-expand text-yellow-300"></i> <span id="teacherModeText">Teacher Mode</span>
+                </button>
+            </div>
+
+            <!-- Demo Tabs -->
+            <div class="flex bg-slate-200 p-1 rounded-2xl">
+                <button onclick="switchDemoSubtab('coordinates')" id="demoTabCoordinates" class="demoSubTab flex-1 py-2 text-xs font-bold rounded-xl transition bg-white text-indigo-700 shadow-sm">
+                    📍 Coordinates
+                </button>
+                <button onclick="switchDemoSubtab('ratio')" id="demoTabRatio" class="demoSubTab flex-1 py-2 text-xs font-bold text-slate-600 rounded-xl transition">
+                    ⚖️ Ratio
+                </button>
+                <button onclick="switchDemoSubtab('proportion')" id="demoTabProportion" class="demoSubTab flex-1 py-2 text-xs font-bold text-slate-600 rounded-xl transition">
+                    🔢 Proportion
+                </button>
+            </div>
+
+            <!-- 1. COORDINATES DEMO BOARD -->
+            <div id="demoBoardCoordinates" class="demo-card bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-display font-bold text-slate-800">1st Quadrant Coordinate Grid</h4>
+                        <p class="text-xs text-slate-500">Tap grid, use arrow keys, or type coordinates</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="clearCoordinateBoard()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold border border-rose-200 transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Point Controls & Info -->
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div id="pointABox" class="bg-indigo-50 border border-indigo-200 p-2.5 rounded-xl text-indigo-900">
+                        <div class="font-bold flex justify-between items-center">
+                            <span>Point A (Blue)</span>
+                            <span id="pointAStatus" class="text-[10px] bg-indigo-200 px-1.5 py-0.5 rounded text-indigo-800 font-bold">Active</span>
+                        </div>
+                        <div id="pointACoord" class="text-lg font-black mt-0.5 font-mono">(--, --)</div>
+                    </div>
+
+                    <div id="pointBBox" class="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-emerald-900">
+                        <div class="font-bold flex justify-between items-center">
+                            <span>Point B (Green)</span>
+                            <span id="pointBStatus" class="text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600">Pending</span>
+                        </div>
+                        <div id="pointBCoord" class="text-lg font-black mt-0.5 font-mono">(--, --)</div>
+                    </div>
+                </div>
+
+                <!-- Grid Canvas Area -->
+                <div class="relative flex justify-center bg-slate-50 rounded-2xl p-2 border border-slate-200">
+                    <canvas id="coordCanvas" width="340" height="340" class="max-w-full h-auto rounded-xl"></canvas>
+                </div>
+
+                <!-- Arrow Controllers for Active Point -->
+                <div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-2">
+                    <div class="text-xs font-semibold text-slate-600 text-center">Nudge Selected Point</div>
+                    <div class="flex flex-col items-center gap-1">
+                        <button onclick="nudgeActivePoint(0, 1)" class="w-10 h-10 bg-white shadow border border-slate-300 rounded-xl font-bold text-slate-700 active:bg-slate-100 flex items-center justify-center">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="nudgeActivePoint(-1, 0)" class="w-10 h-10 bg-white shadow border border-slate-300 rounded-xl font-bold text-slate-700 active:bg-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button onclick="confirmActivePoint()" class="px-4 h-10 bg-indigo-600 hover:bg-indigo-700 shadow rounded-xl font-bold text-xs text-white active:scale-95 transition">
+                                <i class="fa-solid fa-check mr-1"></i> Lock Point
+                            </button>
+                            <button onclick="nudgeActivePoint(1, 0)" class="w-10 h-10 bg-white shadow border border-slate-300 rounded-xl font-bold text-slate-700 active:bg-slate-100 flex items-center justify-center">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <button onclick="nudgeActivePoint(0, -1)" class="w-10 h-10 bg-white shadow border border-slate-300 rounded-xl font-bold text-slate-700 active:bg-slate-100 flex items-center justify-center">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Distance Calculation Display -->
+                <div id="coordDistanceResults" class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 p-4 rounded-2xl hidden">
+                    <h5 class="font-display font-bold text-purple-900 text-sm mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-ruler-combined text-purple-600"></i> Distance Analysis
+                    </h5>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-white p-2.5 rounded-xl border border-purple-100 shadow-sm">
+                            <span class="text-slate-500 block text-[11px]">Horizontal Distance</span>
+                            <span id="distHorizVal" class="font-black text-rose-600 text-base">0 units</span>
+                        </div>
+                        <div class="bg-white p-2.5 rounded-xl border border-purple-100 shadow-sm">
+                            <span class="text-slate-500 block text-[11px]">Vertical Distance</span>
+                            <span id="distVertVal" class="font-black text-rose-600 text-base">0 units</span>
+                        </div>
+                    </div>
+                    <!-- Year 6 Scale Example -->
+                    <div class="mt-3 pt-2 border-t border-purple-100 text-xs text-purple-800 flex justify-between items-center">
+                        <span class="font-medium">Scale (1 cm : 10 m):</span>
+                        <span id="scaleDistVal" class="font-bold text-indigo-700">Horiz: 0 m | Vert: 0 m</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 2. RATIO DEMONSTRATION BOARD -->
+            <div id="demoBoardRatio" class="demo-card bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4 hidden">
+                <div>
+                    <h4 class="font-display font-bold text-slate-800">Visual Bar Ratio Modeler</h4>
+                    <p class="text-xs text-slate-500">Enter two quantities to generate proportional blocks</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 bg-amber-50 p-3 rounded-2xl border border-amber-200">
+                    <div>
+                        <label class="block text-xs font-bold text-amber-900 mb-1">Quantity A</label>
+                        <input type="number" id="ratioInputA" value="40" min="1" max="1000" oninput="updateRatioDemo()" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-center font-bold text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-amber-900 mb-1">Quantity B</label>
+                        <input type="number" id="ratioInputB" value="20" min="1" max="1000" oninput="updateRatioDemo()" class="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-center font-bold text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <!-- Visual Bar Output -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                            <span>Quantity A: <span id="labelRatioValA" class="text-amber-600">40</span></span>
+                            <span id="portionInfoA" class="text-slate-500 font-normal">2 portions</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-xl h-8 p-1 flex overflow-hidden">
+                            <div id="barRatioA" class="bg-amber-500 h-full rounded-lg transition-all duration-500 flex items-center justify-center text-white text-xs font-bold shadow-inner" style="width: 66.6%">
+                                40
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                            <span>Quantity B: <span id="labelRatioValB" class="text-blue-600">20</span></span>
+                            <span id="portionInfoB" class="text-slate-500 font-normal">1 portion</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-xl h-8 p-1 flex overflow-hidden">
+                            <div id="barRatioB" class="bg-blue-500 h-full rounded-lg transition-all duration-500 flex items-center justify-center text-white text-xs font-bold shadow-inner" style="width: 33.3%">
+                                20
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ratio Summary Box -->
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="bg-slate-100 p-3 rounded-2xl border border-slate-200">
+                        <span class="text-[11px] text-slate-500 block font-medium">Original Ratio</span>
+                        <span id="origRatioText" class="font-black text-slate-800 text-lg">40 : 20</span>
+                    </div>
+                    <div class="bg-amber-100 p-3 rounded-2xl border border-amber-200">
+                        <span class="text-[11px] text-amber-800 block font-medium">Simplest Form</span>
+                        <span id="simplifiedRatioText" class="font-black text-amber-900 text-lg">2 : 1</span>
+                    </div>
+                </div>
+
+                <div id="ratioExplanationText" class="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-200 leading-relaxed italic">
+                    Dividing both numbers by 20 gives 2 : 1.
+                </div>
+            </div>
+
+            <!-- 3. PROPORTION DEMONSTRATION BOARD -->
+            <div id="demoBoardProportion" class="demo-card bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4 hidden">
+                <div>
+                    <h4 class="font-display font-bold text-slate-800">Proportion & Unitary Solver</h4>
+                    <p class="text-xs text-slate-500">Calculate unknown quantities with step-by-step working</p>
+                </div>
+
+                <!-- Method Switcher -->
+                <div class="flex bg-slate-100 p-1 rounded-xl">
+                    <button onclick="setPropMethod('unitary')" id="propMethodUnitary" class="propMethodBtn flex-1 py-1.5 text-xs font-bold rounded-lg transition bg-emerald-600 text-white shadow-sm">
+                        Unitary Method
+                    </button>
+                    <button onclick="setPropMethod('cross')" id="propMethodCross" class="propMethodBtn flex-1 py-1.5 text-xs font-bold text-slate-600 rounded-lg transition">
+                        Divide & Multiply Method
+                    </button>
+                </div>
+
+                <!-- Given Ratio and Target Inputs -->
+                <div class="bg-emerald-50 p-3 rounded-2xl border border-emerald-200 space-y-3">
+                    <div class="text-xs font-bold text-emerald-900">Given Known Pair:</div>
+                    <div class="grid grid-cols-3 gap-2 items-center text-center">
+                        <input type="number" id="propGivenA" value="4" min="1" oninput="updatePropDemo()" class="px-2 py-1.5 bg-white border border-emerald-300 rounded-xl font-bold text-center text-xs">
+                        <span class="font-black text-emerald-800 text-sm">:</span>
+                        <input type="number" id="propGivenB" value="12" min="1" oninput="updatePropDemo()" class="px-2 py-1.5 bg-white border border-emerald-300 rounded-xl font-bold text-center text-xs">
+                    </div>
+
+                    <div class="text-xs font-bold text-emerald-900 pt-1">Target Pair (Use ? for unknown):</div>
+                    <div class="grid grid-cols-3 gap-2 items-center text-center">
+                        <input type="number" id="propTargetA" value="7" min="1" oninput="updatePropDemo()" class="px-2 py-1.5 bg-white border border-emerald-300 rounded-xl font-bold text-center text-xs">
+                        <span class="font-black text-emerald-800 text-sm">:</span>
+                        <div class="bg-amber-100 text-amber-900 font-black px-2 py-1.5 rounded-xl text-xs border border-amber-300">
+                            ? (Unknown)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Step-by-Step Working Area -->
+                <div id="propWorkingContainer" class="bg-slate-900 text-emerald-400 p-4 rounded-2xl font-mono text-xs space-y-2 shadow-inner">
+                    <!-- Steps generated via JS -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= PRACTICE SECTION ================= -->
+        <section id="view-practice" class="space-y-4 hidden">
+            
+            <!-- Setup Practice View -->
+            <div id="practiceSetupCard" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+                <div class="text-center space-y-1">
+                    <h3 class="font-display font-bold text-xl text-slate-800">Practice Engine</h3>
+                    <p class="text-xs text-slate-500">Choose your Year and Topic to attempt 10 dynamic questions</p>
+                </div>
+
+                <!-- Year Select -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Select Year Level</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectPracticeYear(4)" id="pracYearBtn4" class="pracYearBtn py-2.5 rounded-xl border border-slate-200 font-bold text-xs transition bg-indigo-50 border-indigo-500 text-indigo-700">
+                            Year 4
+                        </button>
+                        <button onclick="selectPracticeYear(5)" id="pracYearBtn5" class="pracYearBtn py-2.5 rounded-xl border border-slate-200 font-bold text-xs transition text-slate-600 hover:bg-slate-50">
+                            Year 5
+                        </button>
+                        <button onclick="selectPracticeYear(6)" id="pracYearBtn6" class="pracYearBtn py-2.5 rounded-xl border border-slate-200 font-bold text-xs transition text-slate-600 hover:bg-slate-50">
+                            Year 6
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Topic Select -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1.5">Select Topic</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectPracticeTopic('coordinates')" id="pracTopBtnCoordinates" class="pracTopBtn py-2.5 px-3 rounded-xl border border-slate-200 font-bold text-xs transition text-left flex items-center gap-2 bg-indigo-50 border-indigo-500 text-indigo-700">
+                            <span>📍</span> Coordinates
+                        </button>
+                        <button onclick="selectPracticeTopic('ratio')" id="pracTopBtnRatio" class="pracTopBtn py-2.5 px-3 rounded-xl border border-slate-200 font-bold text-xs transition text-left flex items-center gap-2 text-slate-600 hover:bg-slate-50">
+                            <span>⚖️</span> Ratio
+                        </button>
+                        <button onclick="selectPracticeTopic('proportion')" id="pracTopBtnProportion" class="pracTopBtn py-2.5 px-3 rounded-xl border border-slate-200 font-bold text-xs transition text-left flex items-center gap-2 text-slate-600 hover:bg-slate-50">
+                            <span>🔢</span> Proportion
+                        </button>
+                        <button onclick="selectPracticeTopic('mixed')" id="pracTopBtnMixed" class="pracTopBtn py-2.5 px-3 rounded-xl border border-slate-200 font-bold text-xs transition text-left flex items-center gap-2 text-slate-600 hover:bg-slate-50">
+                            <span>🌟</span> Mixed Practice
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="startPracticeSession()" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-display font-bold text-sm shadow-md transition active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> Start 10-Question Quiz
+                </button>
+            </div>
+
+            <!-- Active Quiz Screen -->
+            <div id="practiceActiveCard" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4 hidden">
+                
+                <!-- Quiz Progress Bar Header -->
+                <div class="flex items-center justify-between text-xs font-bold text-slate-600 pb-2 border-b border-slate-100">
+                    <span>Question <span id="quizQNum" class="text-indigo-600 text-sm">1</span> / 10</span>
+                    <span id="quizTimer" class="bg-slate-100 px-2.5 py-1 rounded-lg font-mono text-slate-700">⏱️ 00:00</span>
+                </div>
+
+                <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div id="quizProgressBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+
+                <!-- Question Prompt -->
+                <div class="space-y-3">
+                    <h4 id="quizQuestionText" class="font-display font-bold text-slate-800 text-base leading-relaxed">
+                        Loading question...
+                    </h4>
+
+                    <!-- Optional Diagram Container -->
+                    <div id="quizDiagramBox" class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center hidden">
+                        <!-- Canvas or SVG image injected here -->
+                    </div>
+                </div>
+
+                <!-- MCQ Options (A, B, C, D) -->
+                <div id="quizOptionsContainer" class="grid gap-2 pt-2">
+                    <!-- Buttons generated dynamically -->
+                </div>
+
+                <!-- Explanation Feedback Box -->
+                <div id="quizFeedbackBox" class="p-3 rounded-xl text-xs leading-relaxed hidden">
+                    <!-- Feedback content -->
+                </div>
+
+                <!-- Next Button -->
+                <div class="pt-2">
+                    <button id="quizNextBtn" onclick="nextQuestion()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow transition hidden">
+                        Next Question <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ================= PROGRESS SECTION ================= -->
+        <section id="view-progress" class="space-y-4 hidden">
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-display font-bold text-xl text-slate-800">Learning Records</h3>
+                        <p class="text-xs text-slate-500">Track scores, attempts, and topic progress</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-lg">
+                        📊
+                    </div>
+                </div>
+
+                <!-- Overall Summary Stat Cards -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-indigo-50 border border-indigo-100 p-3 rounded-2xl text-center">
+                        <span class="text-[11px] text-indigo-700 block font-medium">Total Best Score</span>
+                        <span id="progBestScore" class="font-black text-indigo-900 text-2xl font-display">0%</span>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-100 p-3 rounded-2xl text-center">
+                        <span class="text-[11px] text-purple-700 block font-medium">Practices Completed</span>
+                        <span id="progCompletedCount" class="font-black text-purple-900 text-2xl font-display">0</span>
+                    </div>
+                </div>
+
+                <!-- Topic Detailed Cards -->
+                <div class="space-y-3 pt-2">
+
+                    <!-- Coordinates Progress -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span class="text-slate-800 flex items-center gap-1.5">📍 Coordinates</span>
+                            <span id="progCoordScore" class="text-indigo-600">0 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                            <div id="progCoordBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                            <span>Attempts: <span id="progCoordAttempts">0</span></span>
+                            <span id="progCoordStatus">Not Started</span>
+                        </div>
+                    </div>
+
+                    <!-- Ratio Progress -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span class="text-slate-800 flex items-center gap-1.5">⚖️ Ratio</span>
+                            <span id="progRatioScore" class="text-amber-600">0 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                            <div id="progRatioBar" class="bg-amber-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                            <span>Attempts: <span id="progRatioAttempts">0</span></span>
+                            <span id="progRatioStatus">Not Started</span>
+                        </div>
+                    </div>
+
+                    <!-- Proportion Progress -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
+                        <div class="flex justify-between items-center text-xs font-bold">
+                            <span class="text-slate-800 flex items-center gap-1.5">🔢 Proportion</span>
+                            <span id="progPropScore" class="text-emerald-600">0 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-200 rounded-full h-2">
+                            <div id="progPropBar" class="bg-emerald-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 font-medium">
+                            <span>Attempts: <span id="progPropAttempts">0</span></span>
+                            <span id="progPropStatus">Not Started</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Sync / Spreadsheet info button -->
+                <div class="pt-2 text-center">
+                    <button onclick="syncProgressWithGAS()" class="text-xs text-indigo-600 font-semibold hover:underline inline-flex items-center gap-1">
+                        <i class="fa-solid fa-rotate"></i> Sync Record with Google Sheets
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= BOTTOM MOBILE NAVIGATION ================= -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-lg">
+        <div class="max-w-2xl mx-auto flex justify-around items-center py-2 px-1">
+            
+            <button onclick="switchTab('home')" id="navHome" class="navBtn flex flex-col items-center gap-0.5 text-indigo-600 font-bold transition">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[10px]">Home</span>
+            </button>
+
+            <button onclick="switchTab('notes')" id="navNotes" class="navBtn flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-book-open text-lg"></i>
+                <span class="text-[10px]">Notes</span>
+            </button>
+
+            <button onclick="switchTab('demo')" id="navDemo" class="navBtn flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-chalkboard-user text-lg"></i>
+                <span class="text-[10px]">Demo</span>
+            </button>
+
+            <button onclick="switchTab('practice')" id="navPractice" class="navBtn flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-pen-to-square text-lg"></i>
+                <span class="text-[10px]">Practice</span>
+            </button>
+
+            <button onclick="switchTab('progress')" id="navProgress" class="navBtn flex flex-col items-center gap-0.5 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-chart-line text-lg"></i>
+                <span class="text-[10px]">Progress</span>
+            </button>
+
+        </div>
+    </nav>
+
+    <!-- ================= MODALS & TOASTS ================= -->
+
+    <!-- Quiz Result Modal -->
+    <div id="quizResultModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl animate-bounce-in">
+            <div id="resultEmoji" class="text-6xl">🎉</div>
+            <div>
+                <h3 id="resultTitle" class="font-display font-bold text-2xl text-slate-800">Awesome Job!</h3>
+                <p id="resultSubtitle" class="text-xs text-slate-500 mt-1">You completed the practice quiz!</p>
+            </div>
+
+            <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-center">
+                <span class="text-xs text-indigo-700 block font-medium">Your Score</span>
+                <span id="resultScoreText" class="font-display font-black text-4xl text-indigo-900">80%</span>
+                <span id="resultFractionText" class="text-xs font-bold text-indigo-600 block mt-0.5">8 / 10 Correct</span>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeResultModal(); startPracticeSession();" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow transition">
+                    Try Again
+                </button>
+                <button onclick="closeResultModal(); switchTab('home');" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition">
+                    Back to Topics
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest / User Profile Info Modal -->
+    <div id="guestModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-display font-bold text-slate-800 text-lg">User Profile</h3>
+                <button onclick="closeGuestModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="modalUserContent" class="space-y-3 text-xs text-slate-600">
+                <!-- Injected via JS -->
+            </div>
+
+            <button onclick="closeGuestModal()" class="w-full py-2.5 bg-indigo-600 text-white font-bold rounded-xl text-xs">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+    <script>
+        // Preserved Email Integration & App Config
+        let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+        if (
+            loggedInEmail === "" ||
+            loggedInEmail === "INSERT_USER_EMAIL_HERE" ||
+            loggedInEmail === "Guest"
+        ) {
+            loggedInEmail = localStorage.getItem('loggedInUserEmail') || null;
+        }
+
+        const APP_CONFIG = {
+            GAS_WEB_APP_URL: "", // Google Apps Script Web App Deployment URL
+            USER_DATA_ENDPOINT: ""
+        };
+
+        // User State Object
+        let currentUser = {
+            email: loggedInEmail || "Guest",
+            name: "Guest User",
+            class: "Primary Pupil",
+            isGuest: true
+        };
+
+        // Application Progress State
+        let userProgress = {
+            coordScore: 0,
+            coordAttempts: 0,
+            ratioScore: 0,
+            ratioAttempts: 0,
+            propScore: 0,
+            propAttempts: 0,
+            bestScore: 0,
+            completedTopics: []
+        };
+
+        function getUserProfile() {
+            // Checks if running under Google Apps Script environment
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(onUserProfileLoaded)
+                    .getUserProfile(currentUser.email);
+            } else {
+                // Standalone Mock Mode
+                if (currentUser.email && currentUser.email !== "Guest") {
+                    currentUser.name = "Loading Name...";
+                    currentUser.userClass = "Loading Class...";
+                    currentUser.isGuest = false;
+                }
+                updateHeaderBadge();
+            }
+        }
+
+        function onUserProfileLoaded(profileData) {
+            if (profileData && profileData.name) {
+                currentUser.name = profileData.name;
+                currentUser.userClass = profileData.userClass;
+                currentUser.isGuest = false;
+                updateHeaderBadge();
+            }
+        }
+
+        function savePracticeResult(topic, score, total) {
+            const perc = Math.round((score / total) * 100);
+            
+            if (topic === 'coordinates' || topic === 'mixed') {
+                userProgress.coordAttempts++;
+                userProgress.coordScore = Math.max(userProgress.coordScore, score);
+            }
+            if (topic === 'ratio' || topic === 'mixed') {
+                userProgress.ratioAttempts++;
+                userProgress.ratioScore = Math.max(userProgress.ratioScore, score);
+            }
+            if (topic === 'proportion' || topic === 'mixed') {
+                userProgress.propAttempts++;
+                userProgress.propScore = Math.max(userProgress.propScore, score);
+            }
+
+            userProgress.bestScore = Math.max(userProgress.bestScore, perc);
+            
+            // Save local storage backup
+            localStorage.setItem('mathApp_progress', JSON.stringify(userProgress));
+
+            // Sync with GAS backend if available
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.savePracticeResult({
+                    email: currentUser.email,
+                    subtopic: topic, // Sends 'coordinates', 'ratio', or 'proportion'
+                    score: score     // Sends current attempt score
+                });
+            }
+
+            renderProgressScreen();
+            updateHomeProgressBars();
+        }
+
+        function loadUserProgress() {
+            const saved = localStorage.getItem('mathApp_progress');
+            if (saved) {
+                try {
+                    userProgress = JSON.parse(saved);
+                } catch(e) {}
+            }
+            renderProgressScreen();
+            updateHomeProgressBars();
+        }
+
+        function updateHeaderBadge() {
+            document.getElementById('userName').innerText = currentUser.name;
+            document.getElementById('userClass').innerText = currentUser.userClass;
+            
+            if (currentUser.isGuest) {
+                document.getElementById('gasNoticeBanner').classList.remove('hidden');
+            } else {
+                document.getElementById('gasNoticeBanner').classList.add('hidden');
+            }
+        }
+
+        function switchTab(tabId) {
+            const tabs = ['home', 'notes', 'demo', 'practice', 'progress'];
+            tabs.forEach(t => {
+                const sec = document.getElementById(`view-${t}`);
+                if (sec) sec.classList.add('hidden');
+                
+                const navBtn = document.getElementById(`nav${capitalize(t)}`);
+                if (navBtn) {
+                    navBtn.classList.remove('text-indigo-600', 'font-bold');
+                    navBtn.classList.add('text-slate-400');
+                }
+            });
+
+            const activeSec = document.getElementById(`view-${tabId}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+
+            const activeNav = document.getElementById(`nav${capitalize(tabId)}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-slate-400');
+                activeNav.classList.add('text-indigo-600', 'font-bold');
+            }
+
+            if (tabId === 'demo') {
+                setTimeout(drawCoordinateGrid, 100);
+            }
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        let currentNotesYear = 4;
+        let currentNotesTopic = 'Coordinates';
+
+        const CURRICULUM_NOTES = {
+            4: {
+                Coordinates: {
+                    title: "7.1 Coordinates in the First Quadrant (Year 4)",
+                    know: "Recognise the x-axis, y-axis, and origin O (0,0). Coordinates are written as (x, y).",
+                    keyIdea: "Always move horizontally along X first, then vertically along Y second! ('X first, Y second')",
+                    steps: [
+                        "Start at origin O (0,0).",
+                        "Move right along the x-axis to the given x-number.",
+                        "Move up parallel to the y-axis to the given y-number."
+                    ],
+                    example: "Point A = (3, 5). Move 3 units right, then move 5 units up.",
+                    mistake: "Writing (5, 3) instead of (3, 5). X is horizontal, Y is vertical!",
+                    quickCheck: "What is the coordinate of origin O?",
+                    qcAns: "(0,0)"
+                },
+                Ratio: {
+                    title: "7.2 Ratio (Year 4)",
+                    know: "Represent relationship between two quantities in ratios: 1:1 up to 1:10, 1:100, and 1:1000.",
+                    keyIdea: "A ratio compares two quantities measured in the same unit.",
+                    steps: [
+                        "Count the first item.",
+                        "Count the second item.",
+                        "Write in the format A : B."
+                    ],
+                    example: "1 pencil to 10 erasers is written as 1 : 10.",
+                    mistake: "Including units in ratio answers (e.g. 1 cm : 10 cm - Incorrect! Ratios do NOT have units).",
+                    quickCheck: "Express 1 balloon to 100 stickers as a ratio.",
+                    qcAns: "1 : 100"
+                },
+                Proportion: {
+                    title: "7.3 Proportion - Unitary Method (Year 4)",
+                    know: "Determine an unknown value by first finding the value of 1 single unit.",
+                    keyIdea: "Find 1 unit first (Divide), then calculate the target number of units (Multiply).",
+                    steps: [
+                        "Divide total value by given quantity to get value of 1 unit.",
+                        "Multiply 1 unit value by desired target quantity."
+                    ],
+                    example: "4 books cost RM20. 1 book = RM20 ÷ 4 = RM5. Therefore, 6 books = RM5 × 6 = RM30.",
+                    mistake: "Multiplying before finding the single unit value.",
+                    quickCheck: "If 3 pencils cost RM6, how much do 5 pencils cost?",
+                    qcAns: "RM10"
+                }
+            },
+            5: {
+                Coordinates: {
+                    title: "7.1 Coordinates - Distance (Year 5)",
+                    know: "Determine horizontal distance and vertical distance between two coordinates.",
+                    keyIdea: "Horizontal distance = Difference in X. Vertical distance = Difference in Y.",
+                    steps: [
+                        "Find horizontal distance: Subtract smaller X from larger X.",
+                        "Find vertical distance: Subtract smaller Y from larger Y."
+                    ],
+                    example: "A(2, 3) and B(7, 6). Horizontal = 7 - 2 = 5 units. Vertical = 6 - 3 = 3 units.",
+                    mistake: "Adding coordinates together instead of subtracting to find distance.",
+                    quickCheck: "Find horizontal distance between (1, 4) and (6, 4).",
+                    qcAns: "5 units"
+                },
+                Ratio: {
+                    title: "7.2 Ratio Types (Year 5)",
+                    know: "Represent ratio of two quantities as Parts to Parts, Parts to Whole, or Whole to Parts.",
+                    keyIdea: "Check carefully whether the question asks for a part or the total whole!",
+                    steps: [
+                        "Identify Part 1, Part 2, and Total Whole.",
+                        "Match the requested order in the question."
+                    ],
+                    example: "3 girls, 2 boys. Total = 5. Ratio of Girls to Whole = 3 : 5.",
+                    mistake: "Mixing up order (e.g., writing Whole to Part when asked Part to Whole).",
+                    quickCheck: "4 red balls, 6 blue balls. What is ratio of Red to Total?",
+                    qcAns: "4 : 10"
+                },
+                Proportion: {
+                    title: "7.3 Proportion (Year 5)",
+                    know: "Determine unknown values using proportion ratios.",
+                    keyIdea: "Equivalent ratios increase or decrease by the same factor.",
+                    steps: [
+                        "Set up the given ratio.",
+                        "Identify the multiplication/division factor."
+                    ],
+                    example: "2 : 5 = 6 : ? (Since 2 × 3 = 6, multiply 5 × 3 = 15).",
+                    mistake: "Adding numbers instead of multiplying/dividing by a common factor.",
+                    quickCheck: "If 2 : 3 = ? : 12, what is ?",
+                    qcAns: "8"
+                }
+            },
+            6: {
+                Coordinates: {
+                    title: "7.1 Coordinates & Map Scale (Year 6)",
+                    know: "Determine actual distances using coordinates and educational scales.",
+                    keyIdea: "Multiply grid distance units by the scale value (e.g., 1 cm : 10 m).",
+                    steps: [
+                        "Calculate grid distance in units (or cm).",
+                        "Multiply grid distance by the scale factor."
+                    ],
+                    example: "Grid distance = 4 units. Scale 1 cm : 10 m. Actual distance = 4 × 10 = 40 m.",
+                    mistake: "Forgetting to write the target unit (meters or km).",
+                    quickCheck: "Grid distance = 5 cm. Scale is 1 cm : 1 km. What is real distance?",
+                    qcAns: "5 km"
+                },
+                Ratio: {
+                    title: "7.2 Simplest Form of Ratio (Year 6)",
+                    know: "Simplify ratios to their lowest whole number terms.",
+                    keyIdea: "Divide both sides of the ratio by their Highest Common Factor (HCF).",
+                    steps: [
+                        "Find a common number that divides both sides.",
+                        "Divide both sides until no further whole number division is possible."
+                    ],
+                    example: "40 : 20 ÷ 20 = 2 : 1.",
+                    mistake: "Leaving decimals or fractions in the ratio.",
+                    quickCheck: "Simplify 15 : 20.",
+                    qcAns: "3 : 4"
+                },
+                Proportion: {
+                    title: "7.3 Proportion Unknowns (Year 6)",
+                    know: "Determine unknown quantities on either side based on a given ratio.",
+                    keyIdea: "Divide by known quantity on same side, then multiply by matching quantity.",
+                    steps: [
+                        "Formula: (Target Known ÷ Given Same Side) × Given Opposite Side."
+                    ],
+                    example: "Given 4 : 12. Find ? : 24. Answer = (24 ÷ 12) × 4 = 8.",
+                    mistake: "Dividing the wrong pair.",
+                    quickCheck: "Given 3 : 9, find 5 : ?",
+                    qcAns: "15"
+                }
+            }
+        };
+
+        function setNotesYear(year) {
+            currentNotesYear = year;
+            document.querySelectorAll('.noteYearBtn').forEach(b => {
+                b.classList.remove('bg-indigo-600', 'text-white', 'shadow-sm');
+                b.classList.add('text-slate-600');
+            });
+            const btn = document.getElementById(`noteYearBtn${year}`);
+            if (btn) {
+                btn.classList.add('bg-indigo-600', 'text-white', 'shadow-sm');
+                btn.classList.remove('text-slate-600');
+            }
+            renderNotes();
+        }
+
+        function setNotesTopic(topic) {
+            currentNotesTopic = topic;
+            document.querySelectorAll('.noteTopicTab').forEach(b => {
+                b.classList.remove('bg-indigo-100', 'text-indigo-700');
+                b.classList.add('text-slate-600', 'bg-slate-200');
+            });
+            const tab = document.getElementById(`noteTab${topic}`);
+            if (tab) {
+                tab.classList.add('bg-indigo-100', 'text-indigo-700');
+                tab.classList.remove('text-slate-600', 'bg-slate-200');
+            }
+            renderNotes();
+        }
+
+        function openNoteTopic(topic) {
+            switchTab('notes');
+            setNotesTopic(topic);
+        }
+
+        function renderNotes() {
+            const data = CURRICULUM_NOTES[currentNotesYear][currentNotesTopic];
+            const container = document.getElementById('notesContentContainer');
+            
+            container.innerHTML = `
+                <div class="border-b border-slate-100 pb-3">
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                        Year ${currentNotesYear} Standard
+                    </span>
+                    <h3 class="font-display font-bold text-lg text-slate-800 mt-1">${data.title}</h3>
+                </div>
+
+                <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 space-y-1">
+                    <div class="text-xs font-bold text-indigo-900 flex items-center gap-1">
+                        <i class="fa-solid fa-lightbulb text-yellow-500"></i> What You Need To Know
+                    </div>
+                    <p class="text-xs text-slate-700">${data.know}</p>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="text-xs font-bold text-slate-800">🔑 Key Idea</div>
+                    <p class="text-xs text-slate-600 font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-200">${data.keyIdea}</p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="text-xs font-bold text-slate-800">📋 Step-by-Step Explanation</div>
+                    <ol class="list-decimal list-inside text-xs text-slate-600 space-y-1 pl-1">
+                        ${data.steps.map(s => `<li>${s}</li>`).join('')}
+                    </ol>
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 space-y-1">
+                    <div class="text-xs font-bold text-emerald-900">✏️ Worked Example</div>
+                    <p class="text-xs text-emerald-800 font-mono">${data.example}</p>
+                </div>
+
+                <div class="bg-rose-50 p-3 rounded-xl border border-rose-200 space-y-1">
+                    <div class="text-xs font-bold text-rose-900">⚠️ Common Mistake</div>
+                    <p class="text-xs text-rose-800">${data.mistake}</p>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 space-y-2">
+                    <div class="text-xs font-bold text-amber-900">⚡ Quick Check</div>
+                    <p class="text-xs text-amber-950 font-medium">${data.quickCheck}</p>
+                    <button onclick="this.nextElementSibling.classList.remove('hidden')" class="text-[11px] font-bold text-amber-700 underline">Show Answer</button>
+                    <div class="hidden text-xs font-bold text-emerald-700 bg-white p-2 rounded-lg border border-amber-200">
+                        Answer: ${data.qcAns}
+                    </div>
+                </div>
+            `;
+        }
+
+        let pointA = { x: 2, y: 3, set: false };
+        let pointB = { x: 7, y: 6, set: false };
+        let activePointKey = 'A'; // 'A' or 'B'
+        let isTeacherMode = false;
+
+        function toggleTeacherMode() {
+            isTeacherMode = !isTeacherMode;
+            const body = document.body;
+            const btnText = document.getElementById('teacherModeText');
+            if (isTeacherMode) {
+                body.classList.add('teacher-mode');
+                btnText.innerText = "Exit Teacher Mode";
+            } else {
+                body.classList.remove('teacher-mode');
+                btnText.innerText = "Teacher Mode";
+            }
+            drawCoordinateGrid();
+        }
+
+        function switchDemoSubtab(sub) {
+            document.querySelectorAll('.demoSubTab').forEach(b => {
+                b.classList.remove('bg-white', 'text-indigo-700', 'shadow-sm');
+                b.classList.add('text-slate-600');
+            });
+            const tab = document.getElementById(`demoTab${capitalize(sub)}`);
+            if (tab) {
+                tab.classList.add('bg-white', 'text-indigo-700', 'shadow-sm');
+                tab.classList.remove('text-slate-600');
+            }
+
+            document.getElementById('demoBoardCoordinates').classList.add('hidden');
+            document.getElementById('demoBoardRatio').classList.add('hidden');
+            document.getElementById('demoBoardProportion').classList.add('hidden');
+
+            document.getElementById(`demoBoard${capitalize(sub)}`).classList.remove('hidden');
+
+            if (sub === 'coordinates') drawCoordinateGrid();
+            if (sub === 'ratio') updateRatioDemo();
+            if (sub === 'proportion') updatePropDemo();
+        }
+
+        function openDemoTopic(sub) {
+            switchTab('demo');
+            switchDemoSubtab(sub);
+        }
+
+        function initCoordinateEvents() {
+            const canvas = document.getElementById('coordCanvas');
+            if (!canvas) return;
+
+            // Touch / Mouse click listener to place point
+            canvas.addEventListener('click', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                const clickX = (e.clientX - rect.left) * scaleX;
+                const clickY = (e.clientY - rect.top) * scaleY;
+
+                const margin = 35;
+                const gridSize = 10;
+                const step = (canvas.width - margin * 2) / gridSize;
+
+                let gridX = Math.round((clickX - margin) / step);
+                let gridY = Math.round((canvas.height - margin - clickY) / step);
+
+                gridX = Math.max(0, Math.min(10, gridX));
+                gridY = Math.max(0, Math.min(10, gridY));
+
+                if (activePointKey === 'A') {
+                    pointA.x = gridX;
+                    pointA.y = gridY;
+                } else if (activePointKey === 'B') {
+                    pointB.x = gridX;
+                    pointB.y = gridY;
+                }
+                updateCoordinateUI();
+            });
+        }
+
+        function nudgeActivePoint(dx, dy) {
+            if (activePointKey === 'A') {
+                pointA.x = Math.max(0, Math.min(10, pointA.x + dx));
+                pointA.y = Math.max(0, Math.min(10, pointA.y + dy));
+            } else if (activePointKey === 'B') {
+                pointB.x = Math.max(0, Math.min(10, pointB.x + dx));
+                pointB.y = Math.max(0, Math.min(10, pointB.y + dy));
+            }
+            updateCoordinateUI();
+        }
+
+        function confirmActivePoint() {
+            if (activePointKey === 'A') {
+                pointA.set = true;
+                activePointKey = 'B';
+            } else if (activePointKey === 'B') {
+                pointB.set = true;
+            }
+            updateCoordinateUI();
+        }
+
+        function clearCoordinateBoard() {
+            pointA = { x: 2, y: 3, set: false };
+            pointB = { x: 7, y: 6, set: false };
+            activePointKey = 'A';
+            updateCoordinateUI();
+        }
+
+        function updateCoordinateUI() {
+            document.getElementById('pointACoord').innerText = `(${pointA.x}, ${pointA.y})`;
+            document.getElementById('pointBCoord').innerText = `(${pointB.x}, ${pointB.y})`;
+
+            const statusA = document.getElementById('pointAStatus');
+            const statusB = document.getElementById('pointBStatus');
+
+            if (activePointKey === 'A') {
+                statusA.innerText = "Active";
+                statusA.className = "text-[10px] bg-indigo-200 px-1.5 py-0.5 rounded text-indigo-800 font-bold";
+                statusB.innerText = pointA.set ? "Pending" : "Locked";
+                statusB.className = "text-[10px] bg-slate-200 px-1.5 py-0.5 rounded text-slate-600";
+            } else {
+                statusA.innerText = "Locked";
+                statusA.className = "text-[10px] bg-indigo-100 px-1.5 py-0.5 rounded text-indigo-700";
+                statusB.innerText = pointB.set ? "Locked" : "Active";
+                statusB.className = "text-[10px] bg-emerald-200 px-1.5 py-0.5 rounded text-emerald-800 font-bold";
+            }
+
+            const resultsBox = document.getElementById('coordDistanceResults');
+            if (pointA.set && pointB.set) {
+                const horiz = Math.abs(pointB.x - pointA.x);
+                const vert = Math.abs(pointB.y - pointA.y);
+
+                document.getElementById('distHorizVal').innerText = `${horiz} units`;
+                document.getElementById('distVertVal').innerText = `${vert} units`;
+                document.getElementById('scaleDistVal').innerText = `Horiz: ${horiz * 10} m | Vert: ${vert * 10} m`;
+
+                resultsBox.classList.remove('hidden');
+            } else {
+                resultsBox.classList.add('hidden');
+            }
+
+            drawCoordinateGrid();
+        }
+
+        function drawCoordinateGrid() {
+            const canvas = document.getElementById('coordCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const margin = 35;
+            const gridSize = 10;
+            const width = canvas.width - margin * 2;
+            const height = canvas.height - margin * 2;
+            const step = width / gridSize;
+
+            // Draw Grid Lines
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "#e2e8f0";
+
+            for (let i = 0; i <= gridSize; i++) {
+                // Vertical lines
+                ctx.beginPath();
+                ctx.moveTo(margin + i * step, margin);
+                ctx.lineTo(margin + i * step, canvas.height - margin);
+                ctx.stroke();
+
+                // Horizontal lines
+                ctx.beginPath();
+                ctx.moveTo(margin, canvas.height - margin - i * step);
+                ctx.lineTo(canvas.width - margin, canvas.height - margin - i * step);
+                ctx.stroke();
+            }
+
+            // Draw Axes
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "#334155";
+
+            // X-Axis
+            ctx.beginPath();
+            ctx.moveTo(margin, canvas.height - margin);
+            ctx.lineTo(canvas.width - margin + 10, canvas.height - margin);
+            ctx.stroke();
+
+            // Y-Axis
+            ctx.beginPath();
+            ctx.moveTo(margin, canvas.height - margin);
+            ctx.lineTo(margin, margin - 10);
+            ctx.stroke();
+
+            // Labels and Numbers
+            ctx.fillStyle = "#475569";
+            ctx.font = isTeacherMode ? "bold 13px Inter" : "bold 11px Inter";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+
+            // Origin O
+            ctx.fillText("O", margin - 12, canvas.height - margin + 4);
+
+            for (let i = 1; i <= gridSize; i++) {
+                // X labels
+                ctx.fillText(i.toString(), margin + i * step, canvas.height - margin + 6);
+                // Y labels
+                ctx.textAlign = "right";
+                ctx.textBaseline = "middle";
+                ctx.fillText(i.toString(), margin - 6, canvas.height - margin - i * step);
+            }
+
+            // Axis titles
+            ctx.fillStyle = "#4f46e5";
+            ctx.font = "bold 12px Inter";
+            ctx.fillText("X", canvas.width - margin + 15, canvas.height - margin);
+            ctx.fillText("Y", margin, margin - 18);
+
+            // Convert grid coords to canvas pixels
+            function toCanvasX(x) { return margin + x * step; }
+            function toCanvasY(y) { return canvas.height - margin - y * step; }
+
+            // Draw Right-Angle Distance Lines if both set
+            if (pointA.set && pointB.set) {
+                const ax = toCanvasX(pointA.x);
+                const ay = toCanvasY(pointA.y);
+                const bx = toCanvasX(pointB.x);
+                const by = toCanvasY(pointB.y);
+
+                // Horizontal Line (Red Dashed)
+                ctx.beginPath();
+                ctx.setLineDash([5, 4]);
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = "#ef4444";
+                ctx.moveTo(ax, ay);
+                ctx.lineTo(bx, ay);
+                ctx.stroke();
+
+                // Vertical Line (Red Dashed)
+                ctx.beginPath();
+                ctx.moveTo(bx, ay);
+                ctx.lineTo(bx, by);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // Draw Point A
+            const ax = toCanvasX(pointA.x);
+            const ay = toCanvasY(pointA.y);
+            ctx.beginPath();
+            ctx.arc(ax, ay, isTeacherMode ? 9 : 7, 0, Math.PI * 2);
+            ctx.fillStyle = "#4f46e5";
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#ffffff";
+            ctx.stroke();
+
+            ctx.fillStyle = "#3730a3";
+            ctx.font = "bold 12px Inter";
+            ctx.textAlign = "left";
+            ctx.fillText(`A(${pointA.x},${pointA.y})`, ax + 8, ay - 10);
+
+            // Draw Point B
+            if (pointA.set || activePointKey === 'B') {
+                const bx = toCanvasX(pointB.x);
+                const by = toCanvasY(pointB.y);
+                ctx.beginPath();
+                ctx.arc(bx, by, isTeacherMode ? 9 : 7, 0, Math.PI * 2);
+                ctx.fillStyle = "#10b981";
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#ffffff";
+                ctx.stroke();
+
+                ctx.fillStyle = "#065f46";
+                ctx.font = "bold 12px Inter";
+                ctx.textAlign = "left";
+                ctx.fillText(`B(${pointB.x},${pointB.y})`, bx + 8, by - 10);
+            }
+        }
+
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        function updateRatioDemo() {
+            let valA = parseInt(document.getElementById('ratioInputA').value) || 1;
+            let valB = parseInt(document.getElementById('ratioInputB').value) || 1;
+
+            valA = Math.max(1, Math.min(1000, valA));
+            valB = Math.max(1, Math.min(1000, valB));
+
+            document.getElementById('labelRatioValA').innerText = valA;
+            document.getElementById('labelRatioValB').innerText = valB;
+
+            const div = gcd(valA, valB);
+            const simA = valA / div;
+            const simB = valB / div;
+
+            const total = valA + valB;
+            const pctA = Math.max(15, Math.min(85, (valA / total) * 100));
+            const pctB = 100 - pctA;
+
+            document.getElementById('barRatioA').style.width = `${pctA}%`;
+            document.getElementById('barRatioA').innerText = valA;
+
+            document.getElementById('barRatioB').style.width = `${pctB}%`;
+            document.getElementById('barRatioB').innerText = valB;
+
+            document.getElementById('portionInfoA').innerText = `${simA} portions`;
+            document.getElementById('portionInfoB').innerText = `${simB} portions`;
+
+            document.getElementById('origRatioText').innerText = `${valA} : ${valB}`;
+            document.getElementById('simplifiedRatioText').innerText = `${simA} : ${simB}`;
+
+            document.getElementById('ratioExplanationText').innerText = 
+                `By dividing both quantities by their common factor of ${div}, the simplest ratio is ${simA} : ${simB}.`;
+        }
+
+        let currentPropMethod = 'unitary';
+
+        function setPropMethod(method) {
+            currentPropMethod = method;
+            document.querySelectorAll('.propMethodBtn').forEach(b => {
+                b.classList.remove('bg-emerald-600', 'text-white', 'shadow-sm');
+                b.classList.add('text-slate-600');
+            });
+            const btn = document.getElementById(`propMethod${capitalize(method)}`);
+            if (btn) {
+                btn.classList.add('bg-emerald-600', 'text-white', 'shadow-sm');
+                btn.classList.remove('text-slate-600');
+            }
+            updatePropDemo();
+        }
+
+        function updatePropDemo() {
+            const gA = parseFloat(document.getElementById('propGivenA').value) || 1;
+            const gB = parseFloat(document.getElementById('propGivenB').value) || 1;
+            const tA = parseFloat(document.getElementById('propTargetA').value) || 1;
+
+            const container = document.getElementById('propWorkingContainer');
+
+            if (currentPropMethod === 'unitary') {
+                const unitVal = gB / gA;
+                const finalAns = unitVal * tA;
+
+                container.innerHTML = `
+                    <div class="text-slate-400">// Unitary Method Working Steps:</div>
+                    <div class="flex items-center gap-2">
+                        <span>Given: ${gA} units = ${gB}</span>
+                    </div>
+                    <div class="text-amber-400 text-[11px]">↓ Divide by ${gA} to find 1 unit</div>
+                    <div class="text-white font-bold">1 unit = ${gB} ÷ ${gA} = ${unitVal.toFixed(2).replace('.00','')}</div>
+                    <div class="text-amber-400 text-[11px]">↓ Multiply by target quantity ${tA}</div>
+                    <div class="text-emerald-300 font-bold text-sm">
+                        ${tA} units = ${unitVal.toFixed(2).replace('.00','')} × ${tA} = <span class="text-yellow-300 text-base font-black">${finalAns.toFixed(2).replace('.00','')}</span>
+                    </div>
+                `;
+            } else {
+                const finalAns = (tA / gA) * gB;
+
+                container.innerHTML = `
+                    <div class="text-slate-400">// Divide & Multiply Working Steps:</div>
+                    <div>Form ratio equation:</div>
+                    <div class="text-white">${gA} : ${gB} = ${tA} : ?</div>
+                    <div class="text-amber-400 text-[11px] mt-1">Rule: Divide by known matching side (${gA}), then multiply by target (${tA})</div>
+                    <div class="text-white font-bold mt-1">Formula: Answer = ${tA} ÷ ${gA} × ${gB}</div>
+                    <div class="text-emerald-300 font-bold text-sm mt-1">
+                        Answer = <span class="text-yellow-300 text-base font-black">${finalAns.toFixed(2).replace('.00','')}</span>
+                    </div>
+                `;
+            }
+        }
+
+        let activePracYear = 5;
+        let activePracTopic = 'mixed';
+        let currentQuizQuestions = [];
+        let currentQuestionIdx = 0;
+        let quizScore = 0;
+        let quizTimerInterval = null;
+        let quizSeconds = 0;
+
+        function selectPracticeYear(year) {
+            activePracYear = year;
+            document.querySelectorAll('.pracYearBtn').forEach(b => {
+                b.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+                b.classList.add('text-slate-600');
+            });
+            const btn = document.getElementById(`pracYearBtn${year}`);
+            if (btn) {
+                btn.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+            }
+        }
+
+        function selectPracticeTopic(topic) {
+            activePracTopic = topic;
+            document.querySelectorAll('.pracTopBtn').forEach(b => {
+                b.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+                b.classList.add('text-slate-600');
+            });
+            const btn = document.getElementById(`pracTopBtn${capitalize(topic)}`);
+            if (btn) {
+                btn.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+            }
+        }
+
+        function startSpecificPractice(topic) {
+            switchTab('practice');
+            selectPracticeTopic(topic);
+            startPracticeSession();
+        }
+
+        function generateQuestions() {
+            const list = [];
+            for (let i = 0; i < 10; i++) {
+                let topic = activePracTopic;
+                if (topic === 'mixed') {
+                    const topics = ['coordinates', 'ratio', 'proportion'];
+                    topic = topics[i % 3];
+                }
+
+                if (topic === 'coordinates') {
+                    list.push(generateCoordinateQuestion(activePracYear, i));
+                } else if (topic === 'ratio') {
+                    list.push(generateRatioQuestion(activePracYear, i));
+                } else {
+                    list.push(generateProportionQuestion(activePracYear, i));
+                }
+            }
+            return list;
+        }
+
+        function generateCoordinateQuestion(year, idx) {
+            if (year === 4) {
+                const x = (idx % 6) + 2;
+                const y = ((idx * 2) % 6) + 3;
+                return {
+                    id: `c_y4_${idx}_${Date.now()}`,
+                    question: `Which pair of coordinates correctly represents a point located ${x} units along the horizontal x-axis and ${y} units up the vertical y-axis?`,
+                    choices: [`(${x}, ${y})`, `(${y}, ${x})`, `(${x + 1}, ${y})`, `(0, ${y})`],
+                    answer: `(${x}, ${y})`,
+                    explanation: "Coordinates are always written as (x, y) where x comes first and y comes second."
+                };
+            } else if (year === 5) {
+                const x1 = (idx % 4) + 1;
+                const y1 = 3;
+                const dist = (idx % 5) + 3;
+                const x2 = x1 + dist;
+                return {
+                    id: `c_y5_${idx}_${Date.now()}`,
+                    question: `What is the horizontal distance between Point A(${x1}, ${y1}) and Point B(${x2}, ${y1})?`,
+                    choices: [`${dist} units`, `${dist + 2} units`, `${x1} units`, `${x2} units`],
+                    answer: `${dist} units`,
+                    explanation: `Horizontal distance = ${x2} - ${x1} = ${dist} units.`
+                };
+            } else {
+                const scaleKm = (idx % 3) + 2;
+                const units = (idx % 4) + 3;
+                const realDist = units * scaleKm;
+                return {
+                    id: `c_y6_${idx}_${Date.now()}`,
+                    question: `On a map grid, the scale is 1 cm : ${scaleKm} km. If the distance between two towns is ${units} cm on the map, what is the actual real-world distance?`,
+                    choices: [`${realDist} km`, `${realDist + 5} km`, `${units + scaleKm} km`, `${units} km`],
+                    answer: `${realDist} km`,
+                    explanation: `Actual distance = Map distance (${units} cm) × Scale factor (${scaleKm} km) = ${realDist} km.`
+                };
+            }
+        }
+
+        function generateRatioQuestion(year, idx) {
+            if (year === 4) {
+                const vals = [10, 100, 1000];
+                const v = vals[idx % 3];
+                return {
+                    id: `r_y4_${idx}_${Date.now()}`,
+                    question: `Express the ratio of 1 eraser to ${v} paperclips in standard ratio form.`,
+                    choices: [`1 : ${v}`, `${v} : 1`, `1 : ${v * 10}`, `10 : ${v}`],
+                    answer: `1 : ${v}`,
+                    explanation: `1 eraser to ${v} paperclips is written simply as 1 : ${v}.`
+                };
+            } else if (year === 5) {
+                const girls = (idx % 4) + 3;
+                const boys = (idx % 3) + 2;
+                const total = girls + boys;
+                return {
+                    id: `r_y5_${idx}_${Date.now()}`,
+                    question: `In a classroom, there are ${girls} girls and ${boys} boys. What is the ratio of Girls to the Total number of pupils?`,
+                    choices: [`${girls} : ${total}`, `${girls} : ${boys}`, `${boys} : ${total}`, `${total} : ${girls}`],
+                    answer: `${girls} : ${total}`,
+                    explanation: `Total pupils = ${girls} + ${boys} = ${total}. Ratio of Girls to Whole = ${girls} : ${total}.`
+                };
+            } else {
+                const mult = (idx % 4) + 2;
+                const simA = 2 + (idx % 3);
+                const simB = 3 + (idx % 2);
+                const origA = simA * mult;
+                const origB = simB * mult;
+                return {
+                    id: `r_y6_${idx}_${Date.now()}`,
+                    question: `Simplify the ratio ${origA} : ${origB} to its simplest form using whole numbers.`,
+                    choices: [`${simA} : ${simB}`, `${origA} : ${origB}`, `${simA * 2} : ${simB * 2}`, `1 : ${simB}`],
+                    answer: `${simA} : ${simB}`,
+                    explanation: `Dividing both numbers by their common factor ${mult} yields ${simA} : ${simB}.`
+                };
+            }
+        }
+
+        function generateProportionQuestion(year, idx) {
+            if (year === 4) {
+                const count1 = 3 + (idx % 3);
+                const unitPrice = 2 + (idx % 4);
+                const total1 = count1 * unitPrice;
+                const count2 = 5 + (idx % 3);
+                const ans = count2 * unitPrice;
+                return {
+                    id: `p_y4_${idx}_${Date.now()}`,
+                    question: `If ${count1} notebooks cost RM${total1}, how much will ${count2} of the same notebooks cost?`,
+                    choices: [`RM${ans}`, `RM${ans + 4}`, `RM${total1 + count2}`, `RM${ans - 2}`],
+                    answer: `RM${ans}`,
+                    explanation: `Price of 1 notebook = RM${total1} ÷ ${count1} = RM${unitPrice}. Therefore, ${count2} notebooks = RM${unitPrice} × ${count2} = RM${ans}.`
+                };
+            } else if (year === 5) {
+                const baseA = 2 + (idx % 2);
+                const baseB = 5 + (idx % 2);
+                const factor = 3 + (idx % 3);
+                const targetA = baseA * factor;
+                const targetB = baseB * factor;
+                return {
+                    id: `p_y5_${idx}_${Date.now()}`,
+                    question: `If the ratio of red counters to blue counters is ${baseA} : ${baseB}, how many blue counters are there if there are ${targetA} red counters?`,
+                    choices: [`${targetB}`, `${targetB + 5}`, `${targetA + baseB}`, `${targetB - 3}`],
+                    answer: `${targetB}`,
+                    explanation: `Since red counters increased from ${baseA} to ${targetA} (multiplied by ${factor}), blue counters must be ${baseB} × ${factor} = ${targetB}.`
+                };
+            } else {
+                const gA = 4;
+                const gB = 12;
+                const tA = (idx % 4) + 5;
+                const ans = tA * 3;
+                return {
+                    id: `p_y6_${idx}_${Date.now()}`,
+                    question: `Given the proportion ${gA} : ${gB} = ${tA} : ?, determine the unknown quantity (?).`,
+                    choices: [`${ans}`, `${ans + 6}`, `${tA + gB}`, `${ans - 4}`],
+                    answer: `${ans}`,
+                    explanation: `Answer = (${tA} ÷ ${gA}) × ${gB} = ${ans}.`
+                };
+            }
+        }
+
+        function startPracticeSession() {
+            currentQuizQuestions = generateQuestions();
+            currentQuestionIdx = 0;
+            quizScore = 0;
+            quizSeconds = 0;
+
+            document.getElementById('practiceSetupCard').classList.add('hidden');
+            document.getElementById('practiceActiveCard').classList.remove('hidden');
+
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            quizTimerInterval = setInterval(() => {
+                quizSeconds++;
+                const mins = Math.floor(quizSeconds / 60).toString().padStart(2, '0');
+                const secs = (quizSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('quizTimer').innerText = `⏱️ ${mins}:${secs}`;
+            }, 1000);
+
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = currentQuizQuestions[currentQuestionIdx];
+            document.getElementById('quizQNum').innerText = currentQuestionIdx + 1;
+            document.getElementById('quizProgressBar').style.width = `${((currentQuestionIdx + 1) / 10) * 100}%`;
+            document.getElementById('quizQuestionText').innerText = q.question;
+
+            const feedbackBox = document.getElementById('quizFeedbackBox');
+            feedbackBox.classList.add('hidden');
+            document.getElementById('quizNextBtn').classList.add('hidden');
+
+            const container = document.getElementById('quizOptionsContainer');
+            container.innerHTML = '';
+
+            const shuffledChoices = [...q.choices].sort(() => Math.random() - 0.5);
+
+            shuffledChoices.forEach((choice, idx) => {
+                const label = ['A', 'B', 'C', 'D'][idx];
+                const btn = document.createElement('button');
+                btn.className = "quizOptionBtn w-full p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-medium text-xs text-slate-800 text-left flex items-center gap-3 transition active:scale-98";
+                btn.onclick = () => selectAnswer(choice, q.answer, q.explanation, btn);
+                btn.innerHTML = `
+                    <span class="w-6 h-6 rounded-lg bg-white border border-slate-300 flex items-center justify-center font-bold text-slate-600 text-[11px] shrink-0">${label}</span>
+                    <span>${choice}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(selected, correct, explanation, clickedBtn) {
+            // Disable all option buttons
+            const btns = document.querySelectorAll('.quizOptionBtn');
+            btns.forEach(b => b.disabled = true);
+
+            const feedbackBox = document.getElementById('quizFeedbackBox');
+            feedbackBox.classList.remove('hidden');
+
+            if (selected === correct) {
+                quizScore++;
+                clickedBtn.classList.remove('bg-slate-50', 'border-slate-200');
+                clickedBtn.classList.add('bg-emerald-50', 'border-emerald-500', 'text-emerald-900', 'font-bold');
+                feedbackBox.className = "p-3 rounded-xl text-xs leading-relaxed bg-emerald-50 border border-emerald-200 text-emerald-900";
+                feedbackBox.innerHTML = `<strong>✅ Correct!</strong> ${explanation}`;
+            } else {
+                clickedBtn.classList.remove('bg-slate-50', 'border-slate-200');
+                clickedBtn.classList.add('bg-rose-50', 'border-rose-500', 'text-rose-900', 'font-bold');
+                feedbackBox.className = "p-3 rounded-xl text-xs leading-relaxed bg-rose-50 border border-rose-200 text-rose-900";
+                feedbackBox.innerHTML = `<strong>❌ Incorrect.</strong> Correct answer is <strong>${correct}</strong>. ${explanation}`;
+            }
+
+            document.getElementById('quizNextBtn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIdx++;
+            if (currentQuestionIdx < 10) {
+                renderQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            if (quizTimerInterval) clearInterval(quizTimerInterval);
+
+            savePracticeResult(activePracTopic, quizScore, 10);
+
+            const perc = Math.round((quizScore / 10) * 100);
+            document.getElementById('resultScoreText').innerText = `${perc}%`;
+            document.getElementById('resultFractionText').innerText = `${quizScore} / 10 Correct`;
+
+            if (perc >= 80) {
+                document.getElementById('resultEmoji').innerText = "🎉";
+                document.getElementById('resultTitle').innerText = "Outstanding!";
+                document.getElementById('resultSubtitle').innerText = "You have mastered this topic standard!";
+            } else if (perc >= 50) {
+                document.getElementById('resultEmoji').innerText = "👍";
+                document.getElementById('resultTitle').innerText = "Good Effort!";
+                document.getElementById('resultSubtitle').innerText = "Keep practicing to score 100%!";
+            } else {
+                document.getElementById('resultEmoji').innerText = "💪";
+                document.getElementById('resultTitle').innerText = "Keep Trying!";
+                document.getElementById('resultSubtitle').innerText = "Review the Notes & Demo board to improve!";
+            }
+
+            document.getElementById('quizResultModal').classList.remove('hidden');
+        }
+
+        function closeResultModal() {
+            document.getElementById('quizResultModal').classList.add('hidden');
+            document.getElementById('practiceActiveCard').classList.add('hidden');
+            document.getElementById('practiceSetupCard').classList.remove('hidden');
+        }
+
+        function renderProgressScreen() {
+            document.getElementById('progBestScore').innerText = `${userProgress.bestScore}%`;
+            
+            const totalComps = (userProgress.coordAttempts > 0 ? 1 : 0) + 
+                               (userProgress.ratioAttempts > 0 ? 1 : 0) + 
+                               (userProgress.propAttempts > 0 ? 1 : 0);
+            document.getElementById('progCompletedCount').innerText = totalComps;
+
+            // Coordinates
+            document.getElementById('progCoordScore').innerText = `${userProgress.coordScore} / 10`;
+            document.getElementById('progCoordBar').style.width = `${(userProgress.coordScore / 10) * 100}%`;
+            document.getElementById('progCoordAttempts').innerText = userProgress.coordAttempts;
+            document.getElementById('progCoordStatus').innerText = userProgress.coordAttempts > 0 ? "Completed" : "Not Started";
+
+            // Ratio
+            document.getElementById('progRatioScore').innerText = `${userProgress.ratioScore} / 10`;
+            document.getElementById('progRatioBar').style.width = `${(userProgress.ratioScore / 10) * 100}%`;
+            document.getElementById('progRatioAttempts').innerText = userProgress.ratioAttempts;
+            document.getElementById('progRatioStatus').innerText = userProgress.ratioAttempts > 0 ? "Completed" : "Not Started";
+
+            // Proportion
+            document.getElementById('progPropScore').innerText = `${userProgress.propScore} / 10`;
+            document.getElementById('progPropBar').style.width = `${(userProgress.propScore / 10) * 100}%`;
+            document.getElementById('progPropAttempts').innerText = userProgress.propAttempts;
+            document.getElementById('progPropStatus').innerText = userProgress.propAttempts > 0 ? "Completed" : "Not Started";
+        }
+
+        function updateHomeProgressBars() {
+            const coordPct = Math.round((userProgress.coordScore / 10) * 100);
+            const ratioPct = Math.round((userProgress.ratioScore / 10) * 100);
+            const propPct = Math.round((userProgress.propScore / 10) * 100);
+
+            document.getElementById('homeCoordProgBadge').innerText = `${coordPct}%`;
+            document.getElementById('homeCoordBar').style.width = `${coordPct}%`;
+
+            document.getElementById('homeRatioProgBadge').innerText = `${ratioPct}%`;
+            document.getElementById('homeRatioBar').style.width = `${ratioPct}%`;
+
+            document.getElementById('homePropProgBadge').innerText = `${propPct}%`;
+            document.getElementById('homePropBar').style.width = `${propPct}%`;
+        }
+
+        function showGuestModal() {
+            const content = document.getElementById('modalUserContent');
+            content.innerHTML = `
+                <div class="p-3 bg-indigo-50 rounded-xl space-y-1">
+                    <div><strong>Name:</strong> ${currentUser.name}</div>
+                    <div><strong>Class:</strong> ${currentUser.userClass}</div>
+                    <div><strong>Email:</strong> ${currentUser.email}</div>
+                </div>
+                ${currentUser.isGuest ? `
+                    <div class="text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Guest User Mode. Please log in through the main school application portal to save records directly to Google Sheets.
+                    </div>
+                ` : `
+                    <div class="text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
+                        <i class="fa-solid fa-circle-check mr-1"></i> Connected to Google Sheets (CoorRecord).
+                    </div>
+                `}
+            `;
+            document.getElementById('guestModal').classList.remove('hidden');
+        }
+
+        function closeGuestModal() {
+            document.getElementById('guestModal').classList.add('hidden');
+        }
+
+        function syncProgressWithGAS() {
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                google.script.run.withSuccessHandler(() => {
+                    alert('Progress successfully synced with CoorRecord Spreadsheet!');
+                }).savePracticeResult({
+                    email: currentUser.email,
+                    name: currentUser.name,
+                    class: currentUser.userClass,
+                    coordScore: userProgress.coordScore,
+                    ratioScore: userProgress.ratioScore,
+                    propScore: userProgress.propScore,
+                    totalScore: userProgress.bestScore
+                });
+            } else {
+                showGuestModal();
+            }
+        }
+
+        window.onload = function() {
+            getUserProfile();
+            loadUserProgress();
+            renderNotes();
+            initCoordinateEvents();
+            drawCoordinateGrid();
+            updateRatioDemo();
+            updatePropDemo();
+        };
+    </script>
+</body>
+</html>
