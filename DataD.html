@@ -574,22 +574,33 @@
     // Paste your GAS Web App URL here
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
     
-    // Helper function to replace google.script.run
-    async function apiRun(action, payload, successHandler) {
+    // Helper function to mimic google.script.run
+    async function apiRun(functionName, args, successHandler) {
+      // Your backend expects 'args' to be an array for .apply()
+      // This ensures even a single variable gets wrapped in an array automatically
+      const argsArray = Array.isArray(args) ? args : [args];
+    
       try {
         const response = await fetch(GAS_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: action, payload: payload })
+          headers: {
+            // text/plain prevents CORS preflight errors in GAS
+            "Content-Type": "text/plain;charset=utf-8",
+          },
+          // Matches your backend variables: func and args
+          body: JSON.stringify({ func: functionName, args: argsArray })
         });
+        
         const result = await response.json();
         
-        if (result.success && successHandler) {
-          successHandler(result.data); // Pass the data back to your existing handlers
-        } else if (!result.success) {
-          console.error("Backend Error:", result.error);
+        // Your backend returns { error: "..." } on failure, or { data: ... } on success
+        if (result.error) {
+          console.error("Backend Error from GAS:", result.error);
+        } else if (successHandler) {
+          successHandler(result.data);
         }
       } catch (error) {
-        console.error("Network Error:", error);
+        console.error("Network Fetch Error:", error);
       }
     }
 
