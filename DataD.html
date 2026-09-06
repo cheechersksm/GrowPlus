@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Data Detective — Year 5 Mathematics</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0%, #0f172a 50%, #090d16 100%);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 75px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-heading { font-family: 'Fredoka', cursive, sans-serif; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+    
+    .data-tile {
+      user-select: none;
+      touch-action: manipulation;
+      transition: all 0.2s ease;
+    }
+    .data-tile:active {
+      transform: scale(1.08);
+    }
+    .selected-tile {
+      border-color: #f59e0b !important;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+      transform: scale(1.08);
+    }
+
+    /* Glow Effects inspired by Poster */
+    .glow-blue { box-shadow: 0 10px 25px -3px rgba(37, 99, 235, 0.3); }
+    .glow-pink { box-shadow: 0 10px 25px -3px rgba(236, 72, 153, 0.3); }
+    .glow-amber { box-shadow: 0 10px 25px -3px rgba(245, 158, 11, 0.3); }
+    .glow-emerald { box-shadow: 0 10px 25px -3px rgba(16, 185, 129, 0.3); }
+  </style>
+</head>
+<body class="selection:bg-sky-500 selection:text-white">
+
+  <!-- APP STARTUP LOADING SCREEN -->
+  <div id="app-loader" class="fixed inset-0 z-[100] bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center space-y-6 transition-opacity duration-500">
+    <div class="relative">
+      <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-4xl shadow-2xl shadow-sky-500/40 animate-pulse">
+        <i class="fa-solid fa-user-secret"></i>
+      </div>
+      <div class="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-sm font-bold shadow-lg">
+        <i class="fa-solid fa-seedling"></i>
+      </div>
+    </div>
+
+    <div class="space-y-2">
+      <div class="text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full inline-block border border-emerald-500/20">
+        GROWPLUS MATHEMATICS
+      </div>
+      <h1 class="font-heading text-3xl md:text-4xl text-white tracking-wide">
+        DATA DETECTIVE
+      </h1>
+      <p class="text-slate-400 text-sm italic">"Small Data... Big Discovery!"</p>
+    </div>
+
+    <div class="w-64 bg-slate-900 border border-slate-800 h-2.5 rounded-full overflow-hidden">
+      <div id="loader-bar" class="bg-gradient-to-r from-sky-400 via-emerald-400 to-amber-400 h-full w-1/3 animate-pulse"></div>
+    </div>
+
+    <p id="loader-status" class="text-xs font-bold text-slate-400">Loading pupil profile & records...</p>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed top-4 right-4 bg-emerald-500 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 z-50 transform -translate-y-24 transition-transform duration-300">
+    <i class="fa-solid fa-circle-check text-lg"></i>
+    <span id="toast-msg" class="font-bold text-sm">Progress saved!</span>
+  </div>
+
+  <!-- HEADER BAR -->
+  <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20 font-black text-xl">
+          <i class="fa-solid fa-user-secret"></i>
+        </div>
+        <div>
+          <h1 class="font-heading text-lg text-white tracking-wide flex items-center gap-2">
+            DATA DETECTIVE <span class="bg-sky-500/20 text-sky-400 text-xs px-2.5 py-0.5 rounded-full border border-sky-500/30 font-sans font-semibold">Year 5</span>
+          </h1>
+          <p class="text-xs text-slate-400 flex items-center gap-1.5">
+            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-leaf"></i> GROWPLUS</span>
+            <span>• Chapter 8 Data Handling</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 bg-slate-950/80 px-4 py-1.5 rounded-full border border-slate-800">
+        <div class="text-right">
+          <div class="text-xs font-bold text-white leading-tight" id="display-user-name">Loading...</div>
+          <div class="text-[10px] text-amber-400 font-semibold" id="display-user-class">Year 5</div>
+        </div>
+        <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5 shadow">
+          <i class="fa-solid fa-bolt"></i>
+          <span id="display-xp">0 XP</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- PROGRESS BAR -->
+    <div class="max-w-6xl mx-auto mt-2 bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
+      <div id="global-progress-fill" class="h-full bg-gradient-to-r from-blue-500 via-pink-500 to-amber-400 transition-all duration-500 w-0"></div>
+    </div>
+  </header>
+
+  <!-- BOTTOM NAVIGATION BAR (5 BUTTONS - PLAY MODES HIDDEN) -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex justify-around py-2 px-2 z-50">
+    <button class="nav-btn active text-sky-400 flex flex-col items-center text-[10px] font-bold gap-1 w-1/5" onclick="switchTab('dashboard')">
+      <i class="fa-solid fa-house text-lg"></i> Home
+    </button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center text-[10px] font-bold gap-1 w-1/5" onclick="switchTab('datalab')">
+      <i class="fa-solid fa-flask text-lg"></i> Data Lab
+    </button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center text-[10px] font-bold gap-1 w-1/5" onclick="switchTab('practice')">
+      <i class="fa-solid fa-bullseye text-lg"></i> Practice
+    </button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center text-[10px] font-bold gap-1 w-1/5" onclick="switchTab('master')">
+      <i class="fa-solid fa-stopwatch text-lg"></i> Test
+    </button>
+    <button class="nav-btn text-slate-400 flex flex-col items-center text-[10px] font-bold gap-1 w-1/5" onclick="switchTab('badges')">
+      <i class="fa-solid fa-award text-lg"></i> Badges
+    </button>
+  </nav>
+
+  <!-- MAIN APP VIEWS -->
+  <main class="max-w-6xl w-full mx-auto p-4 md:p-6 flex-1 space-y-6">
+
+    <!-- 1. DASHBOARD TAB -->
+    <div id="tab-dashboard" class="tab-view space-y-6">
+      <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-sky-400 bg-sky-500/10 border border-sky-500/20 px-3 py-1 rounded-full">
+              Solve Data • Find Patterns • Be a Data Analyst!
+            </span>
+            <h2 class="font-heading text-2xl md:text-3xl text-white mt-2">Welcome back, Detective! 🕵️</h2>
+          </div>
+          <div class="bg-amber-500/10 border border-amber-500/30 text-amber-300 px-3 py-1.5 rounded-2xl text-xs font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-lightbulb"></i> Small Data... Big Discovery!
+          </div>
+        </div>
+
+        <p class="text-slate-300 text-sm">Explore topic practices and complete the 10-Question Master Test to earn up to 1000 XP and unlock badges!</p>
+        
+        <button onclick="switchTab('notes')" class="w-full py-4 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 font-heading text-lg rounded-2xl shadow-xl transition flex items-center justify-center gap-2 glow-amber">
+          <i class="fa-solid fa-book-open"></i> 📚 STUDY NOTES
+        </button>
+      </div>
+
+      <!-- VIBRANT POSTER CARDS GRID -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- MODE (BLUE) -->
+        <div onclick="switchGuidedSubTab('mode')" class="bg-gradient-to-br from-slate-900 to-blue-950/80 border border-blue-500/40 hover:border-blue-400 p-5 rounded-3xl cursor-pointer transition space-y-3 group glow-blue">
+          <div class="flex items-center justify-between">
+            <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-500/30">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+            <span class="text-xs font-black uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-0.5 rounded-full">Most Frequent</span>
+          </div>
+          <h3 class="font-heading text-xl text-white group-hover:text-blue-400">Mode Hunter</h3>
+          <p class="text-xs text-slate-300">4 Samples including fruit quantities & bimodal sets.</p>
+        </div>
+
+        <!-- MEDIAN (PINK) -->
+        <div onclick="switchGuidedSubTab('median')" class="bg-gradient-to-br from-slate-900 to-pink-950/80 border border-pink-500/40 hover:border-pink-400 p-5 rounded-3xl cursor-pointer transition space-y-3 group glow-pink">
+          <div class="flex items-center justify-between">
+            <div class="w-12 h-12 rounded-2xl bg-pink-600 text-white flex items-center justify-center text-xl font-bold shadow-lg shadow-pink-500/30">
+              <i class="fa-solid fa-chart-simple"></i>
+            </div>
+            <span class="text-xs font-black uppercase tracking-wider text-pink-400 bg-pink-500/10 border border-pink-500/20 px-2.5 py-0.5 rounded-full">Middle Value</span>
+          </div>
+          <h3 class="font-heading text-xl text-white group-hover:text-pink-400">Median Tracker</h3>
+          <p class="text-xs text-slate-300">4 Samples with odd & even count middle pair averaging.</p>
+        </div>
+
+        <!-- MEAN (ORANGE/GOLD) -->
+        <div onclick="switchGuidedSubTab('mean')" class="bg-gradient-to-br from-slate-900 to-amber-950/80 border border-amber-500/40 hover:border-amber-400 p-5 rounded-3xl cursor-pointer transition space-y-3 group glow-amber">
+          <div class="flex items-center justify-between">
+            <div class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-black shadow-lg shadow-amber-500/30">
+              x̄
+            </div>
+            <span class="text-xs font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full">Average</span>
+          </div>
+          <h3 class="font-heading text-xl text-white group-hover:text-amber-400">Mean Balancer</h3>
+          <p class="text-xs text-slate-300">4 Samples with interactive bar chart tile balancing towers.</p>
+        </div>
+
+        <!-- RANGE (GREEN) -->
+        <div onclick="switchGuidedSubTab('range')" class="bg-gradient-to-br from-slate-900 to-emerald-950/80 border border-emerald-500/40 hover:border-emerald-400 p-5 rounded-3xl cursor-pointer transition space-y-3 group glow-emerald">
+          <div class="flex items-center justify-between">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center text-xl font-bold shadow-lg shadow-emerald-500/30">
+              <i class="fa-solid fa-ruler-vertical"></i>
+            </div>
+            <span class="text-xs font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full">Difference</span>
+          </div>
+          <h3 class="font-heading text-xl text-white group-hover:text-emerald-400">Range Ranger</h3>
+          <p class="text-xs text-slate-300">4 Samples using largest & smallest formula slots.</p>
+        </div>
+      </div>
+
+      <!-- POSTER HIGHLIGHT PILLS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+        <div class="bg-slate-900/80 border border-purple-500/30 p-3 rounded-2xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg">🧠</div>
+          <div class="text-xs font-bold text-slate-200">Think Logically</div>
+        </div>
+        <div class="bg-slate-900/80 border border-blue-500/30 p-3 rounded-2xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">💬</div>
+          <div class="text-xs font-bold text-slate-200">Analyse Data</div>
+        </div>
+        <div class="bg-slate-900/80 border border-amber-500/30 p-3 rounded-2xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg">💡</div>
+          <div class="text-xs font-bold text-slate-200">Solve Challenges</div>
+        </div>
+        <div class="bg-slate-900/80 border border-emerald-500/30 p-3 rounded-2xl flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">🎖️</div>
+          <div class="text-xs font-bold text-slate-200">Master Data Skills</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDY NOTES TAB (LARGER PRINT & VIBRANT ACCENTS) -->
+    <div id="tab-notes" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-6">
+        <div>
+          <h2 class="font-heading text-3xl text-white flex items-center gap-3">
+            📚 Detective Study Notes
+          </h2>
+          <p class="text-slate-300 text-base md:text-lg mt-2">Quick guide to understanding Year 5 Data Handling concepts.</p>
+        </div>
+
+        <div class="space-y-6">
+          <!-- Mode Card -->
+          <div class="bg-slate-950 border-l-8 border-blue-500 border-y border-r border-slate-800 p-6 rounded-2xl space-y-3">
+            <h3 class="font-heading text-2xl text-blue-400 flex items-center gap-3">
+              <span class="text-3xl">🔁</span> Mode (Nilai Yang Paling Kerap)
+            </h3>
+            <p class="text-base md:text-lg text-slate-200 leading-relaxed">The number or item that appears <strong class="text-blue-300 font-bold">most frequently</strong> in a set of data.</p>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-sm md:text-base text-slate-200 font-mono leading-relaxed">
+              <strong class="text-white">Example:</strong> Data set: 3, 7, 7, 5, 7, 4 &rarr; <strong class="text-blue-400 text-lg">Mode = 7</strong> (appears 3 times).
+            </div>
+          </div>
+
+          <!-- Median Card -->
+          <div class="bg-slate-950 border-l-8 border-pink-500 border-y border-r border-slate-800 p-6 rounded-2xl space-y-3">
+            <h3 class="font-heading text-2xl text-pink-400 flex items-center gap-3">
+              <span class="text-3xl">🎯</span> Median (Nilai Tengah)
+            </h3>
+            <p class="text-base md:text-lg text-slate-200 leading-relaxed">The <strong class="text-pink-300 font-bold">middle value</strong> when a data set is ordered from smallest to largest.</p>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-sm md:text-base text-slate-200 font-mono space-y-2 leading-relaxed">
+              <div><strong class="text-white">Step 1:</strong> Arrange data from smallest to largest: 2, 4, <span class="text-pink-400 font-bold text-lg">5</span>, 8, 9</div>
+              <div><strong class="text-white">Step 2:</strong> Find center item &rarr; <strong class="text-pink-400 text-lg">Median = 5</strong>.</div>
+            </div>
+          </div>
+
+          <!-- Mean Card -->
+          <div class="bg-slate-950 border-l-8 border-amber-500 border-y border-r border-slate-800 p-6 rounded-2xl space-y-3">
+            <h3 class="font-heading text-2xl text-amber-400 flex items-center gap-3">
+              <span class="text-3xl">⚖️</span> Mean (Min / Purata)
+            </h3>
+            <p class="text-base md:text-lg text-slate-200 leading-relaxed">The calculated average. <strong class="text-amber-300 font-bold">Total sum</strong> of all data divided by total count of data.</p>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-sm md:text-base text-slate-200 font-mono space-y-2 leading-relaxed">
+              <div><strong class="text-white">Formula:</strong> Mean = Total Sum ÷ Number of Data</div>
+              <div><strong class="text-white">Example:</strong> (4 + 6 + 8) ÷ 3 = 18 ÷ 3 &rarr; <strong class="text-amber-400 text-lg">Mean = 6</strong>.</div>
+            </div>
+          </div>
+
+          <!-- Range Card -->
+          <div class="bg-slate-950 border-l-8 border-emerald-500 border-y border-r border-slate-800 p-6 rounded-2xl space-y-3">
+            <h3 class="font-heading text-2xl text-emerald-400 flex items-center gap-3">
+              <span class="text-3xl">📏</span> Range (Julat)
+            </h3>
+            <p class="text-base md:text-lg text-slate-200 leading-relaxed">The <strong class="text-emerald-300 font-bold">difference</strong> between the maximum value and minimum value.</p>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl text-sm md:text-base text-slate-200 font-mono space-y-2 leading-relaxed">
+              <div><strong class="text-white">Formula:</strong> Range = Highest Value − Lowest Value</div>
+              <div><strong class="text-white">Example:</strong> Data: 3, 8, 15, 6 &rarr; 15 − 3 = <strong class="text-emerald-400 text-lg">Range 12</strong>.</div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="switchTab('dashboard')" class="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl transition flex items-center gap-2">
+          <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. GUIDED PLAY MODES TAB -->
+    <div id="tab-guided" class="tab-view hidden space-y-6">
+      <!-- Sub tab pills -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <button id="sub-btn-mode" onclick="switchGuidedSubTab('mode')" class="p-4 rounded-2xl border border-slate-800 bg-slate-900 text-left transition flex items-center gap-3">
+          <span class="text-2xl">🔁</span>
+          <div>
+            <div class="text-[10px] font-extrabold uppercase text-blue-400">Mod 1</div>
+            <div class="font-bold text-sm text-white">Mode Hunter</div>
+          </div>
+        </button>
+        <button id="sub-btn-median" onclick="switchGuidedSubTab('median')" class="p-4 rounded-2xl border border-slate-800 bg-slate-900 text-left transition flex items-center gap-3">
+          <span class="text-2xl">🎯</span>
+          <div>
+            <div class="text-[10px] font-extrabold uppercase text-pink-400">Mod 2</div>
+            <div class="font-bold text-sm text-white">Median Tracker</div>
+          </div>
+        </button>
+        <button id="sub-btn-mean" onclick="switchGuidedSubTab('mean')" class="p-4 rounded-2xl border border-slate-800 bg-slate-900 text-left transition flex items-center gap-3">
+          <span class="text-2xl">⚖️</span>
+          <div>
+            <div class="text-[10px] font-extrabold uppercase text-amber-400">Mod 3</div>
+            <div class="font-bold text-sm text-white">Mean Balancer</div>
+          </div>
+        </button>
+        <button id="sub-btn-range" onclick="switchGuidedSubTab('range')" class="p-4 rounded-2xl border border-slate-800 bg-slate-900 text-left transition flex items-center gap-3">
+          <span class="text-2xl">📏</span>
+          <div>
+            <div class="text-[10px] font-extrabold uppercase text-emerald-400">Mod 4</div>
+            <div class="font-bold text-sm text-white">Range Ranger</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Guided Container -->
+      <div id="guided-content-area"></div>
+    </div>
+
+    <!-- 3. DATA LAB TAB -->
+    <div id="tab-datalab" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+        <h2 class="font-heading text-2xl text-white flex items-center gap-2">
+          <i class="fa-solid fa-flask text-sky-400"></i> Interactive Data Lab
+        </h2>
+        <p class="text-slate-400 text-sm">Type custom values, generate random datasets, or tap/drag the number cards below to re-arrange them in order! Answers hide when analyzing so you can discover them yourself.</p>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+          <input type="text" id="datalab-input" value="4, 8, 15, 16, 23, 42" placeholder="e.g. 4, 7, 5, 7, 3" class="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold focus:border-sky-500 focus:outline-none">
+          <button onclick="processDataLab()" class="px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bolt"></i> Analyze Data
+          </button>
+          <button onclick="generateRandomDataLab()" class="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-dice"></i> Generate Random Data
+          </button>
+        </div>
+
+        <!-- RE-ORDERABLE NUMBER TILES AREA -->
+        <div class="pt-2">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Rearrange Number Cards (Tap two to swap or drag):</span>
+            <button onclick="autoSortDataLabTiles()" class="text-xs text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-3 py-1 rounded-lg border border-sky-500/30 font-bold transition">
+              <i class="fa-solid fa-arrow-up-1-9 mr-1"></i> Auto-Sort
+            </button>
+          </div>
+          <div id="datalab-tiles-container" class="flex flex-wrap gap-3 p-4 bg-slate-950 border border-slate-800/80 rounded-2xl min-h-[80px] items-center justify-center"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Mean -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+          <div>
+            <div class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">Mean (Average)</div>
+            <div class="text-xs text-slate-400">Sum divided by count</div>
+          </div>
+          <div class="py-4 text-center bg-slate-950 rounded-xl border border-slate-800">
+            <div id="lab-res-mean" class="text-2xl font-black text-amber-400 hidden">-</div>
+            <button id="lab-btn-mean" onclick="toggleLabReveal('mean')" class="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl font-bold text-xs transition">
+              <i class="fa-solid fa-eye mr-1"></i> Reveal Answer
+            </button>
+          </div>
+        </div>
+
+        <!-- Median -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+          <div>
+            <div class="text-xs font-bold text-pink-400 uppercase tracking-wider mb-1">Median (Middle)</div>
+            <div class="text-xs text-slate-400">Center value when sorted</div>
+          </div>
+          <div class="py-4 text-center bg-slate-950 rounded-xl border border-slate-800">
+            <div id="lab-res-median" class="text-2xl font-black text-pink-400 hidden">-</div>
+            <button id="lab-btn-median" onclick="toggleLabReveal('median')" class="px-4 py-2 bg-pink-500/20 hover:bg-pink-500/30 text-pink-300 border border-pink-500/30 rounded-xl font-bold text-xs transition">
+              <i class="fa-solid fa-eye mr-1"></i> Reveal Answer
+            </button>
+          </div>
+        </div>
+
+        <!-- Mode -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+          <div>
+            <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Mode (Most Frequent)</div>
+            <div class="text-xs text-slate-400">Item appearing most</div>
+          </div>
+          <div class="py-4 text-center bg-slate-950 rounded-xl border border-slate-800">
+            <div id="lab-res-mode" class="text-2xl font-black text-blue-400 hidden">-</div>
+            <button id="lab-btn-mode" onclick="toggleLabReveal('mode')" class="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/30 rounded-xl font-bold text-xs transition">
+              <i class="fa-solid fa-eye mr-1"></i> Reveal Answer
+            </button>
+          </div>
+        </div>
+
+        <!-- Range -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between space-y-4">
+          <div>
+            <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">Range (Spread)</div>
+            <div class="text-xs text-slate-400">Max minus Min</div>
+          </div>
+          <div class="py-4 text-center bg-slate-950 rounded-xl border border-slate-800">
+            <div id="lab-res-range" class="text-2xl font-black text-emerald-400 hidden">-</div>
+            <button id="lab-btn-range" onclick="toggleLabReveal('range')" class="px-4 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-xl font-bold text-xs transition">
+              <i class="fa-solid fa-eye mr-1"></i> Reveal Answer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PRACTICE ARENA TAB (TOPIC SPECIFIC) -->
+    <div id="tab-practice" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="font-heading text-2xl text-white flex items-center gap-2">
+            <i class="fa-solid fa-bullseye text-sky-400"></i> Practice Arena (10 Questions per Topic)
+          </h2>
+          <p class="text-slate-400 text-sm">Select a topic to test pupil understanding and earn up to 200 XP:</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="practice-btn-Mode" onclick="generatePracticeSet('Mode')" class="px-4 py-2 rounded-xl font-extrabold text-xs bg-blue-600 text-white shadow-lg">Mode</button>
+          <button id="practice-btn-Median" onclick="generatePracticeSet('Median')" class="px-4 py-2 rounded-xl font-extrabold text-xs bg-slate-950 border border-slate-800 text-slate-400">Median</button>
+          <button id="practice-btn-Mean" onclick="generatePracticeSet('Mean')" class="px-4 py-2 rounded-xl font-extrabold text-xs bg-slate-950 border border-slate-800 text-slate-400">Mean</button>
+          <button id="practice-btn-Range" onclick="generatePracticeSet('Range')" class="px-4 py-2 rounded-xl font-extrabold text-xs bg-slate-950 border border-slate-800 text-slate-400">Range</button>
+        </div>
+      </div>
+
+      <div id="practice-questions-list" class="space-y-4"></div>
+
+      <button id="practice-submit-btn" onclick="submitPracticeSet()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading text-lg rounded-2xl shadow-xl transition">
+        Submit Practice Answers
+      </button>
+    </div>
+
+    <!-- 5. MASTER TEST TAB -->
+    <div id="tab-master" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="font-heading text-2xl text-white flex items-center gap-2">
+              <i class="fa-solid fa-stopwatch text-amber-400"></i> Master Test (10 Questions)
+            </h2>
+            <p class="text-slate-400 text-sm">Comprehensive assessment on Mode, Median, Mean, & Range with stopwatch timer.</p>
+          </div>
+          <div id="master-timer-display" class="hidden px-4 py-2 bg-slate-950 border border-slate-800 rounded-2xl text-amber-400 font-mono font-black text-lg">
+            <i class="fa-solid fa-clock mr-1"></i> <span id="timer-text">00:00</span>
+          </div>
+        </div>
+
+        <div id="master-intro-screen" class="text-center py-12 space-y-4">
+          <div class="w-20 h-20 mx-auto rounded-3xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-3xl">
+            <i class="fa-solid fa-hourglass-start"></i>
+          </div>
+          <h3 class="font-heading text-2xl text-white">Ready for the 10-Question Master Test?</h3>
+          <p class="text-slate-400 max-w-md mx-auto text-sm">The stopwatch timer will start as soon as you begin!</p>
+          <button onclick="startMasterTest()" class="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-heading text-lg rounded-2xl shadow-xl transition">
+            Start Master Test Now
+          </button>
+        </div>
+
+        <div id="master-quiz-screen" class="hidden space-y-6">
+          <div id="master-questions-container" class="space-y-4"></div>
+          <button onclick="submitMasterTest()" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-heading text-lg rounded-2xl shadow-xl transition">
+            Complete & Submit Test
+          </button>
+        </div>
+
+        <div id="master-results-screen" class="hidden text-center py-8 space-y-4">
+          <div class="w-20 h-20 mx-auto rounded-3xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-3xl">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <h3 class="font-heading text-2xl text-white">Test Completed!</h3>
+          <p class="text-slate-300 text-lg font-bold" id="master-final-score">Score: 0 / 10</p>
+          <p class="text-slate-400 text-sm">Time Taken: <span id="master-final-time" class="text-amber-400 font-bold">00:00</span></p>
+          <button onclick="startMasterTest()" class="px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition">
+            Retake Master Test
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. BADGES TAB -->
+    <div id="tab-badges" class="tab-view hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+        <div>
+          <h2 class="font-heading text-2xl text-white flex items-center gap-2">
+            <i class="fa-solid fa-award text-amber-400"></i> Badges & Achievements
+          </h2>
+          <p class="text-slate-400 text-sm">Earn 200 XP milestones across Topic Practice & Master Test to unlock badges!</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="badges-grid-container"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // GLOBAL STATE (Topic-Specific Scores)
+    let currentUser = {
+      email: "Guest",
+      name: "Pupil Detective",
+      className: "5 Mawar",
+      scores: {
+        mode: 0,     // Max 200
+        median: 0,   // Max 200
+        mean: 0,     // Max 200
+        range: 0,    // Max 200
+        assessment: 0 // Max 200
+      },
+      xp: 0,
+      badges: []
+    };
+
+    const BADGES = [
+      { id: 1, xp: 200, name: "Data Hunter 🏹", desc: "Earned 200 XP exploring statistical modes!", icon: "fa-bullseye", color: "from-blue-500 to-indigo-600" },
+      { id: 2, xp: 400, name: "Median Tracker 📍", desc: "Earned 400 XP finding central positions!", icon: "fa-location-dot", color: "from-pink-500 to-rose-600" },
+      { id: 3, xp: 600, name: "Balance Master ⚖️", desc: "Earned 600 XP balancing data values!", icon: "fa-scale-balanced", color: "from-amber-400 to-orange-500" },
+      { id: 4, xp: 800, name: "Range Rover 🧭", desc: "Earned 800 XP mastering dataset spreads!", icon: "fa-compass", color: "from-emerald-500 to-teal-600" },
+      { id: 5, xp: 1000, name: "Stats Superstar 🌟", desc: "Earned 1000 XP! You are a master statistician!", icon: "fa-crown", color: "from-yellow-400 to-amber-600" }
+    ];
+
+    let currentGuidedTab = 'mode';
+    let sampleStates = { mode: 0, median: 0, mean: 0, range: 0 };
+    let sampleCompletions = {
+      mode: [false, false, false, false],
+      median: [false, false, false, false],
+      mean: [false, false, false, false],
+      range: [false, false, false, false]
+    };
+
+    // DATA LAB TILES STATE
+    let dataLabTilesList = [4, 8, 15, 16, 23, 42];
+    let selectedLabTileIndex = null;
+    let draggedLabTileIndex = null;
+
+    // MEAN TOWER STATE
+    let meanTowerState = { towers: [4, 6, 8, 10], selectedCol: null };
+    // RANGE FORMULA STATE
+    let rangeFormulaState = { maxCard: null, minCard: null };
+
+    // PRACTICE STATE
+    let practiceState = { topic: 'Mode', questions: [], answers: {} };
+
+    // MASTER TEST STATE
+    let masterTimerInterval = null;
+    let masterSeconds = 0;
+    let masterAnswers = {};
+    let masterQuestions = [];
+
+    // Paste your GAS Web App URL here
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+    
+    // Helper function to replace google.script.run
+    async function apiRun(action, payload, successHandler) {
+      try {
+        const response = await fetch(GAS_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: action, payload: payload })
+        });
+        const result = await response.json();
+        
+        if (result.success && successHandler) {
+          successHandler(result.data); // Pass the data back to your existing handlers
+        } else if (!result.success) {
+          console.error("Backend Error:", result.error);
+        }
+      } catch (error) {
+        console.error("Network Error:", error);
+      }
+    }
+
+    // INITIALIZATION & LOADING SCREEN CONTROL
+    window.addEventListener('DOMContentLoaded', () => {
+      initUserHandover();
+      renderBadges();
+      renderGuidedContent();
+      renderDataLabTiles();
+
+      // Fallback timer to hide loader if network takes long
+      setTimeout(hideLoader, 2500);
+    });
+
+    function hideLoader() {
+      const loader = document.getElementById('app-loader');
+      if (loader && !loader.classList.contains('opacity-0')) {
+        loader.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => loader.style.display = 'none', 500);
+      }
+    }
+
+    function initUserHandover() {
+      let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+      if (loggedInEmail === "" || loggedInEmail === "INSERT_USER_EMAIL_HERE" || loggedInEmail === "Guest") {
+        loggedInEmail = localStorage.getItem('loggedInUserEmail') || "sarah@school.edu.my";
+      }
+
+      currentUser.email = loggedInEmail;
+      
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        apiRun("getDataDUserProfile", loggedInEmail, onProfileLoaded);
+      } else {
+        onProfileLoaded({
+          success: true,
+          profile: { email: loggedInEmail, name: "Sarah Ahmad", className: "5 Mawar" }
+        });
+      }
+    }
+
+    function onProfileLoaded(res) {
+      if (res.success && res.profile) {
+        currentUser.name = res.profile.name;
+        currentUser.className = res.profile.className;
+        document.getElementById('display-user-name').innerText = currentUser.name;
+        document.getElementById('display-user-class').innerText = currentUser.className;
+
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          apiRun("getDataHandlingRecord", currentUser.email, onRecordLoaded);
+        } else {
+          hideLoader();
+        }
+      } else {
+        hideLoader();
+      }
+    }
+
+    function onRecordLoaded(res) {
+      if (res.success && res.record) {
+        currentUser.scores.mode = Number(res.record.modeScore) || 0;
+        currentUser.scores.median = Number(res.record.medianScore) || 0;
+        currentUser.scores.mean = Number(res.record.meanScore) || 0;
+        currentUser.scores.range = Number(res.record.rangeScore) || 0;
+        currentUser.scores.assessment = Number(res.record.assessmentScore) || 0;
+        currentUser.badges = res.record.badges || [];
+        calculateTotalXP();
+      }
+      hideLoader();
+    }
+
+    // XP FORMULA: ModeScore + MedianScore + MeanScore + RangeScore + AssessmentScore
+    function calculateTotalXP() {
+      currentUser.xp = currentUser.scores.mode + 
+                         currentUser.scores.median + 
+                         currentUser.scores.mean + 
+                         currentUser.scores.range + 
+                         currentUser.scores.assessment;
+      updateXPUI();
+
+      // Check badge milestones
+      BADGES.forEach(b => {
+        if (currentUser.xp >= b.xp && !currentUser.badges.includes(b.id)) {
+          currentUser.badges.push(b.id);
+          showToast(`Unlocked Badge: ${b.name}`);
+          if (window.confetti) window.confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+      });
+      renderBadges();
+      saveProgressToCloud();
+    }
+
+    function updateXPUI() {
+      document.getElementById('display-xp').innerText = currentUser.xp + " XP";
+      const progressPercent = Math.min(100, (currentUser.xp / 1000) * 100);
+      document.getElementById('global-progress-fill').style.width = progressPercent + "%";
+    }
+
+    function saveProgressToCloud() {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        apiRun("saveDataHandlingRecord", {
+          email: currentUser.email,
+          name: currentUser.name,
+          className: currentUser.className,
+          modeScore: currentUser.scores.mode,
+          medianScore: currentUser.scores.median,
+          meanScore: currentUser.scores.mean,
+          rangeScore: currentUser.scores.range,
+          assessmentScore: currentUser.scores.assessment,
+          overallProgress: Math.min(100, Math.round(currentUser.xp / 10)),
+          badges: currentUser.badges
+        });
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      toast.classList.remove('-translate-y-24');
+      setTimeout(() => toast.classList.add('-translate-y-24'), 3000);
+    }
+
+    // NAVIGATION
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('text-sky-400'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.add('text-slate-400'));
+
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.remove('hidden');
+
+      const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (btn) {
+        btn.classList.remove('text-slate-400');
+        btn.classList.add('text-sky-400');
+      }
+
+      if (tabId === 'practice' && practiceState.questions.length === 0) {
+        generatePracticeSet('Mode');
+      }
+    }
+
+    function switchGuidedSubTab(subTab) {
+      currentGuidedTab = subTab;
+      switchTab('guided');
+
+      ['mode', 'median', 'mean', 'range'].forEach(t => {
+        const btn = document.getElementById('sub-btn-' + t);
+        if (btn) {
+          if (t === subTab) {
+            btn.className = "p-4 rounded-2xl border border-sky-500/50 bg-slate-800 text-left transition flex items-center gap-3 shadow-lg";
+          } else {
+            btn.className = "p-4 rounded-2xl border border-slate-800 bg-slate-900 text-left transition flex items-center gap-3";
+          }
+        }
+      });
+
+      renderGuidedContent();
+    }
+
+    // GUIDED SAMPLES ENGINE
+    const GUIDED_SAMPLES = {
+      mode: [
+        { title: 'Sample 1: Basic Numerical Mode', data: [3, 7, 3, 9, 3, 5, 7], correct: ['3'], hint: 'Count how many times each number appears! Which number appears the most times?' },
+        { title: 'Sample 2: Non-Numerical Fruit Basket', data: ['🍎 Apple', '🍊 Orange', '🍎 Apple', '🍇 Grape', '🍉 Melon', '🍎 Apple'], correct: ['🍎 Apple'], hint: 'Look closely at the bar heights above each fruit! Which fruit has the highest bar tower?' },
+        { title: 'Sample 3: Bimodal Dataset', data: [12, 15, 12, 18, 15, 20, 12, 15], correct: ['12', '15'], hint: 'Check if more than one number ties for the highest count tower! Can two numbers both be modes?' },
+        { title: 'Sample 4: Challenge Bimodal Set', data: [4, 8, 4, 10, 8, 6], correct: ['4', '8'], hint: 'Notice the visual bar heights. Select all items that reach the maximum height.' }
+      ],
+      median: [
+        { title: 'Sample 1: Odd Count (5 numbers)', data: [15, 3, 9, 21, 7], sorted: [3, 7, 9, 15, 21], isEven: false, median: 9, hint: 'Sort the numbers from smallest to largest first! Then pick the number right in the middle.' },
+        { title: 'Sample 2: Even Count (6 numbers)', data: [18, 4, 10, 14, 2, 8], sorted: [2, 4, 8, 10, 14, 18], isEven: true, median: 9, hint: 'When there is an even number of values, take the two middle numbers and find their average (add them and divide by 2).' },
+        { title: 'Sample 3: Odd Set (7 numbers)', data: [42, 11, 25, 33, 19, 50, 28], sorted: [11, 19, 25, 28, 33, 42, 50], isEven: false, hint: 'Click "Sort Ascending" to arrange the numbers, then identify the middle value.' },
+        { title: 'Sample 4: Even Set (4 numbers)', data: [30, 10, 50, 20], sorted: [10, 20, 30, 50], isEven: true, median: 25, hint: 'The middle two numbers in sorted order are 20 and 30. What is halfway between 20 and 30?' }
+      ],
+      mean: [
+        { title: 'Sample 1: Towers [4, 6, 8, 10]', initial: [4, 6, 8, 10], target: 7, hint: 'Move tiles from taller towers to shorter towers until all 4 towers are at equal height!' },
+        { title: 'Sample 2: Towers [2, 5, 8]', initial: [2, 5, 8], target: 5, hint: 'Total sum is 15 tiles across 3 towers. Divide total sum by 3.' },
+        { title: 'Sample 3: Towers [3, 7, 5, 9]', initial: [3, 7, 5, 9], target: 6, hint: 'Balance the columns by dragging blocks until every column has identical height.' },
+        { title: 'Sample 4: Towers [1, 4, 7, 8]', initial: [1, 4, 7, 8], target: 5, hint: 'Try making all towers equal to 5 tiles!' }
+      ],
+      range: [
+        { title: 'Sample 1: Cards [14, 5, 28, 9, 21]', data: [14, 5, 28, 9, 21], largest: 28, smallest: 5, range: 23, hint: 'Find the highest number (28) and lowest number (5), then subtract smallest from largest.' },
+        { title: 'Sample 2: Cards [45, 12, 88, 30]', data: [45, 12, 88, 30], largest: 88, smallest: 12, range: 76, hint: 'Identify the largest card and smallest card. Assign them into the Max and Min formula slots!' },
+        { title: 'Sample 3: Cards [7, 19, 3, 14, 25]', data: [7, 19, 3, 14, 25], largest: 25, smallest: 3, range: 22, hint: 'Range measures dataset spread: (Largest Value) − (Smallest Value).' },
+        { title: 'Sample 4: Cards [102, 45, 89, 210]', data: [102, 45, 89, 210], largest: 210, smallest: 45, range: 165, hint: 'Make sure your Max slot holds 210 and Min slot holds 45!' }
+      ]
+    };
+
+    function renderGuidedContent() {
+      const area = document.getElementById('guided-content-area');
+      const idx = sampleStates[currentGuidedTab];
+      const sample = GUIDED_SAMPLES[currentGuidedTab][idx];
+      const completions = sampleCompletions[currentGuidedTab];
+
+      let dotsHtml = completions.map((c, i) => `
+        <div class="w-3 h-3 rounded-full ${c ? 'bg-emerald-500' : i === idx ? 'bg-amber-400 ring-2 ring-amber-400/30' : 'bg-slate-800'}"></div>
+      `).join('');
+
+      let html = `
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-6">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">Sample ${idx + 1} of 4</span>
+              <h3 class="font-heading text-xl text-white mt-2">${sample.title}</h3>
+            </div>
+            <div class="flex gap-1.5">${dotsHtml}</div>
+          </div>
+      `;
+
+      if (currentGuidedTab === 'mode') {
+        const counts = {};
+        sample.data.forEach(x => counts[x] = (counts[x] || 0) + 1);
+        const unique = Array.from(new Set(sample.data));
+        const maxFreq = Math.max(...Object.values(counts));
+
+        html += `
+          <p class="text-slate-300 text-sm">Observe the visual bar chart below. Select item(s) with the highest bar count tower:</p>
+          
+          <!-- VISUAL BAR CHART DISPLAY -->
+          <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-6 flex items-end justify-center gap-4 sm:gap-6 h-56 my-2">
+            ${unique.map(item => {
+              const freq = counts[item];
+              const heightPx = Math.max(24, Math.round((freq / maxFreq) * 120));
+              return `
+                <div class="flex flex-col items-center gap-2">
+                  <span class="text-xs font-extrabold text-blue-400">${freq} ${freq === 1 ? 'time' : 'times'}</span>
+                  <div class="w-12 sm:w-16 bg-gradient-to-t from-blue-600 to-indigo-500 rounded-t-xl transition-all duration-500 shadow-lg shadow-blue-500/20 flex items-center justify-center font-bold text-white text-xs" style="height: ${heightPx}px;">
+                    ${freq}
+                  </div>
+                  <span class="text-xs sm:text-sm font-bold text-white tracking-wide">${item}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            ${unique.map(item => `
+              <button onclick="toggleModeSelection('${item}')" id="mode-card-${item}" class="mode-item-card p-4 rounded-2xl border border-slate-800 bg-slate-950 text-center space-y-1">
+                <div class="text-xl font-bold">${item}</div>
+                <div class="text-[10px] text-slate-400">Count: ${counts[item]}</div>
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="checkModeSample()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg transition">Check Answer</button>
+        `;
+      } else if (currentGuidedTab === 'median') {
+        html += `
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold text-slate-300">Data Sequence:</span>
+              <button onclick="sortMedianSample()" class="text-xs bg-slate-800 text-pink-400 border border-pink-500/30 px-3 py-1.5 rounded-xl font-bold transition hover:bg-slate-700">Sort Ascending</button>
+            </div>
+            <div id="median-tiles-wrap" class="flex flex-wrap gap-2 p-4 bg-slate-950 rounded-2xl border border-slate-800">
+              ${sample.data.map(n => `<div class="px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-black text-lg">${n}</div>`).join('')}
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-slate-300">Enter Median Value:</label>
+            <input type="number" id="median-sample-input" placeholder="e.g. 9" class="w-full max-w-xs px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl font-bold text-white focus:outline-none focus:border-pink-500">
+          </div>
+          <button onclick="checkMedianSample()" class="px-6 py-3 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl shadow-lg transition">Submit Median</button>
+        `;
+      } else if (currentGuidedTab === 'mean') {
+        meanTowerState.towers = [...sample.initial];
+        meanTowerState.selectedCol = null;
+
+        html += `
+          <p class="text-slate-300 text-sm">Click a tower to pick up top tile, then click another tower to drop! Equalize all towers:</p>
+          <div id="mean-towers-container" class="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex items-end justify-center gap-6 h-64"></div>
+          <div class="flex items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-2xl gap-3">
+            <span class="text-xs font-bold text-slate-400">Expert Direct Answer:</span>
+            <input type="number" id="mean-direct-input" placeholder="Type Mean" class="w-28 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl font-bold text-sm">
+          </div>
+          <button onclick="checkMeanSample()" class="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg transition">Verify Balance</button>
+        `;
+      } else if (currentGuidedTab === 'range') {
+        rangeFormulaState = { maxCard: null, minCard: null };
+        html += `
+          <p class="text-slate-300 text-sm">Click Max or Min to assign cards into formula slots:</p>
+          <div class="flex flex-wrap gap-3">
+            ${sample.data.map(n => `
+              <div class="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col items-center gap-2">
+                <span class="text-xl font-black text-white">${n}</span>
+                <div class="flex gap-1">
+                  <button onclick="assignRangeCard(${n}, 'max')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition">Max</button>
+                  <button onclick="assignRangeCard(${n}, 'min')" class="px-2 py-1 bg-teal-600 hover:bg-teal-500 text-white text-[10px] font-bold rounded-lg transition">Min</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex items-center justify-center gap-4">
+            <div id="slot-max" class="w-20 h-14 border-2 border-dashed border-emerald-500/50 rounded-xl flex items-center justify-center font-black text-2xl text-emerald-400">?</div>
+            <span class="text-2xl font-black text-slate-500">-</span>
+            <div id="slot-min" class="w-20 h-14 border-2 border-dashed border-teal-500/50 rounded-xl flex items-center justify-center font-black text-2xl text-teal-400">?</div>
+            <span class="text-2xl font-black text-slate-500">=</span>
+            <input type="number" id="range-sample-input" placeholder="Answer" class="w-24 h-14 px-2 bg-slate-900 border border-slate-700 rounded-xl text-center font-black text-2xl text-white">
+          </div>
+          <button onclick="checkRangeSample()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition">Submit Range</button>
+        `;
+      }
+
+      html += `
+          <div id="guided-feedback" class="hidden p-4 rounded-2xl border text-sm font-semibold"></div>
+          <div class="flex items-center justify-end pt-4 border-t border-slate-800">
+            ${idx < 3 ? `
+              <button id="guided-next-btn" onclick="nextGuidedSample()" disabled class="px-6 py-3 bg-slate-800 text-slate-500 font-bold rounded-xl transition">Next Sample <i class="fa-solid fa-arrow-right"></i></button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      area.innerHTML = html;
+      if (currentGuidedTab === 'mean') renderMeanTowers();
+    }
+
+    // MODE SAMPLE HANDLERS
+    let selectedModeCards = [];
+    function toggleModeSelection(val) {
+      const idx = selectedModeCards.indexOf(val);
+      if (idx > -1) selectedModeCards.splice(idx, 1);
+      else selectedModeCards.push(val);
+
+      document.querySelectorAll('.mode-item-card').forEach(c => {
+        const itemText = c.querySelector('.text-xl').innerText;
+        if (selectedModeCards.includes(itemText)) {
+          c.className = "mode-item-card p-4 rounded-2xl border border-blue-400 bg-blue-600/20 text-center space-y-1 scale-105 transition";
+        } else {
+          c.className = "mode-item-card p-4 rounded-2xl border border-slate-800 bg-slate-950 text-center space-y-1";
+        }
+      });
+    }
+
+    function checkModeSample() {
+      const idx = sampleStates.mode;
+      const sample = GUIDED_SAMPLES.mode[idx];
+      const isCorrect = selectedModeCards.length === sample.correct.length && selectedModeCards.every(x => sample.correct.includes(x));
+      showGuidedFeedback(isCorrect, sample.hint, 'mode');
+    }
+
+    // MEDIAN SAMPLE HANDLERS
+    function sortMedianSample() {
+      const idx = sampleStates.median;
+      const sample = GUIDED_SAMPLES.median[idx];
+      const wrap = document.getElementById('median-tiles-wrap');
+      wrap.innerHTML = sample.sorted.map(n => `<div class="px-4 py-3 bg-pink-500/20 border border-pink-400 text-pink-300 rounded-xl font-black text-lg">${n}</div>`).join('');
+    }
+
+    function checkMedianSample() {
+      const idx = sampleStates.median;
+      const sample = GUIDED_SAMPLES.median[idx];
+      const val = parseFloat(document.getElementById('median-sample-input').value);
+      showGuidedFeedback(val === sample.median, sample.hint, 'median');
+    }
+
+    // MEAN TOWER HANDLERS
+    function renderMeanTowers() {
+      const container = document.getElementById('mean-towers-container');
+      if (!container) return;
+      container.innerHTML = meanTowerState.towers.map((count, colIdx) => `
+        <div onclick="handleMeanTowerClick(${colIdx})" class="flex flex-col-reverse items-center gap-1 cursor-pointer w-16 p-2 rounded-xl border ${meanTowerState.selectedCol === colIdx ? 'bg-amber-500/20 border-amber-400' : 'bg-slate-900 border-slate-800'}">
+          <span class="text-xs font-black text-amber-400 mt-2">[${count}]</span>
+          ${Array.from({ length: count }).map((_, i) => `<div class="w-full h-5 rounded ${meanTowerState.selectedCol === colIdx && i === count - 1 ? 'bg-amber-400' : 'bg-amber-600'}"></div>`).join('')}
+        </div>
+      `).join('');
+    }
+
+    function handleMeanTowerClick(colIdx) {
+      if (meanTowerState.selectedCol === null) {
+        if (meanTowerState.towers[colIdx] > 0) meanTowerState.selectedCol = colIdx;
+      } else if (meanTowerState.selectedCol === colIdx) {
+        meanTowerState.selectedCol = null;
+      } else {
+        meanTowerState.towers[meanTowerState.selectedCol]--;
+        meanTowerState.towers[colIdx]++;
+        meanTowerState.selectedCol = null;
+      }
+      renderMeanTowers();
+    }
+
+    function checkMeanSample() {
+      const idx = sampleStates.mean;
+      const sample = GUIDED_SAMPLES.mean[idx];
+      const direct = parseInt(document.getElementById('mean-direct-input').value);
+      const isBalanced = meanTowerState.towers.every(t => t === sample.target);
+      showGuidedFeedback(isBalanced || direct === sample.target, sample.hint, 'mean');
+    }
+
+    // RANGE CARD HANDLERS
+    function assignRangeCard(num, type) {
+      if (type === 'max') {
+        rangeFormulaState.maxCard = num;
+        document.getElementById('slot-max').innerText = num;
+      } else {
+        rangeFormulaState.minCard = num;
+        document.getElementById('slot-min').innerText = num;
+      }
+    }
+
+    function checkRangeSample() {
+      const idx = sampleStates.range;
+      const sample = GUIDED_SAMPLES.range[idx];
+      const val = parseInt(document.getElementById('range-sample-input').value);
+      const isMatch = rangeFormulaState.maxCard === sample.largest && rangeFormulaState.minCard === sample.smallest && val === sample.range;
+      showGuidedFeedback(isMatch, sample.hint, 'range');
+    }
+
+    function showGuidedFeedback(isCorrect, hintText, tab) {
+      const fb = document.getElementById('guided-feedback');
+      fb.classList.remove('hidden');
+      if (isCorrect) {
+        fb.className = "p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-sm font-bold";
+        fb.innerHTML = `🎉 Correct! Great data detective work!`;
+        
+        const idx = sampleStates[tab];
+        if (!sampleCompletions[tab][idx]) {
+          sampleCompletions[tab][idx] = true;
+        }
+
+        const nextBtn = document.getElementById('guided-next-btn');
+        if (nextBtn) {
+          nextBtn.disabled = false;
+          nextBtn.className = "px-6 py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition shadow-lg";
+        }
+      } else {
+        fb.className = "p-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 text-rose-300 text-sm font-bold";
+        fb.innerHTML = `🤔 Not quite right! 💡 Hint: ${hintText}`;
+      }
+    }
+
+    function nextGuidedSample() {
+      if (sampleStates[currentGuidedTab] < 3) {
+        sampleStates[currentGuidedTab]++;
+        selectedModeCards = [];
+        renderGuidedContent();
+      }
+    }
+
+    // DATA LAB INTERACTIVE TILES & FUNCTIONALITY
+    function generateRandomDataLab() {
+      const count = Math.floor(Math.random() * 5) + 4; // Generates 4 to 8 numbers
+      const randoms = [];
+      for (let i = 0; i < count; i++) {
+        randoms.push(Math.floor(Math.random() * 30) + 1);
+      }
+      dataLabTilesList = randoms;
+      document.getElementById('datalab-input').value = dataLabTilesList.join(', ');
+      renderDataLabTiles();
+      processDataLab();
+    }
+
+    function renderDataLabTiles() {
+      const container = document.getElementById('datalab-tiles-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      dataLabTilesList.forEach((val, idx) => {
+        const tile = document.createElement('div');
+        tile.className = `data-tile px-5 py-3 rounded-2xl font-black text-lg bg-gradient-to-tr from-sky-600 to-blue-700 text-white shadow-lg cursor-grab border-2 ${selectedLabTileIndex === idx ? 'selected-tile border-amber-400' : 'border-slate-700'}`;
+        tile.innerText = val;
+        tile.draggable = true;
+
+        // Desktop Drag and Drop
+        tile.addEventListener('dragstart', (e) => {
+          draggedLabTileIndex = idx;
+          e.dataTransfer.setData('text/plain', idx);
+        });
+
+        tile.addEventListener('dragover', (e) => e.preventDefault());
+
+        tile.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (draggedLabTileIndex !== null && draggedLabTileIndex !== idx) {
+            swapDataLabTiles(draggedLabTileIndex, idx);
+          }
+        });
+
+        // Touch & Tap to Swap
+        tile.addEventListener('click', () => {
+          if (selectedLabTileIndex === null) {
+            selectedLabTileIndex = idx;
+            renderDataLabTiles();
+          } else if (selectedLabTileIndex === idx) {
+            selectedLabTileIndex = null;
+            renderDataLabTiles();
+          } else {
+            swapDataLabTiles(selectedLabTileIndex, idx);
+            selectedLabTileIndex = null;
+          }
+        });
+
+        container.appendChild(tile);
+      });
+    }
+
+    function swapDataLabTiles(i, j) {
+      const temp = dataLabTilesList[i];
+      dataLabTilesList[i] = dataLabTilesList[j];
+      dataLabTilesList[j] = temp;
+      document.getElementById('datalab-input').value = dataLabTilesList.join(', ');
+      renderDataLabTiles();
+    }
+
+    function autoSortDataLabTiles() {
+      dataLabTilesList.sort((a,b) => a - b);
+      document.getElementById('datalab-input').value = dataLabTilesList.join(', ');
+      renderDataLabTiles();
+    }
+
+    function processDataLab() {
+      const input = document.getElementById('datalab-input').value;
+      const parsed = input.split(',').map(n => parseFloat(n.trim())).filter(n => !isNaN(n));
+      if (parsed.length < 2) return alert("Please enter at least 2 numbers.");
+
+      dataLabTilesList = [...parsed];
+      renderDataLabTiles();
+
+      // Calculate
+      const sum = parsed.reduce((a,b) => a+b, 0);
+      const mean = (sum / parsed.length).toFixed(2);
+
+      const sorted = [...parsed].sort((a,b) => a-b);
+      const mid = Math.floor(sorted.length/2);
+      const median = sorted.length%2 === 0 ? ((sorted[mid-1]+sorted[mid])/2).toFixed(2) : sorted[mid];
+
+      const counts = {};
+      parsed.forEach(x => counts[x] = (counts[x]||0)+1);
+      let maxF = 0;
+      for (let k in counts) if (counts[k]>maxF) maxF = counts[k];
+      const modes = [];
+      if (maxF > 1) for (let k in counts) if (counts[k] === maxF) modes.push(k);
+
+      document.getElementById('lab-res-mean').innerText = mean;
+      document.getElementById('lab-res-median').innerText = median;
+      document.getElementById('lab-res-mode').innerText = modes.length > 0 ? modes.join(', ') : 'No Mode';
+      document.getElementById('lab-res-range').innerText = (sorted[sorted.length-1] - sorted[0]).toFixed(2);
+
+      ['mean', 'median', 'mode', 'range'].forEach(k => {
+        document.getElementById('lab-res-' + k).classList.add('hidden');
+        document.getElementById('lab-btn-' + k).classList.remove('hidden');
+      });
+    }
+
+    function toggleLabReveal(key) {
+      document.getElementById('lab-res-' + key).classList.remove('hidden');
+      document.getElementById('lab-btn-' + key).classList.add('hidden');
+    }
+
+    // PRACTICE ARENA (10 QUESTIONS PER TOPIC)
+    function generatePracticeSet(topic) {
+      practiceState.topic = topic;
+      practiceState.answers = {};
+
+      ['Mode', 'Median', 'Mean', 'Range'].forEach(t => {
+        const btn = document.getElementById('practice-btn-' + t);
+        if (t === topic) btn.className = "px-4 py-2 rounded-xl font-extrabold text-xs bg-blue-600 text-white shadow-lg";
+        else btn.className = "px-4 py-2 rounded-xl font-extrabold text-xs bg-slate-950 border border-slate-800 text-slate-400";
+      });
+
+      if (topic === 'Mode') {
+        practiceState.questions = [
+          { id: 1, q: 'Find mode of fruit choices: [🍎 Apple, 🍊 Orange, 🍎 Apple]?', options: ['🍎 Apple', '🍊 Orange'], correct: '🍎 Apple' },
+          { id: 2, q: 'What is the mode of [3, 8, 3, 5, 8, 3]?', options: ['3', '8', '5'], correct: '3' },
+          { id: 3, q: 'Identify mode(s) for [4, 9, 4, 12, 9]:', options: ['4', '9', '4 and 9'], correct: '4 and 9' },
+          { id: 4, q: 'True or False: A dataset can have more than one mode.', options: ['True', 'False'], correct: 'True' },
+          { id: 5, q: 'Mode of shirt sizes: [S, M, L, M, S, M]?', options: ['S', 'M', 'L'], correct: 'M' },
+          { id: 6, q: 'Find mode of test scores: [75, 80, 85, 80, 90, 80]:', options: ['75', '80', '85'], correct: '80' },
+          { id: 7, q: 'What is mode of [10, 10, 20, 20, 30]?', options: ['10', '20', '10 and 20'], correct: '10 and 20' },
+          { id: 8, q: 'Mode of goals scored: [2, 0, 1, 2, 3, 2, 1]?', options: ['1', '2', '3'], correct: '2' },
+          { id: 9, q: 'True or False: If every number appears once, there is no mode.', options: ['True', 'False'], correct: 'True' },
+          { id: 10, q: 'What is the mode of [12, 15, 12, 18, 15, 12]?', options: ['12', '15', '18'], correct: '12' }
+        ];
+      } else if (topic === 'Median') {
+        practiceState.questions = [
+          { id: 1, q: 'Find median of odd dataset: [5, 2, 9, 1, 7]', options: ['2', '5', '7'], correct: '5' },
+          { id: 2, q: 'What is median of sorted set [10, 20, 30]?', options: ['10', '20', '30'], correct: '20' },
+          { id: 3, q: 'Find median for even dataset [2, 6, 10, 14]:', options: ['6', '8', '10'], correct: '8' },
+          { id: 4, q: 'Find median of even set [5, 15, 25, 35]:', options: ['15', '20', '25'], correct: '20' },
+          { id: 5, q: 'Median of heights (cm): [130, 125, 140, 135, 120]?', options: ['125', '130', '135'], correct: '130' },
+          { id: 6, q: 'What is median of [4, 8, 12, 16]?', options: ['8', '10', '12'], correct: '10' },
+          { id: 7, q: 'Find median of [15, 3, 9, 21, 7]:', options: ['7', '9', '15'], correct: '9' },
+          { id: 8, q: 'True or False: Data must be arranged in order before finding median.', options: ['True', 'False'], correct: 'True' },
+          { id: 9, q: 'Find median of [100, 200, 300, 400]:', options: ['200', '250', '300'], correct: '250' },
+          { id: 10, q: 'Median of [1, 3, 5, 7, 9, 11, 13]:', options: ['5', '7', '9'], correct: '7' }
+        ];
+      } else if (topic === 'Mean') {
+        practiceState.questions = [
+          { id: 1, q: 'What is the mean of [4, 6, 8]?', options: ['5', '6', '8'], correct: '6' },
+          { id: 2, q: 'Calculate mean of towers [2, 4, 6, 8]:', options: ['5', '6', '4'], correct: '5' },
+          { id: 3, q: 'What is the mean of test scores [80, 90, 70, 100]?', options: ['85', '90', '80'], correct: '85' },
+          { id: 4, q: 'Sarah scores 4, 6, and 8 goals in 3 matches. Mean goals per match:', options: ['5', '6', '7'], correct: '6' },
+          { id: 5, q: 'Mean of 4 numbers is 10. Three are 8, 12, and 6. What is 4th number?', options: ['10', '14', '12'], correct: '14' },
+          { id: 6, q: 'Calculate mean of [10, 20, 30, 40]:', options: ['20', '25', '30'], correct: '25' },
+          { id: 7, q: 'Calculate mean of towers [2, 5, 8]:', options: ['4', '5', '6'], correct: '5' },
+          { id: 8, q: 'Mean formula is:', options: ['Total Sum ÷ Count', 'Max − Min', 'Middle Value'], correct: 'Total Sum ÷ Count' },
+          { id: 9, q: 'Mean of 3 test scores is 85. Two are 80 and 90. Third score is:', options: ['85', '88', '90'], correct: '85' },
+          { id: 10, q: 'Find mean of [5, 10, 15]:', options: ['5', '10', '15'], correct: '10' }
+        ];
+      } else {
+        practiceState.questions = [
+          { id: 1, q: 'Calculate the range of [12, 3, 25, 8]?', options: ['22', '25', '12'], correct: '22' },
+          { id: 2, q: 'Find the range of [15, 5, 20]:', options: ['10', '15', '20'], correct: '15' },
+          { id: 3, q: 'Calculate range for [105, 45, 88, 120]:', options: ['75', '88', '120'], correct: '75' },
+          { id: 4, q: 'Group A range is 15, Group B range is 25. Which has wider spread?', options: ['Group A', 'Group B', 'Equal'], correct: 'Group B' },
+          { id: 5, q: 'Range formula is:', options: ['Highest − Lowest', 'Sum ÷ Count', 'Middle Value'], correct: 'Highest − Lowest' },
+          { id: 6, q: 'Range of dataset [3, 19, 45, 2]:', options: ['42', '43', '45'], correct: '43' },
+          { id: 7, q: 'Find range of fruit counts: 14 apples, 5 oranges, 28 grapes, 9 melons:', options: ['23', '28', '14'], correct: '23' },
+          { id: 8, q: 'Range of temperatures: 32°C, 28°C, 35°C, 30°C:', options: ['5°C', '7°C', '35°C'], correct: '7°C' },
+          { id: 9, q: 'Find range of [50, 100, 150, 200]:', options: ['100', '150', '200'], correct: '150' },
+          { id: 10, q: 'Range of plant heights (cm): [12, 4, 18, 9, 15]:', options: ['14', '18', '12'], correct: '14' }
+        ];
+      }
+
+      const list = document.getElementById('practice-questions-list');
+      list.innerHTML = practiceState.questions.map((q, idx) => `
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3">
+          <div class="text-xs text-slate-400 font-bold uppercase">Question ${idx+1} of 10 • ${topic}</div>
+          <p class="text-white font-bold text-sm">${q.q}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            ${q.options.map(opt => `
+              <button onclick="selectPracticeOption(${q.id}, '${opt}')" id="practice-opt-${q.id}-${opt.replace(/\s+/g, '')}" class="practice-opt-btn p-3 rounded-xl border border-slate-800 bg-slate-950 text-slate-300 font-bold text-sm">${opt}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectPracticeOption(qId, option) {
+      practiceState.answers[qId] = option;
+      const q = practiceState.questions.find(x => x.id === qId);
+      q.options.forEach(opt => {
+        const btn = document.getElementById(`practice-opt-${qId}-${opt.replace(/\s+/g, '')}`);
+        if (opt === option) btn.className = "practice-opt-btn p-3 rounded-xl border border-sky-400 bg-sky-600 text-white font-bold text-sm shadow";
+        else btn.className = "practice-opt-btn p-3 rounded-xl border border-slate-800 bg-slate-950 text-slate-300 font-bold text-sm";
+      });
+    }
+
+    function submitPracticeSet() {
+      let scoreCount = 0;
+      practiceState.questions.forEach(q => {
+        if (practiceState.answers[q.id] === q.correct) scoreCount++;
+      });
+
+      // Score for 10 questions = scoreCount * 20 (Max 200)
+      const topicKey = practiceState.topic.toLowerCase();
+      const topicXP = scoreCount * 20;
+      currentUser.scores[topicKey] = topicXP;
+
+      calculateTotalXP();
+      showToast(`${practiceState.topic} Practice Completed! Score: ${scoreCount}/10 (${topicXP} XP)`);
+    }
+
+    // MASTER TEST (10 QUESTIONS)
+    function startMasterTest() {
+      document.getElementById('master-intro-screen').classList.add('hidden');
+      document.getElementById('master-results-screen').classList.add('hidden');
+      document.getElementById('master-quiz-screen').classList.remove('hidden');
+      document.getElementById('master-timer-display').classList.remove('hidden');
+
+      masterSeconds = 0;
+      masterAnswers = {};
+      clearInterval(masterTimerInterval);
+      masterTimerInterval = setInterval(() => {
+        masterSeconds++;
+        const m = Math.floor(masterSeconds/60).toString().padStart(2,'0');
+        const s = (masterSeconds%60).toString().padStart(2,'0');
+        document.getElementById('timer-text').innerText = `${m}:${s}`;
+      }, 1000);
+
+      masterQuestions = [
+        { id: 1, q: 'Find mode of [5, 12, 5, 8, 12, 5]:', options: ['5', '12', '8'], correct: '5' },
+        { id: 2, q: 'Find median of even set [4, 8, 12, 16]:', options: ['8', '10', '12'], correct: '10' },
+        { id: 3, q: 'Calculate mean of [10, 20, 30, 40]:', options: ['20', '25', '30'], correct: '25' },
+        { id: 4, q: 'Range of dataset [3, 19, 45, 2]:', options: ['42', '43', '45'], correct: '43' },
+        { id: 5, q: 'Missing mean: Mean of 3 numbers is 10. Two are 8 and 11. Third number is:', options: ['10', '11', '12'], correct: '11' },
+        { id: 6, q: 'True/False: A dataset can have no mode if all items appear only once.', options: ['True', 'False'], correct: 'True' },
+        { id: 7, q: 'Find the median of [15, 3, 9, 21, 7]:', options: ['7', '9', '15'], correct: '9' },
+        { id: 8, q: 'Find range of fruit counts: 14 apples, 5 oranges, 28 grapes, 9 melons:', options: ['23', '28', '14'], correct: '23' },
+        { id: 9, q: 'Calculate mean of towers [2, 5, 8]:', options: ['4', '5', '6'], correct: '5' },
+        { id: 10, q: 'Identify the mode(s) of [4, 8, 4, 10, 8, 6]:', options: ['4', '8', '4 and 8'], correct: '4 and 8' }
+      ];
+
+      const container = document.getElementById('master-questions-container');
+      container.innerHTML = masterQuestions.map((q, idx) => `
+        <div class="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-3">
+          <div class="text-xs text-amber-400 font-bold uppercase">Question ${idx+1} of 10</div>
+          <p class="text-white font-bold text-sm">${q.q}</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            ${q.options.map(opt => `
+              <button onclick="selectMasterAnswer(${q.id}, '${opt}')" id="master-opt-${q.id}-${opt.replace(/\s+/g, '')}" class="master-opt-btn p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-bold text-sm">${opt}</button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function selectMasterAnswer(qId, opt) {
+      masterAnswers[qId] = opt;
+      const q = masterQuestions.find(x => x.id === qId);
+      q.options.forEach(o => {
+        const btn = document.getElementById(`master-opt-${qId}-${o.replace(/\s+/g, '')}`);
+        if (o === opt) {
+          btn.className = "master-opt-btn p-3 rounded-xl border border-amber-400 bg-amber-500 text-slate-950 font-bold text-sm shadow";
+        } else {
+          btn.className = "master-opt-btn p-3 rounded-xl border border-slate-800 bg-slate-900 text-slate-300 font-bold text-sm";
+        }
+      });
+    }
+
+    function submitMasterTest() {
+      clearInterval(masterTimerInterval);
+      document.getElementById('master-quiz-screen').classList.add('hidden');
+      document.getElementById('master-results-screen').classList.remove('hidden');
+
+      let scoreCount = 0;
+      masterQuestions.forEach(q => {
+        if (masterAnswers[q.id] === q.correct) scoreCount++;
+      });
+
+      const m = Math.floor(masterSeconds/60).toString().padStart(2,'0');
+      const s = (masterSeconds%60).toString().padStart(2,'0');
+      document.getElementById('master-final-score').innerText = `Score: ${scoreCount} / 10 (${scoreCount * 10}%)`;
+      document.getElementById('master-final-time').innerText = `${m}:${s}`;
+      
+      const assessmentXP = scoreCount * 20; // Max 200 XP
+      currentUser.scores.assessment = assessmentXP;
+      calculateTotalXP();
+
+      showToast(`Test Submitted! Score: ${scoreCount}/10 (+${assessmentXP} XP)`);
+    }
+
+    // BADGES
+    function renderBadges() {
+      const container = document.getElementById('badges-grid-container');
+      if (!container) return;
+      container.innerHTML = BADGES.map(b => {
+        const isUnlocked = currentUser.badges.includes(b.id) || currentUser.xp >= b.xp;
+        return `
+          <div class="p-5 rounded-2xl border transition flex items-center gap-4 ${isUnlocked ? 'bg-slate-950 border-amber-500/40 shadow-lg' : 'bg-slate-950/50 border-slate-800 opacity-50'}">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr ${isUnlocked ? b.color : 'from-slate-800 to-slate-900'} flex items-center justify-center text-white text-2xl shadow">
+              <i class="fa-solid ${isUnlocked ? b.icon : 'fa-lock'}"></i>
+            </div>
+            <div>
+              <div class="text-[10px] text-amber-400 font-bold uppercase">${b.xp} XP Milestone</div>
+              <div class="text-base font-black text-white">${b.name}</div>
+              <div class="text-xs text-slate-400 mt-1">${b.desc}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>
