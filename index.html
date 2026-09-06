@@ -19,6 +19,54 @@
         .btn-green { background-color: #10b981; color: white; transition: all 0.2s; }
         .btn-green:hover { background-color: #059669; }
         #view-login { background-image: linear-gradient(rgba(240, 253, 244, 0.25), rgba(6, 95, 70, 0.45)), url('https://i.imgur.com/zX5CkzC.jpg'); background-size: cover; background-position: center; }
+        
+        //For image slider
+        .embedded-slider {
+          position: relative;
+          width: 100%;          /* Adapts to parent column/container width */
+          max-width: 500px;     /* Set maximum width for the slider */
+          aspect-ratio: 1 / 1;        /* Adjust height as needed */
+          margin: 20px auto;    /* Centers slider inside the section */
+          overflow: hidden;
+          border-radius: 8px;
+        }
+
+      .slider-track {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        transition: transform 0.4s ease-in-out;
+      }
+
+      .slider-track img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        flex-shrink: 0;
+      }
+
+      .slider-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        color: #ffffff;
+        border: none;
+        padding: 10px 15px;
+        cursor: pointer;
+        border-radius: 4px;
+        font-size: 18px;
+        user-select: none;
+        z-index: 2;
+      }
+
+      .slider-btn:hover {
+        background: rgba(0, 0, 0, 0.8);
+      }
+
+      .slider-btn.prev { left: 10px; }
+      .slider-btn.next { right: 10px; }
+
     </style>
 </head>
 <body>
@@ -29,19 +77,43 @@
     </div>
 
     <div id="view-login" class="min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 gap-8">
-        <div class="glass-panel w-full max-w-md p-6 border-l-4 border-emerald-500">
-            <h3 class="text-lg font-bold text-emerald-800 mb-4 flex items-center"><i class="ph ph-megaphone-simple mr-2 text-xl text-emerald-500"></i>Latest Announcements</h3>
-            <div id="loginAnnouncements" class="space-y-4">
-                <p class="text-sm text-gray-500">Loading teacher announcements...</p>
+        
+        <!-- LEFT COLUMN: Image Slider & Latest Announcements -->
+        <div class="flex flex-col gap-1/2 w-full max-w-md">
+            
+            <!-- Image Slider -->
+            <div class="embedded-slider w-full">
+                <div class="slider-track">
+                    <img src="https://lh3.googleusercontent.com/d/18p5OHuxVsGs971YODMPHJuka28DM7I7e" alt="Poster Data Detective">
+                    <img src="https://lh3.googleusercontent.com/d/1Bm6zcscaPMWRLprTfJ2_y93wKkYDWuAR" alt="Qestion 2000GP">
+                    <img src="https://lh3.googleusercontent.com/d/1jYf6sh45XoK8QxdrbxBZP2YeYScXryXd" alt="Collect 2000GP">
+                    <img src="https://lh3.googleusercontent.com/d/1odKjrAjhqtvT_mfn_2-xmce4QiJNkXDY" alt="Reopen Weekly Challenge">
+                    <img src="https://lh3.googleusercontent.com/d/1MDOM3X1vnp_hlcoqM4cMliGZgGtHzPdH" alt="Poster ComingSoon SpaceX">
+                    <img src="https://lh3.googleusercontent.com/d/17fZybCW8XO4QvgCmfJmEi_XGqTeFfw0x" alt="Kenapa perlu belajar Matematik">
+                </div>
+                <button class="slider-btn prev">&#10094;</button>
+                <button class="slider-btn next">&#10095;</button>
             </div>
-        </div>
 
-        <div class="glass-panel w-full max-w-md p-8 text-center">
-            <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="ph-fill ph-plant text-4xl text-emerald-500"></i>
+            <!-- Latest Announcements -->
+            <div class="glass-panel w-full p-6 border-l-4 border-emerald-500">
+                <h3 class="text-lg font-bold text-emerald-800 mb-4 flex items-center">
+                    <i class="ph ph-megaphone-simple mr-2 text-xl text-emerald-500"></i>Latest Announcements
+                </h3>
+                <div id="loginAnnouncements" class="flex-1 overflow-y-auto space-y-4 pr-2" style="height: 200px;">
+                    <p class="text-sm text-gray-500">Loading teacher announcements...</p>
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- RIGHT COLUMN: Login Form Panel -->
+        <div class="glass-panel w-full max-w-md p-8 text-center lg:self-stretch flex flex-col justify-center">
+            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <img src="https://lh3.googleusercontent.com/d/1Mnzty1gYSdz6EfOmbwp0KbwSh-JmnOOc" alt="Header Image" style="width: 50px; height: auto; display: block; margin: 0 auto -5px auto;">
             </div>
             <h1 class="text-3xl font-bold text-emerald-800 mb-2">GROWPLUS</h1>
-            <p class="text-emerald-600 mb-8 text-sm">Version 1.4 (26 JULY 2026)</p>
+            <p class="text-emerald-600 mb-8 text-sm">Version 1.4.3 (5 SEPTEMBER 2026)</p>
 
             <form id="loginForm" class="space-y-4 text-left">
                 <div>
@@ -57,9 +129,19 @@
             
             <div class="mt-8 pt-6 border-t border-gray-200">
                 <p class="text-sm text-gray-500 mb-3">For Parents & Guardians</p>
-                <button onclick="switchView('parent')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">Public Dashboard View</button>
+                <button onclick="switchView('parent')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">Parent Dashboard View</button>
             </div>
+
+            <div class="mt-6 pt-4 border-t border-gray-200">
+                <p class="text-sm text-gray-500 mb-2">Play Apphub as Guest</p>
+                <button onclick="launchPracticeApp('mathSafari')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">🦁 Arithmetic Math Safari</button>
+                <button onclick="launchPracticeApp('roundOffApp')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">🎯 Rounding Master</button>
+                <button onclick="launchPracticeApp('Unit7')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">7️⃣ Coordinate, Ratio & Proportion</button>   
+            
+            </div>
+
         </div>
+        
     </div>
 
     <!-- ==================== PARENT VIEW ==================== -->
@@ -165,7 +247,8 @@
             }
         } catch(err) {
             document.getElementById('loader').classList.add('hide');
-            Swal.fire('Error', 'Connection failed', 'error');
+            await api.run('logStudentActivity', email, 'Login', `Using bitly to log in but ERROR: ${actualError}`, 0);
+            Swal.fire('Error', `Connection failed: ${actualError}`, 'error');
         }
     });
         
@@ -287,9 +370,7 @@
             } else {
                 Swal.fire('No student found', res.message, 'warning');
             }
-        } catch(e) { 
-            console.error(e); 
-        }
+        } catch(e) { console.error(e); }
         btn.innerText = 'Search'; btn.disabled = false;
     }
     
@@ -308,6 +389,139 @@
             // Opens the exam analysis dashboard in a new browser tab
             window.open(finalUrl, "_blank");
     }
+    
+        // For image slider
+        const sliderContainer = document.querySelector('.embedded-slider');
+        const track = sliderContainer.querySelector('.slider-track');
+        const slides = sliderContainer.querySelectorAll('.slider-track img');
+        const prevBtn = sliderContainer.querySelector('.slider-btn.prev');
+        const nextBtn = sliderContainer.querySelector('.slider-btn.next');
+
+        let currentIndex = 0;
+        let autoSlideInterval;
+
+        function updateSlider() {
+          track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        }
+
+        function nextSlide() {
+          currentIndex = (currentIndex + 1) % slides.length;
+          updateSlider();
+        }
+
+        function prevSlide() {
+          currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+          updateSlider();
+        }
+
+        // Starts or resets the 5-second (5000ms) timer
+        function startAutoSlide() {
+          clearInterval(autoSlideInterval);
+          autoSlideInterval = setInterval(nextSlide, 5000);
+        }
+
+        // Button controls
+        nextBtn.addEventListener('click', () => {
+          nextSlide();
+          startAutoSlide(); // Resets timer so it doesn't jump immediately after clicking
+        });
+
+        prevBtn.addEventListener('click', () => {
+          prevSlide();
+          startAutoSlide(); // Resets timer on click
+        });
+
+        // Pause auto-sliding when user hovers over the slider
+        sliderContainer.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+        sliderContainer.addEventListener('mouseleave', startAutoSlide);
+
+        // Start auto-sliding on load
+        startAutoSlide();
+
+        // For Guest to launch AppHub
+        async function launchPracticeApp(appKey) {
+            if (appKey === 'mathSafari') {
+                try {
+                    // 1. Dynamically retrieve the absolute Web App deployment URL
+                    const baseUrl = await api.run('getWebAppUrl');
+                    
+                    // 2. Append the target page parameter flag pointing to MathGame.html
+                    const targetGameUrl = baseUrl + "?page=game";
+                    
+                    // 3. Perform a safe top-frame redirect out of the sandbox
+                    if (window.top && window.top.location) {
+                        window.top.location.href = targetGameUrl;
+                    } else {
+                        window.location.href = targetGameUrl;
+                    }
+                    api.run('logStudentActivity', 'Guest', 'Enter to Arithmetic Math Safari', '' , '0' );
+                } catch (err) {
+                    console.error("Failed to route to game page container safely:", err);
+                    
+                    // Fallback backup route assignment in case the promise encounters an absolute break
+                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec?page=game";
+                    if (window.top && window.top.location) {
+                        window.top.location.href = fallbackUrl;
+                    } else {
+                        window.location.href = fallbackUrl;
+                    }
+                }
+            }
+            if (appKey === 'roundOffApp') {
+                try {
+                    // 1. Dynamically retrieve the absolute Web App deployment URL
+                    const baseUrl = await api.run('getWebAppUrl');
+                    
+                    // 2. Append the target page parameter flag pointing to MathGame.html
+                    const targetGameUrl = baseUrl + "?page=roundOff";
+                    
+                    // 3. Perform a safe top-frame redirect out of the sandbox
+                    if (window.top && window.top.location) {
+                        window.top.location.href = targetGameUrl;
+                    } else {
+                        window.location.href = targetGameUrl;
+                    }
+                    api.run('logStudentActivity', 'Guest', 'Enter to Rounding Master', '' , '0' );
+                } catch (err) {
+                    console.error("Failed to route to game page container safely:", err);
+                    
+                    // Fallback backup route assignment in case the promise encounters an absolute break
+                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec?page=roundOff";
+                    if (window.top && window.top.location) {
+                        window.top.location.href = fallbackUrl;
+                    } else {
+                        window.location.href = fallbackUrl;
+                    }
+                }
+            }
+            if (appKey === 'Unit7') {
+                try {
+                    // 1. Dynamically retrieve the absolute Web App deployment URL
+                    const baseUrl = await api.run('getWebAppUrl');
+                    
+                    // 2. Append the target page parameter flag pointing to MathGame.html
+                    const targetGameUrl = baseUrl + "?page=Unit7";
+                    
+                    // 3. Perform a safe top-frame redirect out of the sandbox
+                    if (window.top && window.top.location) {
+                        window.top.location.href = targetGameUrl;
+                    } else {
+                        window.location.href = targetGameUrl;
+                    }
+                    api.run('logStudentActivity', 'Guest', 'Enter to Unit 7', '' , '0' );
+                } catch (err) {
+                    console.error("Failed to route to game page container safely:", err);
+                    
+                    // Fallback backup route assignment in case the promise encounters an absolute break
+                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec?page=Unit7";
+                    if (window.top && window.top.location) {
+                        window.top.location.href = fallbackUrl;
+                    } else {
+                        window.location.href = fallbackUrl;
+                    }
+                }
+            }
+        }
 </script>
 </body>
 </html>
