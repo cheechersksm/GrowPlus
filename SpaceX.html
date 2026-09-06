@@ -518,7 +518,7 @@
         const GAS = {
             getStudentInfo: function(email, callback) {
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(callback).withFailureHandler(() => callback(null)).getStudentInfoSpace(email);
+                    api.run.withSuccessHandler(callback).withFailureHandler(() => callback(null)).getStudentInfoSpace(email);
                 } else {
                     console.log("Mock GAS: getStudentInfo for " + email);
                     // Mock delay
@@ -539,7 +539,7 @@
             },
             saveRecord: function(data) {
                 if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.saveSpaceRecord(data);
+                    api.run.saveSpaceRecord(data);
                 } else {
                     console.log("Mock GAS: Saved record to sheet:", data);
                 }
@@ -1371,6 +1371,38 @@
                 `;
             });
         }
+
+        
+        // 1. CRITICAL: Define the missing API runner object for server communication
+        // ==================== CONFIGURATION ====================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec"; 
+
+        // ==================== API BRIDGE ====================
+        const api = {
+            run: async function(functionName, ...args) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({ 
+                            func: functionName, 
+                            args: args 
+                        }),
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    return result.data;
+                } catch (error) {
+                    console.error("Game API Call failed for " + functionName + ":", error);
+                    throw error;
+                }
+            }
+        };
 
         // Initialize on load
         window.onload = initApp;
