@@ -476,8 +476,9 @@
 
     <!-- ================= JAVASCRIPT LOGIC ================= -->
     <script>
-        // --- 1. USER IDENTIFICATION & GAS MOCK ---
-        // Implementation based on prompt requirement
+        // 1. Paste your deployed Google Apps Script Web App URL here!
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+
         let loggedInEmail = "INSERT_USER_EMAIL_HERE";
 
         if (
@@ -514,19 +515,35 @@
             }
         };
 
-        // GAS Communication Wrapper
+        // GAS Communication Wrapper (Supports GitHub Pages + GAS Web App API)
         const GAS = {
             getStudentInfo: function(email, callback) {
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    api.run.withSuccessHandler(callback).withFailureHandler(() => callback(null)).getStudentInfoSpace(email);
+                // Check if deployed GAS API URL is set
+                if (GAS_WEB_APP_URL && GAS_WEB_APP_URL !== "YOUR_GAS_WEB_APP_URL_HERE") {
+                    const apiUrl = `${GAS_WEB_APP_URL}?action=getStudentInfo&email=${encodeURIComponent(email)}`;
+                    fetch(apiUrl)
+                        .then(res => res.json())
+                        .then(resData => {
+                            if (resData && resData.status === "success") {
+                                callback(resData.data);
+                            } else {
+                                console.warn("API returned error or empty response:", resData);
+                                callback(null);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("Error fetching student info from GAS API:", err);
+                            showToast("Could not fetch user data from server", "error");
+                            callback(null);
+                        });
+                } else if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(callback).withFailureHandler(() => callback(null)).getStudentInfoSpace(email);
                 } else {
                     console.log("Mock GAS: getStudentInfo for " + email);
-                    // Mock delay
                     setTimeout(() => {
                         if(email === "Guest") {
                             callback(null);
                         } else {
-                            // Fake data
                             callback({
                                 Email: email, Name: "Aina", Class: "5 Bestari", Progress: 40,
                                 PerimeterScore: 60, PerimeterBadge: false, CombinedAreaScore: 50, CombinedAreaBadge: false,
@@ -538,8 +555,17 @@
                 }
             },
             saveRecord: function(data) {
-                if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    api.run.saveSpaceRecord(data);
+                if (GAS_WEB_APP_URL && GAS_WEB_APP_URL !== "YOUR_GAS_WEB_APP_URL_HERE") {
+                    fetch(GAS_WEB_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors", // text/plain with no-cors avoids browser CORS preflight restrictions
+                        headers: { "Content-Type": "text/plain" },
+                        body: JSON.stringify({ action: "saveSpaceRecord", data: data })
+                    })
+                    .then(() => console.log("Save request dispatched to GAS API"))
+                    .catch(err => console.error("Error saving record via API:", err));
+                } else if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.saveSpaceRecord(data);
                 } else {
                     console.log("Mock GAS: Saved record to sheet:", data);
                 }
@@ -686,7 +712,7 @@
             }
         }
 
-        // --- 3. LEARN SECTION --- 
+        // --- 3. LEARN SECTION ---
         const learnData = [
             { title: "What is a Polygon?", content: "<p>A polygon is a 2D closed shape with straight sides. Circles are not polygons because they have curves!</p><img src='https://lh3.googleusercontent.com/d/1fYhQDk3MZC4uVpUr9qx6ZYQG5dPWke5b' alt='Polygon' class='w-3/4 h-3/4 mx-auto mb-1 object-contain'>" },
             { title: "Regular vs Irregular", content: "<p><b>Regular Polygons</b> have sides of equal length and interior angles of equal size.<br><b>Irregular Polygons</b> have sides and angles of different sizes.</p><div class='text-center mt-2'><span class='inline-block p-2 border border-green-500 mr-2 bg-green-900 rounded'>Regular Square</span><span class='inline-block p-2 border-b-4 border-l-2 border-red-500 bg-red-900 rounded'>Irregular Rectangle</span></div>" },
@@ -1041,7 +1067,7 @@
                 y5: [
                     // Year 5 Combined Perimeter
                     () => { let s = Math.floor(Math.random()*6)+4; return { id: `P-Y5-SQTR-${s}`, yearLevel: 5, q: `A square and an equilateral triangle share one side. If the side length is ${s} cm, what is the perimeter of the combined shape?`, ans: 5*s, wrong: [7*s, 6*s, 4*s] }; },
-                    () => { let l = Math.floor(Math.random() * 8) + 6; let w = Math.floor(Math.random() * 3) + 2; return { id: `P-Y5-RECSQ-${l}-${w}`, yearLevel: 5, q: `A rectangle is ${l}cm by ${w}cm. A square of side ${w}cm is joined to one of its shorter sides. Find the total perimeter.`, ans: 2 * (l + 2 * w), wrong: [2 * (l + w), 2 * (l + 3 * w), 2 * (l + w) + 3 * w ]};},
+                    () => { let l = Math.floor(Math.random()*8)+6; let w = Math.floor(Math.random()*3)+2; return { id: `P-Y5-RECSQ-${l}-${w}`, yearLevel: 5, q: `A rectangle is ${l}cm by ${w}cm. A square of side ${w}cm is joined to one of its shorter sides. Find the total perimeter.`, ans: (2*l)+(4*w), wrong: [(2*l)+(6*w), (2*l)+(2*w), (2*l)+(3*w)] }; },
                     () => { let s = Math.floor(Math.random()*5)+3; return { id: `P-Y5-2HEX-${s}`, yearLevel: 5, q: `Two identical regular hexagons of side ${s} cm are joined edge-to-edge. What is the total perimeter?`, ans: 10*s, wrong: [12*s, 11*s, 8*s] }; },
                     () => { let s = Math.floor(Math.random()*5)+4; return { id: `P-Y5-PENEQ-${s}`, yearLevel: 5, q: `A regular pentagon and an equilateral triangle share a side of length ${s} m. Find the combined perimeter.`, ans: 6*s, wrong: [8*s, 7*s, 5*s] }; },
                     () => { let l = Math.floor(Math.random()*5)+5; let w = Math.floor(Math.random()*2)+3; return { id: `P-Y5-2REC-${l}-${w}`, yearLevel: 5, q: `Two identical rectangles measuring ${l}cm by ${w}cm are joined along their lengths. What is the perimeter of the new shape?`, ans: (2*l)+(4*w), wrong: [4*l+4*w, 2*l+2*w, 4*l+2*w] }; }
@@ -1324,7 +1350,7 @@
 
         // --- 6. ACHIEVEMENTS (BADGES) ---
         // Placeholder system as requested
-        const BADGE_IMAGES = { 
+        const BADGE_IMAGES = {
             perimeter: "https://lh3.googleusercontent.com/d/1O1afU2Tf6xt7bVXJpxUSbleHv4pdoKpo",
             combinedArea: "https://lh3.googleusercontent.com/d/16rYZeabqO58Layr67mUEiLKDMAD5GDDJ",
             volume: "https://lh3.googleusercontent.com/d/1K8gStgM1O1ExP2UOEn-xh-zztR4o3acN",
@@ -1349,7 +1375,7 @@
             grid.innerHTML = '';
 
             badgeDefinitions.forEach(b => {
-                const isEarned = currentUser.badges && currentUser.badges[b.id];
+                const isEarned = currentUser.badges[b.id];
                 const statusColor = isEarned ? 'text-green-400' : 'text-slate-500';
                 const statusText = isEarned ? '🏆 Badge Unlocked!' : '🔒 Not Yet Earned';
                 const opacityClass = isEarned ? 'opacity-100' : 'opacity-50 grayscale';
@@ -1362,7 +1388,6 @@
                     <div class="glass-panel p-4 rounded-xl border ${borderClass} flex flex-col items-center text-center transition-all">
                     <div class="w-32 h-32 mb-3 flex items-center justify-center">
                         <img src="${imageUrl}" alt="${b.name}" class="max-w-full max-h-full object-contain ${opacityClass}" onerror="this.onerror=null; this.src='https://via.placeholder.com/64?text=Badge';" /></div>
-
                         <h4 class="font-bold text-sm text-white mb-1">${b.name}</h4>
                         <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-cyan-300 mb-2">${b.cat}</span>
                         <p class="text-xs text-slate-400 mb-2">${b.desc}</p>
@@ -1371,38 +1396,6 @@
                 `;
             });
         }
-
-        
-        // 1. CRITICAL: Define the missing API runner object for server communication
-        // ==================== CONFIGURATION ====================
-        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec"; 
-
-        // ==================== API BRIDGE ====================
-        const api = {
-            run: async function(functionName, ...args) {
-                try {
-                    const response = await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ 
-                            func: functionName, 
-                            args: args 
-                        }),
-                        headers: {
-                            'Content-Type': 'text/plain;charset=utf-8',
-                        }
-                    });
-                    
-                    const result = await response.json();
-                    if (result.error) {
-                        throw new Error(result.error);
-                    }
-                    return result.data;
-                } catch (error) {
-                    console.error("Game API Call failed for " + functionName + ":", error);
-                    throw error;
-                }
-            }
-        };
 
         // Initialize on load
         window.onload = initApp;
