@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SPACE EXPLORER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --space-dark: #0f172a;
+            --space-panel: #1e293b;
+            --space-accent: #38bdf8;
+            --space-success: #4ade80;
+            --space-warning: #facc15;
+            --space-danger: #f87171;
+            --space-purple: #c084fc;
+        }
+
+        body {
+            background-color: var(--space-dark);
+            color: #f8fafc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
+        }
+
+        /* Starry background effect */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background: transparent url('data:image/svg+xml;utf8,<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="20" r="1.5" fill="white" opacity="0.3"/><circle cx="150" cy="80" r="1" fill="white" opacity="0.5"/><circle cx="80" cy="150" r="2" fill="white" opacity="0.2"/></svg>') repeat;
+            animation: twinkle 10s linear infinite;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.8; }
+            50% { opacity: 0.5; }
+            100% { opacity: 0.8; }
+        }
+
+        /* Nav & Layout */
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 50;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-item {
+            transition: all 0.2s ease;
+        }
+        .nav-item.active {
+            color: var(--space-accent);
+            transform: translateY(-5px);
+        }
+
+        /* Demo Board Canvas */
+        #demo-canvas {
+            touch-action: none;
+            background-color: #1e293b;
+            border-radius: 0.5rem;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--space-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--space-panel); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--space-accent); }
+
+        /* Custom UI */
+        .btn {
+            transition: transform 0.1s, filter 0.1s;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+
+        .hidden-section { display: none !important; }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .accordion-content.open {
+            max-height: 2000px; /* generous max height */
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        /* Protractor interact */
+        .protractor-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><polygon points="50,10 90,40 75,90 25,90 10,40" fill="%234ade80" opacity="0.3" stroke="%234ade80" stroke-width="2"/></svg>') center/contain no-repeat;
+        }
+        #protractor-img {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 150px; height: 150px;
+            margin-top: -75px; margin-left: -75px;
+            border-radius: 50%;
+            border: 2px dashed #facc15;
+            background: rgba(250, 204, 21, 0.1);
+            transform-origin: center;
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+<body class="pb-20 md:pb-0 md:pt-20">
+    <div class="stars"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="flex flex-col gap-2"></div>
+
+    <!-- Desktop Header -->
+    <header class="hidden md:flex fixed top-0 w-full glass-panel z-50 h-16 items-center px-6 justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">🚀</span>
+            <h1 class="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">SPACE EXPLORER</h1>
+            <span class="text-xs text-gray-400 ml-2 hidden lg:inline">Explore • Build • Measure • Master</span>
+        </div>
+        <nav class="flex gap-6">
+            <button onclick="nav('home')" class="nav-item hover:text-cyan-400 font-semibold" data-tab="home">🏠 Home</button>
+            <button onclick="nav('learn')" class="nav-item hover:text-cyan-400 font-semibold" data-tab="learn">📘 Learn</button>
+            <button onclick="nav('explore')" class="nav-item hover:text-cyan-400 font-semibold" data-tab="explore">📐 Demo Board</button>
+            <button onclick="nav('challenge')" class="nav-item hover:text-cyan-400 font-semibold" data-tab="challenge">🎮 Challenge</button>
+            <button onclick="nav('achievements')" class="nav-item hover:text-cyan-400 font-semibold" data-tab="achievements">🏆 Badges</button>
+        </nav>
+        <div class="text-sm bg-slate-800 px-3 py-1 rounded-full border border-slate-600" id="header-user">
+            Loading...
+        </div>
+    </header>
+
+    <!-- Mobile Header -->
+    <header class="md:hidden glass-panel p-4 flex justify-center items-center sticky top-0 z-40">
+        <span class="text-xl mr-2">🚀</span>
+        <h1 class="text-lg font-bold tracking-wider text-cyan-400">SPACE EXPLORER</h1>
+    </header>
+
+    <!-- MAIN CONTENT container -->
+    <main class="container mx-auto px-4 py-6 max-w-5xl" id="main-content">
+
+        <!-- ================= HOME SECTION ================= -->
+        <section id="sec-home" class="view-section">
+            <div class="glass-panel p-6 rounded-2xl mb-8 border-t-4 border-t-cyan-500 shadow-lg shadow-cyan-500/20">
+                <h2 class="text-3xl font-bold mb-2">Welcome, <span id="lbl-name" class="text-cyan-400">Astronaut</span>!</h2>
+                <p class="text-slate-300 mb-6">Class: <span id="lbl-class" class="font-semibold text-white">---</span> | Status: <span id="lbl-email" class="text-xs">---</span></p>
+                
+                <div class="mb-2 flex justify-between text-sm">
+                    <span>Overall Progress</span>
+                    <span id="lbl-progress-text">0%</span>
+                </div>
+                <div class="h-4 w-full bg-slate-700 rounded-full overflow-hidden mb-4">
+                    <div id="bar-progress" class="h-full bg-gradient-to-r from-cyan-400 to-blue-500 progress-bar-inner" style="width: 0%"></div>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-slate-800 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400">Total Score</div>
+                        <div class="text-xl font-bold text-yellow-400" id="lbl-score">0</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400">Badges Earned</div>
+                        <div class="text-xl font-bold text-purple-400"><span id="lbl-badges">0</span>/7</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400">Perimeter Mastery</div>
+                        <div class="text-xl font-bold text-green-400" id="lbl-peri-score">0%</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400">Area Mastery</div>
+                        <div class="text-xl font-bold text-pink-400" id="lbl-area-score">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="nav('learn')" class="btn bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-2xl flex flex-col items-center justify-center text-left hover:shadow-lg hover:shadow-blue-500/30 border border-blue-500/50">
+                    <span class="text-4xl mb-2">📘</span>
+                    <h3 class="text-xl font-bold">Learn Module</h3>
+                    <p class="text-blue-200 text-sm mt-2 text-center">Interactive notes on Polygons, Angles, Perimeter & Area.</p>
+                </button>
+                <button onclick="nav('explore')" class="btn bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-2xl flex flex-col items-center justify-center text-left hover:shadow-lg hover:shadow-green-500/30 border border-green-500/50">
+                    <span class="text-4xl mb-2">📐</span>
+                    <h3 class="text-xl font-bold">Demo Board</h3>
+                    <p class="text-green-200 text-sm mt-2 text-center">Build shapes on a coordinate grid and measure them.</p>
+                </button>
+                <button onclick="nav('challenge')" class="btn bg-gradient-to-br from-yellow-600 to-red-600 p-6 rounded-2xl flex flex-col items-center justify-center text-left hover:shadow-lg hover:shadow-yellow-500/30 border border-yellow-500/50">
+                    <span class="text-4xl mb-2">🎮</span>
+                    <h3 class="text-xl font-bold">Challenge</h3>
+                    <p class="text-yellow-100 text-sm mt-2 text-center">Test your skills in the 10-question mission.</p>
+                </button>
+                <button onclick="nav('achievements')" class="btn bg-gradient-to-br from-purple-600 to-purple-800 p-6 rounded-2xl flex flex-col items-center justify-center text-left hover:shadow-lg hover:shadow-purple-500/30 border border-purple-500/50">
+                    <span class="text-4xl mb-2">🏆</span>
+                    <h3 class="text-xl font-bold">Achievements</h3>
+                    <p class="text-purple-200 text-sm mt-2 text-center">View your badges and progression.</p>
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= LEARN SECTION ================= -->
+        <section id="sec-learn" class="view-section hidden-section">
+            <h2 class="text-2xl font-bold mb-6 text-cyan-400">📘 Space Academy Records</h2>
+            <div id="accordion-container" class="flex flex-col gap-3">
+                <!-- Cards generated via JS -->
+            </div>
+        </section>
+
+        <!-- ================= DEMO BOARD SECTION ================= -->
+        <section id="sec-explore" class="view-section hidden-section">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-green-400">📐 Demonstration Board</h2>
+                <label class="flex items-center cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="teacher-mode-toggle" class="sr-only">
+                        <div class="block bg-gray-600 w-10 h-6 rounded-full"></div>
+                        <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition"></div>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-300">👩‍🏫 Teacher Mode</span>
+                </label>
+            </div>
+
+            <div class="glass-panel p-2 md:p-4 rounded-2xl">
+                <!-- Canvas Container -->
+                <div class="relative w-full flex justify-center mb-4">
+                    <canvas id="demo-canvas" width="600" height="600"></canvas>
+                </div>
+
+                <!-- Controls -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                    <button onclick="boardFixPoint()" class="btn bg-cyan-600 hover:bg-cyan-500 text-white p-3 rounded-lg font-bold shadow flex items-center justify-center gap-2">
+                        <span>📌</span> Fix Point <span class="hidden md:inline">(Space)</span>
+                    </button>
+                    <button onclick="boardCloseShape()" class="btn bg-green-600 hover:bg-green-500 text-white p-3 rounded-lg font-bold shadow flex items-center justify-center gap-2">
+                        <span>✅</span> Close Shape
+                    </button>
+                    <button onclick="boardUndo()" class="btn bg-yellow-600 hover:bg-yellow-500 text-white p-3 rounded-lg font-bold shadow flex items-center justify-center gap-2">
+                        <span>↶</span> Undo
+                    </button>
+                    <button onclick="boardRestart()" class="btn bg-red-600 hover:bg-red-500 text-white p-3 rounded-lg font-bold shadow flex items-center justify-center gap-2">
+                        <span>↻</span> Restart
+                    </button>
+                </div>
+                
+                <button onclick="boardAddShape()" class="btn w-full bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-lg font-bold shadow flex items-center justify-center gap-2 mb-4">
+                    <span>+</span> Add Another Shape
+                </button>
+
+                <!-- D-Pad for Mobile -->
+                <div class="md:hidden grid grid-cols-3 gap-2 w-48 mx-auto mb-4">
+                    <div></div>
+                    <button onmousedown="boardMoveCursor(0, 1)" ontouchstart="boardMoveCursor(0, 1); event.preventDefault();" class="btn bg-slate-700 p-4 rounded-lg flex justify-center active:bg-slate-500">⬆️</button>
+                    <div></div>
+                    <button onmousedown="boardMoveCursor(-1, 0)" ontouchstart="boardMoveCursor(-1, 0); event.preventDefault();" class="btn bg-slate-700 p-4 rounded-lg flex justify-center active:bg-slate-500">⬅️</button>
+                    <button onclick="boardFixPoint()" class="btn bg-cyan-600 p-4 rounded-lg flex justify-center text-xs font-bold items-center active:bg-cyan-500">DONE</button>
+                    <button onmousedown="boardMoveCursor(1, 0)" ontouchstart="boardMoveCursor(1, 0); event.preventDefault();" class="btn bg-slate-700 p-4 rounded-lg flex justify-center active:bg-slate-500">➡️</button>
+                    <div></div>
+                    <button onmousedown="boardMoveCursor(0, -1)" ontouchstart="boardMoveCursor(0, -1); event.preventDefault();" class="btn bg-slate-700 p-4 rounded-lg flex justify-center active:bg-slate-500">⬇️</button>
+                    <div></div>
+                </div>
+
+                <!-- Results -->
+                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
+                    <div class="flex justify-between items-center text-slate-300 mb-2">
+                        <span>Cursor: <span id="lbl-cursor-pos" class="text-white font-mono">(0, 0)</span></span>
+                        <span id="lbl-shapes-count">Shapes: 0</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-900 p-3 rounded">
+                            <div class="text-xs text-slate-400">Total Perimeter</div>
+                            <div class="text-xl md:text-2xl font-bold text-cyan-400" id="lbl-board-perimeter">0 units</div>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded">
+                            <div class="text-xs text-slate-400">Total Area</div>
+                            <div class="text-xl md:text-2xl font-bold text-pink-400" id="lbl-board-area">0 sq units</div>
+                        </div>
+                    </div>
+                    <div id="teacher-breakdown" class="mt-3 text-sm text-yellow-300 hidden">
+                        <!-- Breakdown injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= CHALLENGE SECTION ================= -->
+        <section id="sec-challenge" class="view-section hidden-section">
+            <h2 class="text-2xl font-bold mb-4 text-yellow-400">🎮 Mission Challenge</h2>
+            
+            <!-- Topic Selection Screen -->
+            <div id="challenge-select" class="glass-panel p-6 md:p-8 rounded-2xl text-center">
+                <h3 class="text-2xl font-bold mb-2">Choose Your Mission</h3>
+                <p class="text-slate-300 mb-6">Which topic would you like to practise?</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <button onclick="selectTopic('perimeter')" class="btn bg-gradient-to-br from-blue-700 to-blue-900 border-2 border-blue-500 hover:border-cyan-400 p-6 rounded-2xl flex flex-col items-center shadow-lg transition-all">
+                        <span class="text-5xl mb-2">🟦</span>
+                        <h4 class="text-xl font-bold text-white mb-2">PERIMETER</h4>
+                        <p class="text-xs text-blue-200">Perimeter & Combined Perimeter</p>
+                        <div class="mt-4 text-xs text-slate-400 text-left w-full border-t border-blue-600 pt-2">
+                            Best Score: <span id="lbl-stat-perimeter-best" class="text-white font-bold">0%</span><br>
+                            Attempts: <span id="lbl-stat-perimeter-att" class="text-white font-bold">0</span>
+                        </div>
+                    </button>
+
+                    <button onclick="selectTopic('area')" class="btn bg-gradient-to-br from-green-700 to-green-900 border-2 border-green-500 hover:border-lime-400 p-6 rounded-2xl flex flex-col items-center shadow-lg transition-all">
+                        <span class="text-5xl mb-2">🟩</span>
+                        <h4 class="text-xl font-bold text-white mb-2">AREA</h4>
+                        <p class="text-xs text-green-200">Area & Combined Area</p>
+                        <div class="mt-4 text-xs text-slate-400 text-left w-full border-t border-green-600 pt-2">
+                            Best Score: <span id="lbl-stat-area-best" class="text-white font-bold">0%</span><br>
+                            Attempts: <span id="lbl-stat-area-att" class="text-white font-bold">0</span>
+                        </div>
+                    </button>
+
+                    <button onclick="selectTopic('polygons')" class="btn bg-gradient-to-br from-yellow-600 to-yellow-800 border-2 border-yellow-500 hover:border-yellow-300 p-6 rounded-2xl flex flex-col items-center shadow-lg transition-all">
+                        <span class="text-5xl mb-2">🟨</span>
+                        <h4 class="text-xl font-bold text-white mb-2">POLYGONS</h4>
+                        <p class="text-xs text-yellow-200">Regular Polygons</p>
+                        <div class="mt-4 text-xs text-slate-400 text-left w-full border-t border-yellow-600 pt-2">
+                            Best Score: <span id="lbl-stat-polygons-best" class="text-white font-bold">0%</span><br>
+                            Attempts: <span id="lbl-stat-polygons-att" class="text-white font-bold">0</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Topic Confirmation Screen -->
+            <div id="challenge-confirm" class="hidden-section glass-panel p-8 rounded-2xl text-center">
+                <h3 class="text-xl text-slate-300 mb-2">You selected:</h3>
+                <h2 id="lbl-selected-topic" class="text-4xl font-bold text-white mb-6 uppercase tracking-wider">TOPIC</h2>
+                <p class="text-lg text-cyan-200 mb-8">10 questions will be generated for you.</p>
+                
+                <div class="flex justify-center gap-4">
+                    <button onclick="resetChallengeUI()" class="btn bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-xl border border-slate-500">
+                        ← Back
+                    </button>
+                    <button onclick="startChallenge()" class="btn bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xl py-3 px-8 rounded-xl shadow-lg shadow-cyan-500/50">
+                        START CHALLENGE →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Challenge Screen -->
+            <div id="challenge-active" class="hidden-section">
+                <div class="flex justify-between items-center mb-4 text-sm text-slate-300">
+                    <span class="bg-slate-800 px-3 py-1 rounded-full border border-slate-600" id="lbl-active-topic">Topic</span>
+                    <span>Question <span id="lbl-q-current" class="text-white font-bold text-lg">1</span> of 10</span>
+                </div>
+                
+                <div class="glass-panel p-6 rounded-2xl mb-4 border border-slate-600 shadow-xl relative">
+                    <!-- Progress bar for questions -->
+                    <div class="absolute top-0 left-0 h-1 bg-cyan-500 rounded-t-2xl transition-all duration-300" id="q-progress-bar" style="width: 10%"></div>
+                    
+                    <div class="flex justify-between items-start mb-2">
+                        <span id="lbl-q-level" class="text-xs font-bold px-2 py-1 rounded bg-purple-900 text-purple-300">Year 5</span>
+                    </div>
+                    
+                    <div id="q-diagram" class="mb-4 flex justify-center text-4xl"></div>
+                    <h3 id="q-text" class="text-lg md:text-xl font-semibold mb-6">Question text goes here</h3>
+                    
+                    <div id="q-options" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+
+                <div id="q-feedback" class="hidden-section glass-panel p-4 rounded-xl mb-4 text-center text-lg font-bold transition-all">
+                    Feedback
+                </div>
+                
+                <button id="btn-next-q" onclick="nextQuestion()" class="hidden-section btn w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-cyan-600/30">
+                    Next Question ➡️
+                </button>
+            </div>
+
+            <!-- Challenge Result Screen -->
+            <div id="challenge-result" class="hidden-section glass-panel p-8 rounded-2xl text-center relative overflow-hidden">
+                <!-- Background glow based on score -->
+                <div id="result-glow" class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"></div>
+
+                <h3 class="text-2xl font-bold mb-1">🚀 <span id="lbl-result-topic">TOPIC</span> MISSION COMPLETE!</h3>
+                <div class="text-6xl my-4" id="lbl-result-emoji">⭐</div>
+                
+                <div class="text-3xl font-bold text-white mb-1"><span id="lbl-final-score-val">8 / 10</span> Correct</div>
+                <div class="text-xl text-cyan-400 font-bold mb-6">Score: <span id="lbl-final-score-pct">80%</span></div>
+                
+                <div class="bg-slate-800/80 p-4 rounded-xl inline-block text-left mb-6 border border-slate-700 min-w-[250px]">
+                    <div id="result-breakdown-y4" class="flex justify-between items-center mb-2 border-b border-slate-700 pb-2">
+                        <span class="text-slate-300 text-sm">Year 4 Revision:</span>
+                        <span class="font-bold text-white ml-4" id="lbl-score-y4">3/3</span>
+                    </div>
+                    <div id="result-breakdown-y5" class="flex justify-between items-center">
+                        <span class="text-slate-300 text-sm">Year 5 Content:</span>
+                        <span class="font-bold text-white ml-4" id="lbl-score-y5">5/7</span>
+                    </div>
+                </div>
+                
+                <div id="result-badge-status" class="mb-8 p-4 rounded-xl border border-slate-700 bg-slate-900/50">
+                    <!-- Badge status injected here -->
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-center gap-3">
+                    <button onclick="startChallenge()" class="btn bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg w-full sm:w-auto">
+                        TRY AGAIN
+                    </button>
+                    <button onclick="resetChallengeUI()" class="btn bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg border border-slate-500 w-full sm:w-auto">
+                        CHOOSE ANOTHER TOPIC
+                    </button>
+                    <button onclick="nav('home')" class="btn bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-lg w-full sm:w-auto">
+                        BACK TO HOME
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= ACHIEVEMENTS SECTION ================= -->
+        <section id="sec-achievements" class="view-section hidden-section">
+            <h2 class="text-2xl font-bold mb-2 text-purple-400">🏆 Mission Badges</h2>
+            <p class="text-slate-400 mb-6 text-sm">Earn badges by completing challenges and demonstrating your skills to your teacher.</p>
+            
+            <div id="badge-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Badges injected via JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="md:hidden bottom-nav glass-panel border-t border-slate-700">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="nav('home')" class="nav-item flex flex-col items-center justify-center w-full h-full text-slate-400" data-tab="home">
+                <span class="text-xl mb-1">🏠</span><span class="text-[10px]">Home</span>
+            </button>
+            <button onclick="nav('learn')" class="nav-item flex flex-col items-center justify-center w-full h-full text-slate-400" data-tab="learn">
+                <span class="text-xl mb-1">📘</span><span class="text-[10px]">Learn</span>
+            </button>
+            <button onclick="nav('explore')" class="nav-item flex flex-col items-center justify-center w-full h-full text-slate-400" data-tab="explore">
+                <span class="text-xl mb-1">📐</span><span class="text-[10px]">Demo</span>
+            </button>
+            <button onclick="nav('challenge')" class="nav-item flex flex-col items-center justify-center w-full h-full text-slate-400" data-tab="challenge">
+                <span class="text-xl mb-1">🎮</span><span class="text-[10px]">Challenge</span>
+            </button>
+            <button onclick="nav('achievements')" class="nav-item flex flex-col items-center justify-center w-full h-full text-slate-400" data-tab="achievements">
+                <span class="text-xl mb-1">🏆</span><span class="text-[10px]">Badges</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        // --- 1. USER IDENTIFICATION & GAS MOCK ---
+        // Implementation based on prompt requirement
+        let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+
+        if (
+            loggedInEmail === "" ||
+            loggedInEmail === "INSERT_USER_EMAIL_HERE" ||
+            loggedInEmail === "Guest"
+        ) {
+            loggedInEmail = localStorage.getItem('loggedInUserEmail') || "Guest";
+        }
+
+        // State
+        let currentUser = {
+            email: loggedInEmail,
+            name: "Guest User",
+            className: "-",
+            progress: 0,
+            perimeterScore: 0,
+            combinedAreaScore: 0,
+            totalChallengeScore: 0,
+            questionsCompleted: 0,
+            stats: {
+                perimeter: { best: 0, attempts: 0 },
+                area: { best: 0, attempts: 0 },
+                polygons: { best: 0, attempts: 0 }
+            },
+            badges: {
+                perimeter: false,
+                combinedArea: false,
+                volume: false,
+                polygons: false,
+                linesAngles: false,
+                triangles: false,
+                squareRectangle: false
+            }
+        };
+
+        // GAS Communication Wrapper
+        const GAS = {
+            getStudentInfo: function(email, callback) {
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.withSuccessHandler(callback).withFailureHandler(() => callback(null)).getStudentInfoSpace(email);
+                } else {
+                    console.log("Mock GAS: getStudentInfo for " + email);
+                    // Mock delay
+                    setTimeout(() => {
+                        if(email === "Guest") {
+                            callback(null);
+                        } else {
+                            // Fake data
+                            callback({
+                                Email: email, Name: "Aina", Class: "5 Bestari", Progress: 40,
+                                PerimeterScore: 60, PerimeterBadge: false, CombinedAreaScore: 50, CombinedAreaBadge: false,
+                                PolygonBadge: true, LinesAnglesBadge: false, TriangleBadge: false, SquareRectangleBadge: true, VolumeBadge: false,
+                                TotalChallengeScore: 120, QuestionsCompleted: 15
+                            });
+                        }
+                    }, 500);
+                }
+            },
+            saveRecord: function(data) {
+                if (typeof google !== 'undefined' && google.script && google.script.run) {
+                    google.script.run.saveSpaceRecord(data);
+                } else {
+                    console.log("Mock GAS: Saved record to sheet:", data);
+                }
+            }
+        };
+
+        function showToast(msg, type="info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const color = type === 'success' ? 'bg-green-600' : (type === 'error' ? 'bg-red-600' : 'bg-cyan-600');
+            toast.className = `${color} text-white px-4 py-2 rounded shadow-lg transform transition-all duration-300 translate-x-full opacity-0 flex items-center gap-2`;
+            toast.innerHTML = type === 'success' ? `✅ ${msg}` : (type === 'error' ? `❌ ${msg}` : `ℹ️ ${msg}`);
+            container.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => { toast.classList.remove('translate-x-full', 'opacity-0'); }, 10);
+            
+            // Remove
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function initApp() {
+            if (loggedInEmail !== "Guest") {
+                GAS.getStudentInfo(loggedInEmail, (data) => {
+                    if (data) {
+                        currentUser.name = data.Name || "Astronaut";
+                        currentUser.className = data.Class || "Unknown Class";
+                        currentUser.progress = data.Progress || 0;
+                        currentUser.perimeterScore = data.PerimeterScore || 0;
+                        currentUser.combinedAreaScore = data.CombinedAreaScore || 0;
+                        currentUser.totalChallengeScore = data.TotalChallengeScore || 0;
+                        currentUser.questionsCompleted = data.QuestionsCompleted || 0;
+                        
+                        // Set specific stats if they were mapped from legacy fields
+                        currentUser.stats.perimeter.best = data.PerimeterScore || 0;
+                        currentUser.stats.area.best = data.CombinedAreaScore || 0;
+                        // Assuming Polygon score wasn't saved in legacy, default to 0.
+                        
+                        // Badges (boolean mapping)
+                        currentUser.badges.perimeter = data.PerimeterBadge === true || data.PerimeterBadge === "TRUE";
+                        currentUser.badges.combinedArea = data.CombinedAreaBadge === true || data.CombinedAreaBadge === "TRUE";
+                        currentUser.badges.polygons = data.PolygonBadge === true || data.PolygonBadge === "TRUE";
+                        currentUser.badges.linesAngles = data.LinesAnglesBadge === true || data.LinesAnglesBadge === "TRUE";
+                        currentUser.badges.triangles = data.TriangleBadge === true || data.TriangleBadge === "TRUE";
+                        currentUser.badges.squareRectangle = data.SquareRectangleBadge === true || data.SquareRectangleBadge === "TRUE";
+                        currentUser.badges.volume = data.VolumeBadge === true || data.VolumeBadge === "TRUE";
+                    }
+                    updateUI();
+                });
+            } else {
+                updateUI();
+            }
+            
+            generateLearnContent();
+            initDemoBoard();
+            generateBadgeGrid();
+            
+            // Teacher Mode Toggle
+            document.getElementById('teacher-mode-toggle').addEventListener('change', function(e) {
+                isTeacherMode = e.target.checked;
+                const dot = document.querySelector('.dot');
+                if(isTeacherMode) {
+                    dot.style.transform = 'translateX(100%)';
+                    document.querySelector('.block').classList.replace('bg-gray-600', 'bg-green-500');
+                    document.getElementById('teacher-breakdown').classList.remove('hidden');
+                } else {
+                    dot.style.transform = 'translateX(0)';
+                    document.querySelector('.block').classList.replace('bg-green-500', 'bg-gray-600');
+                    document.getElementById('teacher-breakdown').classList.add('hidden');
+                }
+                drawBoard();
+            });
+
+            nav('home'); // Default view
+        }
+
+        function updateUI() {
+            document.getElementById('lbl-name').innerText = currentUser.name;
+            document.getElementById('lbl-class').innerText = currentUser.className;
+            document.getElementById('lbl-email').innerText = currentUser.email;
+            document.getElementById('header-user').innerText = currentUser.name;
+            
+            document.getElementById('lbl-progress-text').innerText = `${currentUser.progress}%`;
+            document.getElementById('bar-progress').style.width = `${currentUser.progress}%`;
+            
+            document.getElementById('lbl-score').innerText = currentUser.totalChallengeScore;
+            document.getElementById('lbl-peri-score').innerText = `${currentUser.stats.perimeter.best}%`;
+            document.getElementById('lbl-area-score').innerText = `${currentUser.stats.area.best}%`;
+
+            // Update Topic Selection Stats
+            document.getElementById('lbl-stat-perimeter-best').innerText = `${currentUser.stats.perimeter.best}%`;
+            document.getElementById('lbl-stat-perimeter-att').innerText = currentUser.stats.perimeter.attempts;
+            document.getElementById('lbl-stat-area-best').innerText = `${currentUser.stats.area.best}%`;
+            document.getElementById('lbl-stat-area-att').innerText = currentUser.stats.area.attempts;
+            document.getElementById('lbl-stat-polygons-best').innerText = `${currentUser.stats.polygons.best}%`;
+            document.getElementById('lbl-stat-polygons-att').innerText = currentUser.stats.polygons.attempts;
+
+            let badgeCount = Object.values(currentUser.badges).filter(b => b).length;
+            document.getElementById('lbl-badges').innerText = badgeCount;
+        }
+
+        function saveProgress() {
+            GAS.saveRecord({
+                email: currentUser.email,
+                name: currentUser.name,
+                className: currentUser.className,
+                progress: currentUser.progress,
+                perimeterScore: currentUser.stats.perimeter.best,
+                perimeterBadge: currentUser.badges.perimeter,
+                combinedAreaScore: currentUser.stats.area.best,
+                combinedAreaBadge: currentUser.badges.combinedArea,
+                polygonBadge: currentUser.badges.polygons,
+                linesAnglesBadge: currentUser.badges.linesAngles,
+                triangleBadge: currentUser.badges.triangles,
+                squareRectangleBadge: currentUser.badges.squareRectangle,
+                volumeBadge: currentUser.badges.volume,
+                totalChallengeScore: currentUser.totalChallengeScore,
+                questionsCompleted: currentUser.questionsCompleted
+            });
+        }
+
+        // --- 2. NAVIGATION ---
+        function nav(tabName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden-section'));
+            document.getElementById('sec-' + tabName).classList.remove('hidden-section');
+            
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if (el.dataset.tab === tabName) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+
+            if (tabName === 'explore') {
+                resizeCanvas();
+                drawBoard();
+            }
+            if (tabName === 'achievements') {
+                generateBadgeGrid();
+            }
+        }
+
+        // --- 3. LEARN SECTION --- 
+        const learnData = [
+            { title: "What is a Polygon?", content: "<p>A polygon is a 2D closed shape with straight sides. Circles are not polygons because they have curves!</p><img src='https://lh3.googleusercontent.com/d/1fYhQDk3MZC4uVpUr9qx6ZYQG5dPWke5b' alt='Polygon' class='w-3/4 h-3/4 mx-auto mb-1 object-contain'>" },
+            { title: "Regular vs Irregular", content: "<p><b>Regular Polygons</b> have sides of equal length and interior angles of equal size.<br><b>Irregular Polygons</b> have sides and angles of different sizes.</p><div class='text-center mt-2'><span class='inline-block p-2 border border-green-500 mr-2 bg-green-900 rounded'>Regular Square</span><span class='inline-block p-2 border-b-4 border-l-2 border-red-500 bg-red-900 rounded'>Irregular Rectangle</span></div>" },
+            { title: "Infographic: Regular Polygons (Up to 8 Sides)", content: "<table class='w-full text-sm text-left border-collapse'><tr class='bg-slate-700'><th>Shape</th><th>Sides/Corners</th><th>Sym. Axes</th></tr><tr class='border-b border-slate-600'><td>Equilateral Triangle</td><td>3</td><td>3</td></tr><tr class='border-b border-slate-600'><td>Square</td><td>4</td><td>4</td></tr><tr class='border-b border-slate-600'><td>Regular Pentagon</td><td>5</td><td>5</td></tr><tr class='border-b border-slate-600'><td>Regular Hexagon</td><td>6</td><td>6</td></tr><tr class='border-b border-slate-600'><td>Regular Heptagon</td><td>7</td><td>7</td></tr><tr><td>Regular Octagon</td><td>8</td><td>8</td></tr></table>" },
+            { title: "Lines of Symmetry", content: "<p>A line of symmetry divides a shape into two identical halves that mirror each other.</p><p class='text-yellow-300 text-sm mt-1'>💡 Tip: A regular polygon has the same number of symmetrical axes as its sides!</p>" },
+            { title: "Diagonals", content: "<p>A diagonal is a straight line joining two opposite corners of a straight-sided shape.</p><p>Square = 2 diagonals. Triangle = 0 diagonals.</p>" },
+            { title: "Interactive: Angles in Polygons", content: "Use the protractor to measure the interior angle of a Regular Pentagon.<div class='protractor-container mt-4'><div id='protractor-img'></div></div><div class='mt-2 text-center'><input type='range' min='0' max='360' value='0' oninput='document.getElementById(\"protractor-img\").style.transform=\"rotate(\"+this.value+\"deg)\"' class='w-32'></div><button class='btn bg-cyan-600 px-3 py-1 mt-2 text-sm rounded mx-auto block' onclick='alert(\"The interior angle of a regular pentagon is 108°\")'>Show Answer</button>" },
+            { title: "Perimeter", content: "<p>Perimeter is the total distance around the outside of a 2D shape. Just add the lengths of all outer sides!</p><p class='text-yellow-300 text-sm'>⚠️ Common Mistake: Do not include lines inside the shape.</p>" },
+            { title: "Area", content: "<p>Area is the amount of space inside a 2D shape. Measured in square units (e.g., cm²).</p><ul class='list-disc pl-5 mt-2'><li>Rectangle/Square: Length × Width</li><li>Triangle: (Base × Height) ÷ 2</li></ul>" },
+            { title: "Combined Shapes", content: "<p>To find the area of a combined shape, break it down into simple shapes (squares, rectangles, triangles), find their individual areas, and add them up!</p><p>For combined perimeter, trace the outside boundary only.</p>" },
+            { title: "Volume", content: "<p>Volume is the amount of 3D space an object occupies. Measured in cubic units (e.g., cm³).</p><p>Formula for Cubes & Cuboids: <b>Length × Width × Height</b></p>" }
+        ];
+
+        function generateLearnContent() {
+            const container = document.getElementById('accordion-container');
+            learnData.forEach((item, index) => {
+                const html = `
+                <div class="glass-panel border border-slate-700 rounded-lg overflow-hidden">
+                    <button class="w-full text-left p-4 font-bold flex justify-between items-center bg-slate-800 hover:bg-slate-700 focus:outline-none" onclick="toggleAccordion(${index})">
+                        <span>${index + 1}. ${item.title}</span>
+                        <span id="acc-icon-${index}" class="text-slate-400 transform transition-transform">▼</span>
+                    </button>
+                    <div id="acc-content-${index}" class="accordion-content bg-slate-900 px-4 py-0 border-t border-transparent">
+                        <div class="py-4 text-slate-300">
+                            ${item.content}
+                        </div>
+                    </div>
+                </div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        function toggleAccordion(index) {
+            const content = document.getElementById(`acc-content-${index}`);
+            const icon = document.getElementById(`acc-icon-${index}`);
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                content.classList.add('border-transparent');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                // Close all others
+                document.querySelectorAll('.accordion-content').forEach(el => el.classList.remove('open'));
+                document.querySelectorAll('[id^="acc-icon-"]').forEach(el => el.style.transform = 'rotate(0deg)');
+                
+                content.classList.add('open');
+                content.classList.remove('border-transparent');
+                content.classList.add('border-slate-700');
+                icon.style.transform = 'rotate(180deg)';
+                
+                // Track progress
+                if (currentUser.progress < 100) {
+                    currentUser.progress = Math.min(100, currentUser.progress + 2);
+                    updateUI();
+                }
+            }
+        }
+
+        // --- 4. DEMONSTRATION BOARD (Canvas) ---
+        const canvas = document.getElementById('demo-canvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        let scale = 1;
+        
+        let shapes = []; // Array of completed shapes (each shape is an array of {x,y})
+        let currentShape = []; // Points of the shape being drawn
+        let cursor = {x: 0, y: 0};
+        let isTeacherMode = false;
+        let isDragging = false;
+
+        function initDemoBoard() {
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Keyboard
+            document.addEventListener('keydown', (e) => {
+                if (document.getElementById('sec-explore').classList.contains('hidden-section')) return;
+                
+                if (e.key === 'ArrowUp') boardMoveCursor(0, 1);
+                if (e.key === 'ArrowDown') boardMoveCursor(0, -1);
+                if (e.key === 'ArrowLeft') boardMoveCursor(-1, 0);
+                if (e.key === 'ArrowRight') boardMoveCursor(1, 0);
+                if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); boardFixPoint(); }
+            });
+
+            // Mouse/Touch logic
+            const getGridPos = (evt) => {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+                const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+                let x = Math.round((clientX - rect.left) / scale);
+                let y = Math.round((canvas.height - (clientY - rect.top)) / scale); // Invert Y
+                return { x: Math.max(0, Math.min(gridSize, x)), y: Math.max(0, Math.min(gridSize, y)) };
+            };
+
+            canvas.addEventListener('mousedown', (e) => { isDragging = true; cursor = getGridPos(e); drawBoard(); });
+            canvas.addEventListener('mousemove', (e) => { if(isDragging) { cursor = getGridPos(e); drawBoard(); } });
+            canvas.addEventListener('mouseup', () => { isDragging = false; });
+            
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); isDragging = true; cursor = getGridPos(e); drawBoard(); }, {passive: false});
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if(isDragging) { cursor = getGridPos(e); drawBoard(); } }, {passive: false});
+            canvas.addEventListener('touchend', () => { isDragging = false; });
+        }
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            let width = Math.min(container.clientWidth, 600);
+            canvas.width = width;
+            canvas.height = width;
+            scale = width / gridSize;
+            drawBoard();
+        }
+
+        function boardMoveCursor(dx, dy) {
+            cursor.x = Math.max(0, Math.min(gridSize, cursor.x + dx));
+            cursor.y = Math.max(0, Math.min(gridSize, cursor.y + dy));
+            drawBoard();
+        }
+
+        function boardFixPoint() {
+            // Prevent duplicate adjacent points
+            if (currentShape.length > 0) {
+                const lastPoint = currentShape[currentShape.length - 1];
+                if (lastPoint.x === cursor.x && lastPoint.y === cursor.y) return;
+            }
+            currentShape.push({...cursor});
+            drawBoard();
+        }
+
+        function boardUndo() {
+            if (currentShape.length > 0) {
+                currentShape.pop();
+            } else if (shapes.length > 0) {
+                currentShape = shapes.pop();
+                currentShape.pop(); // Remove the closing connection
+            }
+            drawBoard();
+        }
+
+        function boardRestart() {
+            shapes = [];
+            currentShape = [];
+            cursor = {x: 0, y: 0};
+            drawBoard();
+        }
+
+        function boardCloseShape() {
+            if (currentShape.length > 2) {
+                shapes.push([...currentShape]);
+                currentShape = [];
+                drawBoard();
+            } else {
+                showToast("Need at least 3 points to make a shape!", "error");
+            }
+        }
+
+        function boardAddShape() {
+            if (currentShape.length > 0) {
+                showToast("Close current shape first!", "error");
+                return;
+            }
+            showToast("Move cursor to start a new shape", "info");
+        }
+
+        // Draw math logic
+        function dist(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        function polygonArea(pts) {
+            if(pts.length < 3) return 0;
+            let area = 0;
+            for(let i=0; i<pts.length; i++) {
+                let j = (i + 1) % pts.length;
+                area += pts[i].x * pts[j].y;
+                area -= pts[j].x * pts[i].y;
+            }
+            return Math.abs(area / 2);
+        }
+
+        function analyzeShapes() {
+            let totalArea = 0;
+            let edgeMap = {}; // Normalize edges to identify shared ones
+
+            const recordEdge = (p1, p2) => {
+                // order points string to be identical regardless of direction
+                let id = p1.x < p2.x || (p1.x === p2.x && p1.y < p2.y) 
+                    ? `${p1.x},${p1.y}-${p2.x},${p2.y}` 
+                    : `${p2.x},${p2.y}-${p1.x},${p1.y}`;
+                
+                if (!edgeMap[id]) edgeMap[id] = { count: 0, length: dist(p1, p2) };
+                edgeMap[id].count++;
+            };
+
+            let breakdowns = [];
+
+            // Add completed shapes
+            shapes.forEach((shape, idx) => {
+                let area = polygonArea(shape);
+                totalArea += area;
+                breakdowns.push(`Shape ${idx+1} Area: ${area} units²`);
+
+                for(let i=0; i<shape.length; i++) {
+                    recordEdge(shape[i], shape[(i+1)%shape.length]);
+                }
+            });
+
+            // Add current active shape (not closed yet)
+            if (currentShape.length > 0) {
+                for(let i=0; i<currentShape.length - 1; i++) {
+                    recordEdge(currentShape[i], currentShape[i+1]);
+                }
+                recordEdge(currentShape[currentShape.length-1], cursor);
+            }
+
+            let perimeter = 0;
+            let sharedCount = 0;
+            for (let id in edgeMap) {
+                if (edgeMap[id].count === 1) {
+                    perimeter += edgeMap[id].length; // Outer edge
+                } else {
+                    sharedCount++; // Internal edge, ignore for perimeter
+                }
+            }
+
+            return {
+                perimeter: perimeter.toFixed(2).replace(/\.00$/, ''),
+                area: totalArea.toFixed(2).replace(/\.00$/, ''),
+                shapeCount: shapes.length,
+                breakdowns: breakdowns,
+                sharedEdges: sharedCount
+            };
+        }
+
+        function drawBoard() {
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Grid
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i <= gridSize; i++) {
+                ctx.beginPath(); ctx.moveTo(i * scale, 0); ctx.lineTo(i * scale, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * scale); ctx.lineTo(canvas.width, i * scale); ctx.stroke();
+            }
+
+            const drawPt = (p) => ({ x: p.x * scale, y: canvas.height - (p.y * scale) }); // Invert Y for drawing
+
+            // Axes labels in Teacher Mode
+            if (isTeacherMode) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '10px sans-serif';
+                for (let i = 0; i <= gridSize; i+=2) {
+                    if (i>0) ctx.fillText(i, i*scale - 4, canvas.height - 2); // X axis
+                    if (i>0) ctx.fillText(i, 2, canvas.height - (i*scale) + 4); // Y axis
+                }
+            }
+
+            // Draw completed shapes
+            shapes.forEach((shape, index) => {
+                ctx.beginPath();
+                let start = drawPt(shape[0]);
+                ctx.moveTo(start.x, start.y);
+                for (let i = 1; i < shape.length; i++) {
+                    let pt = drawPt(shape[i]);
+                    ctx.lineTo(pt.x, pt.y);
+                }
+                ctx.closePath();
+                ctx.fillStyle = `rgba(56, 189, 248, 0.3)`; // cyan tint
+                ctx.fill();
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Draw points and teacher labels
+                shape.forEach(p => {
+                    let dp = drawPt(p);
+                    ctx.beginPath(); ctx.arc(dp.x, dp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+                    if(isTeacherMode) {
+                        ctx.fillStyle = '#facc15'; ctx.font = '12px monospace';
+                        ctx.fillText(`(${p.x},${p.y})`, dp.x + 8, dp.y - 8);
+                    }
+                });
+            });
+
+            // Draw current shape lines
+            if (currentShape.length > 0) {
+                ctx.beginPath();
+                let start = drawPt(currentShape[0]);
+                ctx.moveTo(start.x, start.y);
+                for (let i = 1; i < currentShape.length; i++) {
+                    let pt = drawPt(currentShape[i]);
+                    ctx.lineTo(pt.x, pt.y);
+                }
+                
+                // Line to cursor
+                let dpCursor = drawPt(cursor);
+                ctx.lineTo(dpCursor.x, dpCursor.y);
+                
+                ctx.strokeStyle = '#4ade80'; // green
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Points
+                currentShape.forEach(p => {
+                    let dp = drawPt(p);
+                    ctx.beginPath(); ctx.arc(dp.x, dp.y, 4, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
+                });
+            }
+
+            // Draw Cursor
+            let dpCursor = drawPt(cursor);
+            ctx.beginPath();
+            ctx.arc(dpCursor.x, dpCursor.y, 6, 0, Math.PI*2);
+            ctx.fillStyle = '#f87171'; // red pulse
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Update UI Labels
+            document.getElementById('lbl-cursor-pos').innerText = `(${cursor.x}, ${cursor.y})`;
+            
+            const stats = analyzeShapes();
+            document.getElementById('lbl-shapes-count').innerText = `Shapes: ${stats.shapeCount}`;
+            document.getElementById('lbl-board-perimeter').innerText = `${stats.perimeter} units`;
+            document.getElementById('lbl-board-area').innerText = `${stats.area} sq units`;
+            
+            if (isTeacherMode) {
+                let bdHtml = stats.breakdowns.join('<br>') + (stats.sharedEdges > 0 ? `<br><span class="text-xs">Subtracted internal edges: ${stats.sharedEdges}</span>` : '');
+                document.getElementById('teacher-breakdown').innerHTML = bdHtml || 'Draw a closed shape to see area breakdown.';
+            }
+        }
+
+        // --- 5. CHALLENGE MODULE ---
+        let selectedTopic = null;
+        let currentChallengeQuestions = [];
+        let currentQIndex = 0;
+        let runStats = { y4Total: 0, y4Correct: 0, y5Total: 0, y5Correct: 0 };
+        let questionHistory = []; // Track recent question signatures
+
+        // Generators to simulate a large question bank (150-300 questions) while ensuring variety
+        const QUESTION_BANK = {
+            perimeter: {
+                y4: [
+                    // Year 4 Revision (Polygons up to 8 sides)
+                    () => { let s = Math.floor(Math.random()*8)+3; return { id: `P-Y4-SQ-${s}`, yearLevel: 4, q: `A square has a side length of ${s} cm. What is its perimeter?`, ans: s*4, wrong: [s*2, s*s, (s*4)+2] }; },
+                    () => { let l = Math.floor(Math.random()*10)+5; let w = Math.floor(Math.random()*4)+2; return { id: `P-Y4-REC-${l}-${w}`, yearLevel: 4, q: `A rectangle has a length of ${l} m and width of ${w} m. What is its perimeter?`, ans: (l+w)*2, wrong: [l*w, l+w, (l+w)*2-2] }; },
+                    () => { let s = Math.floor(Math.random()*6)+4; return { id: `P-Y4-EQ-${s}`, yearLevel: 4, q: `An equilateral triangle has sides measuring ${s} cm. Find its perimeter.`, ans: s*3, wrong: [s*2, s+3, s*4] }; },
+                    () => { let s = Math.floor(Math.random()*5)+4; return { id: `P-Y4-HEX-${s}`, yearLevel: 4, q: `A regular hexagon has a side of ${s} m. What is the total perimeter?`, ans: s*6, wrong: [s*5, s*8, (s*6)+s] }; },
+                    () => { let s = Math.floor(Math.random()*4)+3; return { id: `P-Y4-OCT-${s}`, yearLevel: 4, q: `Find the perimeter of a regular octagon with a side length of ${s} cm.`, ans: s*8, wrong: [s*6, s*7, (s*8)+s] }; }
+                ],
+                y5: [
+                    // Year 5 Combined Perimeter
+                    () => { let s = Math.floor(Math.random()*6)+4; return { id: `P-Y5-SQTR-${s}`, yearLevel: 5, q: `A square and an equilateral triangle share one side. If the side length is ${s} cm, what is the perimeter of the combined shape?`, ans: 5*s, wrong: [7*s, 6*s, 4*s] }; },
+                    () => { let l = Math.floor(Math.random() * 8) + 6; let w = Math.floor(Math.random() * 3) + 2; return { id: `P-Y5-RECSQ-${l}-${w}`, yearLevel: 5, q: `A rectangle is ${l}cm by ${w}cm. A square of side ${w}cm is joined to one of its shorter sides. Find the total perimeter.`, ans: 2 * (l + 2 * w), wrong: [2 * (l + w), 2 * (l + 3 * w), 2 * (l + w) + 3 * w ]};},
+                    () => { let s = Math.floor(Math.random()*5)+3; return { id: `P-Y5-2HEX-${s}`, yearLevel: 5, q: `Two identical regular hexagons of side ${s} cm are joined edge-to-edge. What is the total perimeter?`, ans: 10*s, wrong: [12*s, 11*s, 8*s] }; },
+                    () => { let s = Math.floor(Math.random()*5)+4; return { id: `P-Y5-PENEQ-${s}`, yearLevel: 5, q: `A regular pentagon and an equilateral triangle share a side of length ${s} m. Find the combined perimeter.`, ans: 6*s, wrong: [8*s, 7*s, 5*s] }; },
+                    () => { let l = Math.floor(Math.random()*5)+5; let w = Math.floor(Math.random()*2)+3; return { id: `P-Y5-2REC-${l}-${w}`, yearLevel: 5, q: `Two identical rectangles measuring ${l}cm by ${w}cm are joined along their lengths. What is the perimeter of the new shape?`, ans: (2*l)+(4*w), wrong: [4*l+4*w, 2*l+2*w, 4*l+2*w] }; }
+                ]
+            },
+            area: {
+                y4: [
+                    // Year 4 Revision
+                    () => { let s = Math.floor(Math.random()*8)+4; return { id: `A-Y4-SQ-${s}`, yearLevel: 4, q: `Find the area of a square with a side length of ${s} cm.`, ans: s*s, wrong: [s*4, s*2, s*s+s], unit: 'cm²' }; },
+                    () => { let l = Math.floor(Math.random()*9)+5; let w = Math.floor(Math.random()*5)+3; return { id: `A-Y4-REC-${l}-${w}`, yearLevel: 4, q: `A rectangular garden is ${l} m long and ${w} m wide. What is its area?`, ans: l*w, wrong: [(l+w)*2, l+w, (l*w)+2], unit: 'm²' }; },
+                    () => { let b = (Math.floor(Math.random()*4)+3)*2; let h = Math.floor(Math.random()*5)+4; return { id: `A-Y4-TRI-${b}-${h}`, yearLevel: 4, q: `A right-angled triangle has a base of ${b} cm and a height of ${h} cm. Area = ?`, ans: (b*h)/2, wrong: [b*h, b+h, ((b*h)/2)+2], unit: 'cm²' }; },
+                    () => { let b = 10; let h = Math.floor(Math.random()*4)+5; return { id: `A-Y4-ISO-${b}-${h}`, yearLevel: 4, q: `An isosceles triangle has a base of ${b} m and a perpendicular height of ${h} m. Find the area.`, ans: (b*h)/2, wrong: [b*h, (b+h)*2, b*h/4], unit: 'm²' }; }
+                ],
+                y5: [
+                    // Year 5 Combined Area
+                    () => { let s = Math.floor(Math.random()*4)+4; let l = s+3; return { id: `A-Y5-SQREC-${s}-${l}`, yearLevel: 5, q: `A square (side ${s}cm) and a rectangle (${l}cm by ${s}cm) are joined. Find the total area.`, ans: (s*s) + (l*s), wrong: [(s*s)+(l*s)*2, s*l, ((s*s)+(l*s))-s], unit: 'cm²' }; },
+                    () => { let b = (Math.floor(Math.random()*3)+2)*2; let h = Math.floor(Math.random()*4)+3; return { id: `A-Y5-2TRI-${b}-${h}`, yearLevel: 5, q: `Two identical right-angled triangles with base ${b}m and height ${h}m are joined to form a rectangle. Total area?`, ans: b*h, wrong: [(b*h)/2, 2*(b+h), b*h*2], unit: 'm²' }; },
+                    () => { let s = Math.floor(Math.random()*3)*2+4; let h = s-2; return { id: `A-Y5-SQTR-${s}-${h}`, yearLevel: 5, q: `A square of side ${s}cm has a triangle attached to its top. The triangle has a base of ${s}cm and height of ${h}cm. Total area?`, ans: (s*s) + ((s*h)/2), wrong: [(s*s)+(s*h), (s*s)+h, s*4+s+h], unit: 'cm²' }; },
+                    () => { let l1 = 8, w1 = 4, l2 = 6, w2 = 3; return { id: `A-Y5-LSHP-${l1}-${w1}-${l2}-${w2}`, yearLevel: 5, q: `An L-shaped room is split into two rectangles: A (${l1}m x ${w1}m) and B (${l2}m x ${w2}m). What is the total area?`, ans: (l1*w1)+(l2*w2), wrong: [(l1+w1)+(l2+w2), (l1*w1)*(l2*w2), (l1*w1)+(l2*w2)+5], unit: 'm²' }; }
+                ]
+            },
+            polygons: {
+                y4: [], // Not used for this challenge format as per rules (100% Y5)
+                y5: [
+                    // Year 5 Polygons
+                    () => { return { id: `POLY-Y5-NAM-7`, yearLevel: 5, q: `A regular polygon has exactly 7 sides and 7 corners. What is its name?`, ans: "Regular Heptagon", wrong: ["Regular Hexagon", "Regular Octagon", "Regular Pentagon"] }; },
+                    () => { return { id: `POLY-Y5-NAM-8`, yearLevel: 5, q: `Which of these regular polygons has 8 sides?`, ans: "Regular Octagon", wrong: ["Regular Hexagon", "Regular Nonagon", "Regular Heptagon"] }; },
+                    () => { return { id: `POLY-Y5-SYM-6`, yearLevel: 5, q: `How many lines of symmetry does a regular hexagon have?`, ans: 6, wrong: [3, 8, 12] }; },
+                    () => { return { id: `POLY-Y5-SYM-5`, yearLevel: 5, q: `A regular pentagon has how many lines of symmetry?`, ans: 5, wrong: [1, 10, 4] }; },
+                    () => { return { id: `POLY-Y5-DIAG-4`, yearLevel: 5, q: `How many diagonals can be drawn in a square?`, ans: 2, wrong: [4, 1, 0] }; },
+                    () => { return { id: `POLY-Y5-DIAG-5`, yearLevel: 5, q: `How many diagonals does a regular pentagon have?`, ans: 5, wrong: [2, 10, 8] }; },
+                    () => { return { id: `POLY-Y5-ANG-INT`, yearLevel: 5, q: `All interior angles of a regular polygon are...`, ans: "Equal in size", wrong: ["Different in size", "Always 90 degrees", "Always acute"] }; },
+                    () => { return { id: `POLY-Y5-SID-CORN`, yearLevel: 5, q: `A regular octagon has 8 sides. How many corners (vertices) does it have?`, ans: 8, wrong: [6, 16, 10] }; }
+                ]
+            }
+        };
+
+        function selectTopic(topic) {
+            selectedTopic = topic;
+            
+            // UI Updates
+            document.getElementById('challenge-select').classList.add('hidden-section');
+            document.getElementById('challenge-confirm').classList.remove('hidden-section');
+            document.getElementById('lbl-selected-topic').innerText = topic;
+        }
+
+        function resetChallengeUI() {
+            selectedTopic = null;
+            document.getElementById('challenge-select').classList.remove('hidden-section');
+            document.getElementById('challenge-confirm').classList.add('hidden-section');
+            document.getElementById('challenge-active').classList.add('hidden-section');
+            document.getElementById('challenge-result').classList.add('hidden-section');
+            updateUI(); // Refresh stats on cards
+        }
+
+        function generateUniqueQuestion(generators, attempts = 0) {
+            if (generators.length === 0) return null;
+            const genFn = generators[Math.floor(Math.random() * generators.length)];
+            const qData = genFn();
+            
+            // Check history to avoid immediate repeats (up to 5 attempts to find unique)
+            if (questionHistory.includes(qData.id) && attempts < 5) {
+                return generateUniqueQuestion(generators, attempts + 1);
+            }
+            
+            // Add to history (keep last 50)
+            questionHistory.push(qData.id);
+            if (questionHistory.length > 50) questionHistory.shift();
+            
+            // Format options
+            let options = [...qData.wrong, qData.ans];
+            options.sort(() => Math.random() - 0.5); // Shuffle
+            
+            return {
+                id: qData.id,
+                yearLevel: qData.yearLevel,
+                text: qData.q,
+                options: options,
+                correct: qData.ans,
+                unit: qData.unit || ''
+            };
+        }
+
+        function startChallenge() {
+            if (!selectedTopic) return;
+            
+            currentChallengeQuestions = [];
+            runStats = { y4Total: 0, y4Correct: 0, y5Total: 0, y5Correct: 0 };
+            
+            const bank = QUESTION_BANK[selectedTopic];
+            
+            // Distribution Logic
+            if (selectedTopic === 'polygons') {
+                // 100% Year 5
+                for(let i=0; i<10; i++) {
+                    currentChallengeQuestions.push(generateUniqueQuestion(bank.y5));
+                    runStats.y5Total++;
+                }
+            } else {
+                // Perimeter & Area: ~30% Y4, ~70% Y5
+                for(let i=0; i<3; i++) {
+                    currentChallengeQuestions.push(generateUniqueQuestion(bank.y4));
+                    runStats.y4Total++;
+                }
+                for(let i=0; i<7; i++) {
+                    currentChallengeQuestions.push(generateUniqueQuestion(bank.y5));
+                    runStats.y5Total++;
+                }
+            }
+            
+            // Shuffle the final 10 questions
+            currentChallengeQuestions.sort(() => Math.random() - 0.5);
+
+            currentQIndex = 0;
+            
+            // Increment attempts for topic
+            currentUser.stats[selectedTopic].attempts++;
+
+            document.getElementById('challenge-confirm').classList.add('hidden-section');
+            document.getElementById('challenge-result').classList.add('hidden-section');
+            document.getElementById('challenge-active').classList.remove('hidden-section');
+            
+            document.getElementById('lbl-active-topic').innerText = selectedTopic.toUpperCase();
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            let q = currentChallengeQuestions[currentQIndex];
+            
+            document.getElementById('lbl-q-current').innerText = currentQIndex + 1;
+            document.getElementById('q-progress-bar').style.width = `${((currentQIndex) / 10) * 100}%`;
+            
+            // Year tag UI
+            const levelTag = document.getElementById('lbl-q-level');
+            if (q.yearLevel === 4) {
+                levelTag.innerText = "Year 4 Revision";
+                levelTag.className = "text-xs font-bold px-2 py-1 rounded bg-slate-700 text-slate-300";
+            } else {
+                levelTag.innerText = "Year 5 Challenge";
+                levelTag.className = "text-xs font-bold px-2 py-1 rounded bg-purple-900 text-purple-300";
+            }
+
+            document.getElementById('q-text').innerText = q.text;
+            
+            let optsDiv = document.getElementById('q-options');
+            optsDiv.innerHTML = '';
+            
+            q.options.forEach((opt) => {
+                let btn = document.createElement('button');
+                let displayOpt = opt;
+                if(typeof opt === 'number' && q.unit) displayOpt += ` ${q.unit}`;
+                
+                btn.className = "btn bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-4 px-6 rounded-xl text-lg transition-all";
+                btn.innerText = displayOpt;
+                btn.onclick = () => checkAnswer(opt, btn, q);
+                optsDiv.appendChild(btn);
+            });
+
+            document.getElementById('q-feedback').className = "hidden-section";
+            document.getElementById('btn-next-q').classList.add('hidden-section');
+        }
+
+        function checkAnswer(selectedOpt, btn, qData) {
+            // Disable all buttons
+            let btns = document.getElementById('q-options').getElementsByTagName('button');
+            for(let b of btns) b.disabled = true;
+
+            let feedback = document.getElementById('q-feedback');
+            document.getElementById('btn-next-q').classList.remove('hidden-section');
+
+            const isCorrect = (selectedOpt === qData.correct);
+
+            if (isCorrect) {
+                btn.classList.replace('bg-slate-800', 'bg-green-600');
+                btn.classList.replace('border-slate-600', 'border-green-400');
+                feedback.className = "glass-panel p-4 rounded-xl mb-4 text-center text-lg font-bold bg-green-900/50 text-green-400 border border-green-500 scale-100";
+                feedback.innerHTML = "✅ Correct! Great job.";
+                
+                if (qData.yearLevel === 4) runStats.y4Correct++;
+                if (qData.yearLevel === 5) runStats.y5Correct++;
+            } else {
+                btn.classList.replace('bg-slate-800', 'bg-red-600');
+                feedback.className = "glass-panel p-4 rounded-xl mb-4 text-center text-lg font-bold bg-red-900/50 text-red-400 border border-red-500 scale-100";
+                
+                let correctDisplay = qData.correct;
+                if(typeof qData.correct === 'number' && qData.unit) correctDisplay += ` ${qData.unit}`;
+                feedback.innerHTML = `❌ Not quite. The correct answer was <b>${correctDisplay}</b>.`;
+                
+                // Highlight correct answer
+                for(let b of btns) {
+                    if (b.innerText.includes(qData.correct.toString())) {
+                        b.classList.replace('bg-slate-800', 'bg-green-600');
+                        b.classList.add('opacity-50');
+                    }
+                }
+            }
+            
+            currentUser.questionsCompleted++;
+        }
+
+        function nextQuestion() {
+            currentQIndex++;
+            if (currentQIndex < 10) {
+                loadQuestion();
+            } else {
+                finishChallenge();
+            }
+        }
+
+        function finishChallenge() {
+            document.getElementById('challenge-active').classList.add('hidden-section');
+            document.getElementById('challenge-result').classList.remove('hidden-section');
+            
+            const totalCorrect = runStats.y4Correct + runStats.y5Correct;
+            const pct = Math.round((totalCorrect / 10) * 100);
+            
+            // Result Screen UI Updates
+            document.getElementById('lbl-result-topic').innerText = selectedTopic.toUpperCase();
+            document.getElementById('lbl-final-score-val').innerText = `${totalCorrect} / 10`;
+            document.getElementById('lbl-final-score-pct').innerText = `${pct}%`;
+            
+            let emoji = "⭐";
+            let glow = "bg-yellow-500";
+            if(pct === 100) { emoji = "🏆"; glow = "bg-green-500"; }
+            else if(pct >= 80) { emoji = "🌟"; glow = "bg-blue-500"; }
+            else if(pct <= 40) { emoji = "📚"; glow = "bg-red-500"; }
+            
+            document.getElementById('lbl-result-emoji').innerText = emoji;
+            document.getElementById('result-glow').className = `absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none ${glow}`;
+
+            // Breakdown UI
+            const y4Container = document.getElementById('result-breakdown-y4');
+            if (runStats.y4Total > 0) {
+                y4Container.classList.remove('hidden');
+                document.getElementById('lbl-score-y4').innerText = `${runStats.y4Correct}/${runStats.y4Total}`;
+            } else {
+                y4Container.classList.add('hidden');
+            }
+            document.getElementById('lbl-score-y5').innerText = `${runStats.y5Correct}/${runStats.y5Total}`;
+
+            // Update Topic Stats globally
+            currentUser.stats[selectedTopic].best = Math.max(currentUser.stats[selectedTopic].best, pct);
+            currentUser.totalChallengeScore += (totalCorrect * 10);
+            
+            // Evaluate Badges ONLY for the selected topic
+            let badgeStatusHtml = '';
+            
+            if (selectedTopic === 'perimeter') {
+                if (pct >= 80) {
+                    if (!currentUser.badges.perimeter) {
+                        currentUser.badges.perimeter = true;
+                        badgeStatusHtml = `<div class="text-green-400 font-bold mb-1">🏆 PERIMETER PATHFINDER UNLOCKED!</div><p class="text-xs text-slate-300">Excellent mastery of Perimeter.</p>`;
+                    } else {
+                        badgeStatusHtml = `<div class="text-green-400 font-bold mb-1">🏆 Perimeter Pathfinder (Already Unlocked)</div>`;
+                    }
+                } else {
+                    badgeStatusHtml = `<div class="text-slate-400 font-bold mb-1">🔒 Perimeter Pathfinder</div><p class="text-xs text-slate-500">Score 80% or above in Perimeter to unlock.</p>`;
+                }
+            } else if (selectedTopic === 'area') {
+                if (pct >= 80) {
+                    if (!currentUser.badges.combinedArea) {
+                        currentUser.badges.combinedArea = true;
+                        badgeStatusHtml = `<div class="text-green-400 font-bold mb-1">🏆 COMBINED AREA ARCHITECT UNLOCKED!</div><p class="text-xs text-slate-300">Excellent mastery of Area.</p>`;
+                    } else {
+                        badgeStatusHtml = `<div class="text-green-400 font-bold mb-1">🏆 Combined Area Architect (Already Unlocked)</div>`;
+                    }
+                } else {
+                    badgeStatusHtml = `<div class="text-slate-400 font-bold mb-1">🔒 Combined Area Architect</div><p class="text-xs text-slate-500">Score 80% or above in Area to unlock.</p>`;
+                }
+            } else if (selectedTopic === 'polygons') {
+                badgeStatusHtml = `<div class="text-yellow-400 font-bold mb-1">📝 Polygon Specialist</div><p class="text-xs text-slate-300">Show this score to your teacher to claim your Polygon Specialist badge.</p>`;
+            }
+
+            document.getElementById('result-badge-status').innerHTML = badgeStatusHtml;
+
+            saveProgress();
+            // Do not call updateUI() here, as we wait for the user to leave the screen
+        }
+
+        // --- 6. ACHIEVEMENTS (BADGES) ---
+        // Placeholder system as requested
+        const BADGE_IMAGES = { 
+            perimeter: "https://lh3.googleusercontent.com/d/1O1afU2Tf6xt7bVXJpxUSbleHv4pdoKpo",
+            combinedArea: "https://lh3.googleusercontent.com/d/16rYZeabqO58Layr67mUEiLKDMAD5GDDJ",
+            volume: "https://lh3.googleusercontent.com/d/1K8gStgM1O1ExP2UOEn-xh-zztR4o3acN",
+            polygons: "https://lh3.googleusercontent.com/d/1PAF3Zy1fs0Wc_T6uaKg5CRXL-aUZyMg7",
+            linesAngles: "https://lh3.googleusercontent.com/d/1IslivyOXLkom34UGsVWXINsr7DyOi6Lb",
+            triangles: "https://lh3.googleusercontent.com/d/1ybjl5TS-ak9Uy7_5Ho48Jw9mHTL3Xocn",
+            squareRectangle: "https://lh3.googleusercontent.com/d/1e9XWFUBT2WKFSl9aVB0LV5DW-B_XIrpA"
+        };
+
+        const badgeDefinitions = [
+            { id: 'perimeter', name: "Perimeter Pathfinder", cat: "Perimeter", desc: "Score 80%+ in Perimeter questions." },
+            { id: 'combinedArea', name: "Combined Area Architect", cat: "Combined Area", desc: "Score 80%+ in Combined Area questions." },
+            { id: 'volume', name: "3D Volume Wizard", cat: "Volume of Solids", desc: "Awarded by Teacher." },
+            { id: 'polygons', name: "Polygon Specialist", cat: "Polygons", desc: "Awarded by Teacher." },
+            { id: 'linesAngles', name: "Lines & Angles Analyst", cat: "Lines & Angles", desc: "Awarded by Teacher." },
+            { id: 'triangles', name: "Triangle Tactician", cat: "Triangles", desc: "Awarded by Teacher." },
+            { id: 'squareRectangle', name: "Quad Structuralist", cat: "Square and Rectangle", desc: "Awarded by Teacher." }
+        ];
+
+        function generateBadgeGrid() {
+            const grid = document.getElementById('badge-grid');
+            grid.innerHTML = '';
+
+            badgeDefinitions.forEach(b => {
+                const isEarned = currentUser.badges && currentUser.badges[b.id];
+                const statusColor = isEarned ? 'text-green-400' : 'text-slate-500';
+                const statusText = isEarned ? '🏆 Badge Unlocked!' : '🔒 Not Yet Earned';
+                const opacityClass = isEarned ? 'opacity-100' : 'opacity-50 grayscale';
+                const borderClass = isEarned ? 'border-purple-500 shadow-lg shadow-purple-500/20' : 'border-slate-700';
+
+                // Displaying external images
+                const imageUrl = BADGE_IMAGES[b.id];
+
+                grid.innerHTML += `
+                    <div class="glass-panel p-4 rounded-xl border ${borderClass} flex flex-col items-center text-center transition-all">
+                    <div class="w-32 h-32 mb-3 flex items-center justify-center">
+                        <img src="${imageUrl}" alt="${b.name}" class="max-w-full max-h-full object-contain ${opacityClass}" onerror="this.onerror=null; this.src='https://via.placeholder.com/64?text=Badge';" /></div>
+
+                        <h4 class="font-bold text-sm text-white mb-1">${b.name}</h4>
+                        <span class="text-[10px] bg-slate-800 px-2 py-1 rounded text-cyan-300 mb-2">${b.cat}</span>
+                        <p class="text-xs text-slate-400 mb-2">${b.desc}</p>
+                        <div class="text-xs font-bold mt-auto ${statusColor}">${statusText}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Initialize on load
+        window.onload = initApp;
+
+    </script>
+</body>
+</html>
