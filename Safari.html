@@ -112,7 +112,7 @@
     </div>
 
     <!-- QUIZ SCREEN -->
-    <div id="screen-quiz" class="hidden glass-card w-full max-w-2xl rounded-3xl p-6 border-4 border-blue-400 flex flex-col h-full md:h-auto max-h-[90vh]">
+    <div id="screen-quiz" class="hidden glass-card w-full max-w-2xl rounded-3xl p-6 border-4 border-blue-400 flex flex-col h-full md:h-auto max-h-[95vh]">
         <div class="flex justify-between items-center mb-6 bg-blue-100 p-3 rounded-2xl">
             <div class="text-xl font-extrabold text-blue-800">Q: <span id="q-progress">1/10</span></div>
             <div class="text-2xl font-black text-red-500 flex items-center">
@@ -120,10 +120,8 @@
             </div>
         </div>
 
-        <div class="flex-grow flex flex-col justify-center items-center mb-8">
-            <h2 id="q-text" class="text-6xl md:text-7xl font-black text-gray-800 drop-shadow-sm tracking-wide text-center">
-                12 + 15
-            </h2>
+        <div class="flex-grow flex flex-col justify-center items-center mb-6 w-full min-h-[220px] md:min-h-[260px] bg-white rounded-3xl border-2 border-dashed border-emerald-300 p-4 shadow-inner">
+            <div id="q-container" class="flex items-center justify-center w-full">
         </div>
 
         <div id="choices-container" class="grid grid-cols-2 gap-4 md:gap-6 mt-auto">
@@ -245,45 +243,45 @@
                 actualOp = ops[getRnd(0, 3)];
             }
 
-            let qText = '', ans = 0;
+            let qText = '', ans = 0, nums = [];
 
             switch(actualOp) {
                 case 'Add':
                     if (diff === 'Easy') {
                         let n1 = getRnd(1, 9), n2 = getRnd(1, 9);
-                        qText = `${n1} + ${n2}`; ans = n1 + n2;
+                        qText = `${n1} + ${n2}`; ans = n1 + n2; nums = [n1, n2];
                     } else if (diff === 'Medium') {
                         let n1 = getRnd(10, 99), n2 = getRnd(10, 99);
-                        qText = `${n1} + ${n2}`; ans = n1 + n2;
+                        qText = `${n1} + ${n2}`; ans = n1 + n2; nums = [n1, n2];
                     } else { // Challenge
                         let n1 = getRnd(10, 99), n2 = getRnd(10, 99), n3 = getRnd(1, 99);
-                        qText = `${n1} + ${n2} + ${n3}`; ans = n1 + n2 + n3;
+                        qText = `${n1} + ${n2} + ${n3}`; ans = n1 + n2 + n3; nums = [n1, n2, n3]
                     }
                     break;
                 case 'Sub':
                     if (diff === 'Easy') {
                         let n1 = getRnd(10, 19), n2 = getRnd(1, 9);
-                        qText = `${n1} - ${n2}`; ans = n1 - n2;
+                        qText = `${n1} - ${n2}`; ans = n1 - n2; nums = [n1, n2];
                     } else if (diff === 'Medium') {
                         let n1 = getRnd(10, 99), n2 = getRnd(10, 99);
                         if (n2 > n1) [n1, n2] = [n2, n1]; // Ensure positive
                         if(n1 === n2) n1 += getRnd(1, 10);
-                        qText = `${n1} - ${n2}`; ans = n1 - n2;
+                        qText = `${n1} - ${n2}`; ans = n1 - n2; nums = [n1, n2];
                     } else { // Challenge
                         let n1 = getRnd(100, 999), n2 = getRnd(10, 99);
-                        qText = `${n1} - ${n2}`; ans = n1 - n2;
+                        qText = `${n1} - ${n2}`; ans = n1 - n2; nums = [n1, n2];
                     }
                     break;
                 case 'Mul':
                     if (diff === 'Easy') {
                         let n1 = getRnd(1, 9), n2 = getRnd(1, 9);
-                        qText = `${n1} × ${n2}`; ans = n1 * n2;
+                        qText = `${n1} × ${n2}`; ans = n1 * n2; nums = [n1, n2];
                     } else if (diff === 'Medium') {
                         let n1 = getRnd(10, 99), n2 = getRnd(1, 9);
-                        qText = `${n1} × ${n2}`; ans = n1 * n2;
+                        qText = `${n1} × ${n2}`; ans = n1 * n2; nums = [n1, n2];
                     } else { // Challenge
                         let n1 = getRnd(10, 99), n2 = getRnd(10, 99);
-                        qText = `${n1} × ${n2}`; ans = n1 * n2;
+                        qText = `${n1} × ${n2}`; ans = n1 * n2; nums = [n1, n2];
                     }
                     break;
                 case 'Div':
@@ -291,23 +289,23 @@
                         let n2 = getRnd(2, 9);
                         let ansCalc = getRnd(2, Math.floor(99/n2)); // Ensure N1 <= 99
                         let n1 = ansCalc * n2;
-                        qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+                        qText = `${n1} ÷ ${n2}`; ans = ansCalc; nums = [n1, n2];
                     } else if (diff === 'Medium') { // 3 digits / 1 digit
                         let n2 = getRnd(2, 9);
                         let minA = Math.ceil(100/n2), maxA = Math.floor(999/n2);
                         let ansCalc = getRnd(minA, maxA);
                         let n1 = ansCalc * n2;
-                        qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+                        qText = `${n1} ÷ ${n2}`; ans = ansCalc; nums = [n1, n2];
                     } else { // Challenge (3-4 digits / 2 digits)
                         let n2 = getRnd(10, 99);
                         let minA = Math.ceil(100/n2), maxA = Math.floor(9999/n2);
                         let ansCalc = getRnd(minA, maxA);
                         let n1 = ansCalc * n2;
-                        qText = `${n1} ÷ ${n2}`; ans = ansCalc;
+                        qText = `${n1} ÷ ${n2}`; ans = ansCalc; nums = [n1, n2];
                     }
                     break;
             }
-            return { q: qText, a: ans, userAns: null };
+            return { type: actualOp, nums: nums, q: qText, a: ans, userAns: null };
         }
 
         // Generate Multiple Choices
@@ -415,11 +413,59 @@
         function renderQuestion() {
             let data = quizData[currentQ];
             document.getElementById('q-progress').innerText = `${currentQ + 1} / ${settings.qCount}`;
-            document.getElementById('q-text').innerText = `${data.q} = ?`;
+                        let container = document.getElementById('q-container');
+            container.innerHTML = ''; // 清空上一題的直式
+
+            let opSymbol = '';
+            if (data.type === 'Add') opSymbol = '+';
+            if (data.type === 'Sub') opSymbol = '-';
+            if (data.type === 'Mul') opSymbol = '×';
+
+            if (data.type === 'Div') {
+                // 1. 直式除法佈局 (標準除法括號: 3 ⟌ 12)
+                let dividend = data.nums[0]; // 被除數
+                let divisor = data.nums[1];  // 除數
+                
+                let divWrapper = document.createElement('div');
+                divWrapper.className = "flex items-center justify-center font-mono text-7xl md:text-8xl font-black text-gray-800 tracking-wider";
+                divWrapper.innerHTML = `
+                    <span class="text-orange-500 pr-3">${divisor}</span>
+                    <div class="border-t-8 border-l-8 border-gray-800 rounded-tl-3xl pl-6 pr-4 pt-4 pb-2">
+                        <span>${dividend}</span>
+                    </div>
+                `;
+                container.appendChild(divWrapper);
+            } else {
+                // 2. 直式加減乘法佈局 (對齊個位數，左側帶有精緻彩色運算符號)
+                let colWrapper = document.createElement('div');
+                colWrapper.className = "flex flex-col items-end font-mono text-7xl md:text-8xl font-black text-gray-800 tracking-widest min-w-[200px] md:min-w-[250px]";
+                
+                let html = '';
+                // 渲染倒數第二個之前的數字
+                for (let i = 0; i < data.nums.length - 1; i++) {
+                    html += `<div class="pr-8">${data.nums[i]}</div>`;
+                }
+                // 渲染最後一個數，並在左側對齊加上運算符號
+                // ✨【對齊修正】將最後一個數的 span 加上了 pr-8 類別，與其他行對齊！
+                let lastNum = data.nums[data.nums.length - 1];
+                html += `
+                    <div class="flex items-center w-full justify-between mt-1">
+                        <span class="text-orange-500 text-6xl md:text-7xl pr-6 font-black">${opSymbol}</span>
+                        <span class="pr-8">${lastNum}</span>
+                    </div>
+                    <!-- 底部的直式雙線/單線效果 -->
+                    <div class="w-full h-2 bg-gray-800 my-3 rounded-full text-right pr-8"></div>
+                    <!-- 答案位置顯示精美閃爍的 ? 號 -->
+                    <div class="pr-8 text-green-600 font-extrabold animate-pulse">?</div>
+                `;
+                colWrapper.innerHTML = html;
+                container.appendChild(colWrapper);
+            }
             
+            // 渲染選項按鈕
             let choices = getChoices(data.a, settings.choices);
-            let container = document.getElementById('choices-container');
-            container.innerHTML = '';
+            let choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
             
             // Vibrant colors for buttons
             const colors = ['bg-orange-400', 'bg-blue-400', 'bg-pink-400', 'bg-purple-400', 'bg-yellow-400', 'bg-teal-400', 'bg-red-400', 'bg-indigo-400'];
@@ -429,7 +475,7 @@
                 btn.className = `choice-btn text-white font-black text-3xl md:text-4xl py-6 rounded-2xl ${colors[idx % colors.length]} hover:brightness-110`;
                 btn.innerText = c;
                 btn.onclick = () => handleAnswer(c);
-                container.appendChild(btn);
+                choicesContainer.appendChild(btn);
             });
         }
 
