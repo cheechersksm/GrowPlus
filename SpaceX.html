@@ -200,6 +200,10 @@
                         <div class="text-xs text-slate-400">Area Mastery</div>
                         <div class="text-xl font-bold text-pink-400" id="lbl-area-score">0%</div>
                     </div>
+                    <div class="bg-slate-800 p-3 rounded-lg text-center border border-slate-700">
+                        <div class="text-xs text-slate-400">Polygon Mastery</div>
+                        <div class="text-xl font-bold text-pink-400" id="lbl-polygons-score">0%</div>
+                    </div>
                 </div>
             </div>
 
@@ -541,6 +545,7 @@
             progress: 0,
             perimeterScore: 0,
             combinedAreaScore: 0,
+            polygonsScore: 0,
             totalChallengeScore: 0,
             questionsCompleted: 0,
             stats: {
@@ -586,13 +591,14 @@
                         currentUser.progress = data.Progress || 0;
                         currentUser.perimeterScore = data.PerimeterScore || 0;
                         currentUser.combinedAreaScore = data.CombinedAreaScore || 0;
+                        currentUser.polygonsScore = data.PolygonsScore || 0;
                         currentUser.totalChallengeScore = data.TotalChallengeScore || 0;
                         currentUser.questionsCompleted = data.QuestionsCompleted || 0;
                         
                         // Set specific stats if they were mapped from legacy fields
                         currentUser.stats.perimeter.best = data.PerimeterScore || 0;
                         currentUser.stats.area.best = data.CombinedAreaScore || 0;
-                        // Assuming Polygon score wasn't saved in legacy, default to 0.
+                        currentUser.stats.polygons.best = data.PolygonsScore || 0;
                         
                         // Badges (boolean mapping)
                         currentUser.badges.perimeter = data.PerimeterBadge === true || data.PerimeterBadge === "TRUE";
@@ -644,6 +650,7 @@
             document.getElementById('lbl-score').innerText = currentUser.totalChallengeScore;
             document.getElementById('lbl-peri-score').innerText = `${currentUser.stats.perimeter.best}%`;
             document.getElementById('lbl-area-score').innerText = `${currentUser.stats.area.best}%`;
+            document.getElementById('lbl-polygons-score').innerText = `${currentUser.stats.polygons.best}%`;
 
             // Update Topic Selection Stats
             document.getElementById('lbl-stat-perimeter-best').innerText = `${currentUser.stats.perimeter.best}%`;
@@ -667,6 +674,7 @@
                 perimeterBadge: currentUser.badges.perimeter,
                 combinedAreaScore: currentUser.stats.area.best,
                 combinedAreaBadge: currentUser.badges.combinedArea,
+                polygonsScore: currentUser.stats.polygons.best,
                 polygonBadge: currentUser.badges.polygons,
                 linesAnglesBadge: currentUser.badges.linesAngles,
                 triangleBadge: currentUser.badges.triangles,
