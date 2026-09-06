@@ -630,6 +630,10 @@
       }
 
       currentUser.email = loggedInEmail;
+
+      // Directly call the backend via fetch, no 'google' environment checks needed
+        apiRun("getDataDUserProfile", loggedInEmail, onProfileLoaded);
+      }
       
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         apiRun("getDataDUserProfile", loggedInEmail, onProfileLoaded);
@@ -648,15 +652,13 @@
         document.getElementById('display-user-name').innerText = currentUser.name;
         document.getElementById('display-user-class').innerText = currentUser.className;
 
-        if (typeof google !== 'undefined' && google.script && google.script.run) {
-          apiRun("getDataHandlingRecord", currentUser.email, onRecordLoaded);
-        } else {
-          hideLoader();
+        // Fetch the records using your new API helper
+            apiRun("getDataHandlingRecord", currentUser.email, onRecordLoaded);
+          } else {
+            console.error("Backend failed to return a valid profile.", res);
+            hideLoader();
+          }
         }
-      } else {
-        hideLoader();
-      }
-    }
 
     function onRecordLoaded(res) {
       if (res.success && res.record) {
