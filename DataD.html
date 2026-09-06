@@ -691,7 +691,6 @@
     }
 
     function saveProgressToCloud() {
-      if (typeof google !== 'undefined' && google.script && google.script.run) {
         apiRun("saveDataHandlingRecord", {
           email: currentUser.email,
           name: currentUser.name,
@@ -704,7 +703,6 @@
           overallProgress: Math.min(100, Math.round(currentUser.xp / 10)),
           badges: currentUser.badges
         });
-      }
     }
 
     function showToast(msg) {
