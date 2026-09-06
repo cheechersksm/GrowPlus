@@ -478,7 +478,51 @@
     <script>
         // 1. Paste your deployed Google Apps Script Web App URL here!
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+        const api = {
+            run: async function(functionName, ...args) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, {
+                        method: 'POST',
+                        // Using text/plain prevents the browser from triggering an OPTIONS preflight
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8',
+                        },
+                        body: JSON.stringify({ 
+                            func: functionName, 
+                            args: args 
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.error) throw new Error(result.error);
+                    return result.data;
+                } catch (error) {
+                    console.error("API Error (" + functionName + "):", error);
+                    throw error;
+                }
+            }
+        };
 
+        const GAS = {
+            getStudentInfo: async function(email, callback) {
+                try {
+                    const data = await api.run("getStudentInfoSpace", email);
+                    callback(data);
+                } catch (err) {
+                    console.error("Error loading student info:", err);
+                    callback(null);
+                }
+            },
+            saveRecord: async function(data) {
+                try {
+                    const result = await api.run("saveSpaceRecord", data);
+                    console.log("Saved successfully:", result);
+                } catch (err) {
+                    console.error("Save failed:", err);
+                }
+            }
+        };
+        
         let loggedInEmail = "INSERT_USER_EMAIL_HERE";
 
         if (
@@ -512,63 +556,6 @@
                 linesAngles: false,
                 triangles: false,
                 squareRectangle: false
-            }
-        };
-
-        // GAS Communication Wrapper (Supports GitHub Pages + GAS Web App API)
-        const GAS = {
-            getStudentInfo: function(email, callback) {
-                // Check if deployed GAS API URL is set
-                if (GAS_WEB_APP_URL && GAS_WEB_APP_URL !== "YOUR_GAS_WEB_APP_URL_HERE") {
-                    const apiUrl = `${GAS_WEB_APP_URL}?action=getStudentInfo&email=${encodeURIComponent(email)}`;
-                    fetch(apiUrl)
-                        .then(res => res.json())
-                        .then(resData => {
-                            if (resData && resData.status === "success") {
-                                callback(resData.data);
-                            } else {
-                                console.warn("API returned error or empty response:", resData);
-                                callback(null);
-                            }
-                        })
-                        .catch(err => {
-                            console.error("Error fetching student info from GAS API:", err);
-                            showToast("Could not fetch user data from server", "error");
-                            callback(null);
-                        });
-                } else if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.withSuccessHandler(callback).withFailureHandler(() => callback(null)).getStudentInfoSpace(email);
-                } else {
-                    console.log("Mock GAS: getStudentInfo for " + email);
-                    setTimeout(() => {
-                        if(email === "Guest") {
-                            callback(null);
-                        } else {
-                            callback({
-                                Email: email, Name: "Aina", Class: "5 Bestari", Progress: 40,
-                                PerimeterScore: 60, PerimeterBadge: false, CombinedAreaScore: 50, CombinedAreaBadge: false,
-                                PolygonBadge: true, LinesAnglesBadge: false, TriangleBadge: false, SquareRectangleBadge: true, VolumeBadge: false,
-                                TotalChallengeScore: 120, QuestionsCompleted: 15
-                            });
-                        }
-                    }, 500);
-                }
-            },
-            saveRecord: function(data) {
-                if (GAS_WEB_APP_URL && GAS_WEB_APP_URL !== "YOUR_GAS_WEB_APP_URL_HERE") {
-                    fetch(GAS_WEB_APP_URL, {
-                        method: "POST",
-                        mode: "no-cors", // text/plain with no-cors avoids browser CORS preflight restrictions
-                        headers: { "Content-Type": "text/plain" },
-                        body: JSON.stringify({ action: "saveSpaceRecord", data: data })
-                    })
-                    .then(() => console.log("Save request dispatched to GAS API"))
-                    .catch(err => console.error("Error saving record via API:", err));
-                } else if (typeof google !== 'undefined' && google.script && google.script.run) {
-                    google.script.run.saveSpaceRecord(data);
-                } else {
-                    console.log("Mock GAS: Saved record to sheet:", data);
-                }
             }
         };
 
