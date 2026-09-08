@@ -1097,8 +1097,8 @@
       }
   
       try {
-          const baseUrl = await apiRun('getWebAppUrl');
-          window.location.href = baseUrl + "?page=app";
+          const baseUrl = "https://cheechersksm.github.io/GrowPlus";
+          window.location.href = baseUrl + "/Portal.html";
       } catch (err) {
           console.warn("Could not get Web App URL, redirecting locally...", err);
           window.location.href = "index.html"; // Redirects to your main GitHub Pages portal
