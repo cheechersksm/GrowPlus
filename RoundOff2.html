@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Math Rounding Master</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #E0F7FA;
+      --card-bg: #FFFFFF;
+      --primary-blue: #29B6F6;
+      --primary-blue-dark: #0288D1;
+      --accent-yellow: #FFCA28;
+      --accent-yellow-dark: #FFA000;
+      --accent-green: #66BB6A;
+      --accent-green-dark: #388E3C;
+      --accent-red: #EF5350;
+      --accent-red-dark: #D32F2F;
+      --accent-purple: #AB47BC;
+      --accent-purple-dark: #7B1FA2;
+      --text-dark: #263238;
+      --border-radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Fredoka', sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: radial-gradient(#B2EBF2 2px, transparent 2px);
+      background-size: 24px 24px;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-dark);
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      border: 4px solid #B2EBF2;
+      box-shadow: 0 12px 0 #80DEEA, 0 20px 25px rgba(0,0,0,0.15);
+      padding: 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    /* 2.5D Button Styles */
+    .btn-2d {
+      display: inline-block;
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #FFF;
+      background-color: var(--primary-blue);
+      border: none;
+      border-radius: 16px;
+      box-shadow: 0 6px 0 var(--primary-blue-dark), 0 10px 15px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 0.1s ease;
+      margin: 8px 0;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .btn-2d:hover { filter: brightness(1.05); }
+    .btn-2d:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 var(--primary-blue-dark), 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn-yellow { background-color: var(--accent-yellow); box-shadow: 0 6px 0 var(--accent-yellow-dark); color: #424242; }
+    .btn-yellow:active { box-shadow: 0 2px 0 var(--accent-yellow-dark); }
+
+    .btn-green { background-color: var(--accent-green); box-shadow: 0 6px 0 var(--accent-green-dark); }
+    .btn-green:active { box-shadow: 0 2px 0 var(--accent-green-dark); }
+
+    .btn-purple { background-color: var(--accent-purple); box-shadow: 0 6px 0 var(--accent-purple-dark); }
+    .btn-purple:active { box-shadow: 0 2px 0 var(--accent-purple-dark); }
+
+    .btn-selected {
+      outline: 4px solid #000;
+      transform: translateY(2px);
+    }
+    
+    /* Email Status Badge */
+    .email-badge {
+      background: #E1F5FE;
+      border: 2px solid #29B6F6;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: bold;
+      color: #0288D1;
+      margin-bottom: 12px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      word-break: break-all;
+    }
+
+    /* Screen Management */
+    .screen { display: none; }
+    .screen.active {
+      display: block;
+      animation: popIn 0.3s ease;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.95); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    h1 { margin-top: 0; color: #0288D1; font-size: 2.2rem; text-shadow: 2px 2px 0px #B2EBF2; }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 14px;
+      font-size: 1.2rem;
+      border: 3px solid #B2EBF2;
+      border-radius: 14px;
+      text-align: center;
+      margin: 10px 0;
+      outline: none;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.08);
+      background: #FFF;
+      font-weight: bold;
+    }
+    input[type="text"]:focus, select:focus { border-color: var(--primary-blue); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .level-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #E0F7FA;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+
+    .timer-badge {
+      background: #FFF;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 2px solid var(--accent-purple);
+      color: var(--accent-purple-dark);
+      font-family: monospace;
+      font-size: 1.2rem;
+    }
+
+    /* Question Card */
+    .question-card {
+      background: #FFF9C4;
+      border: 3px dashed #FBC02D;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+
+    .question-target {
+      font-size: 1.25rem;
+      color: #37474F;
+      font-weight: 700;
+    }
+
+    .highlight-red {
+      color: var(--accent-red-dark);
+      font-weight: 800;
+      text-decoration: underline;
+    }
+
+    .question-number {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #1A237E;
+      margin: 8px 0;
+      letter-spacing: 2px;
+    }
+
+    /* Number Line Component */
+    .number-line-container {
+      background: #FFF;
+      border: 3px solid #80DEEA;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 15px 0;
+      box-shadow: 0 4px 0 #B2EBF2;
+    }
+
+    .nl-title {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--primary-blue-dark);
+      margin-bottom: 8px;
+    }
+
+    .nl-bar-wrapper {
+      position: relative;
+      height: 48px;
+      margin: 25px 20px 10px 20px;
+    }
+
+    .nl-axis {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 10px;
+      background: linear-gradient(to bottom, #80DEEA, #00ACC1);
+      border-radius: 5px;
+      transform: translateY(-50%);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .nl-tick {
+      position: absolute;
+      top: 50%;
+      width: 4px;
+      height: 22px;
+      background: #00838F;
+      transform: translate(-50%, -50%);
+      border-radius: 2px;
+    }
+
+    .nl-label {
+      position: absolute;
+      top: 36px;
+      transform: translateX(-50%);
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #37474F;
+    }
+
+    .nl-pointer {
+      position: absolute;
+      top: -24px;
+      transform: translateX(-50%);
+      background: var(--accent-red);
+      color: #FFF;
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      box-shadow: 0 3px 0 var(--accent-red-dark);
+      transition: left 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .nl-pointer::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0;
+      border-style: solid;
+      border-color: var(--accent-red) transparent;
+      display: block;
+      width: 0;
+    }
+
+    /* Feedback Box */
+    .feedback-box {
+      min-height: 45px;
+      font-size: 1.15rem;
+      font-weight: bold;
+      margin: 10px 0;
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .feedback-correct { background-color: #C8E6C9; color: #1B5E20; }
+    .feedback-wrong { background-color: #FFCDD2; color: #B71C1C; }
+
+    /* Review Mistakes Section Styles */
+    .review-box {
+      margin: 15px 0;
+      text-align: left;
+    }
+
+    .review-container {
+      background: #F5F5F5;
+      border: 2px solid #B2EBF2;
+      border-radius: 14px;
+      padding: 12px;
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .filter-tab-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 10px;
+      border: 2px solid var(--primary-blue);
+      background: #FFF;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--primary-blue-dark);
+    }
+
+    .filter-tab-btn.active {
+      background: var(--primary-blue);
+      color: #FFF;
+    }
+
+    .review-card {
+      background: #FFF;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      border-left: 6px solid #CCC;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .review-card.review-correct {
+      border-left-color: var(--accent-green);
+      background: #F1F8E9;
+    }
+
+    .review-card.review-wrong {
+      border-left-color: var(--accent-red);
+      background: #FFEBEE;
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .review-details {
+      display: flex;
+      gap: 15px;
+      font-size: 0.9rem;
+      color: #424242;
+    }
+
+    .text-green { color: #2E7D32; font-weight: bold; }
+    .text-red { color: #C62828; font-weight: bold; }
+
+    /* Leaderboard Table */
+    .lb-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 0.95rem;
+    }
+    .lb-table th {
+      background-color: var(--primary-blue);
+      color: white;
+      padding: 10px;
+    }
+    .lb-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #E0E0E0;
+    }
+    .lb-table tr:nth-child(even) { background-color: #F5F5F5; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- SCREEN 1: Setup & Topic Selection -->
+  <div id="screen-setup" class="screen active">
+    <h1>Rounding Master 🎯</h1>
+    <p style="color:#546E7A; font-weight:600; margin-bottom:15px;">Learn & Test Your Rounding Skills!</p>
+       
+    <!-- User Email Display Badge -->
+    <div class="email-badge">
+      <span>📧</span>
+      <span>Email: <span id="display-user-email">Loading...</span></span>
+    </div>
+    
+    <label style="font-weight:bold; display:block; text-align:left;">Student Name:</label>
+    <input type="text" id="student-name" placeholder="Enter your name..." maxlength="20">
+
+    <label style="font-weight:bold; display:block; text-align:left; margin-top:10px;">Select Scope:</label>
+    <div class="grid-2">
+      <button class="btn-2d btn-yellow" id="btn-scope-whole" onclick="selectScope('whole')">Whole Numbers</button>
+      <button class="btn-2d btn-yellow" id="btn-scope-decimal" onclick="selectScope('decimal')">Decimals</button>
+    </div>
+
+    <!-- Dynamic Level Selection -->
+    <div id="level-selection-section" style="margin-top:12px; display:none;">
+      <label style="font-weight:bold; display:block; text-align:left;">Select Standard / Level:</label>
+      <div class="level-grid" id="level-buttons-container"></div>
+    </div>
+
+    <label style="font-weight:bold; display:block; text-align:left; margin-top:10px;">Select Mode:</label>
+    <div class="grid-2">
+      <button class="btn-2d btn-purple" id="btn-mode-practice" onclick="selectMode('practice')">Practice Mode<br><small style="font-size:0.7rem;">Visual hints & number line</small></button>
+      <button class="btn-2d btn-purple" id="btn-mode-contest" onclick="selectMode('contest')">Contest Mode<br><small style="font-size:0.7rem;">Speed & precision</small></button>
+    </div>
+
+    <div class="grid-2" style="margin-top:15px;">
+      <button class="btn-2d btn-green" style="font-size:1.3rem;" onclick="startGame()">START GAME 🚀</button>
+      <button class="btn-2d btn-blue" style="font-size:1.1rem;" onclick="showLeaderboard()">LEADERBOARD 🏆</button>
+    </div>
+
+    <div class="flex justify-center mt-4 mb-4">
+        <button id="btnBackToPortal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-200 flex items-center gap-2">
+            <span>← Back to GrowPlus</span>
+        </button>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Quiz Screen -->
+  <div id="screen-quiz" class="screen">
+    <div class="status-bar">
+      <div>Question <span id="q-index">1</span> / 10</div>
+      <div id="timer-container" class="timer-badge" style="display:none;">00:00.000</div>
+    </div>
+
+    <div class="question-card">
+      <div class="question-target" id="q-target">Round off to the nearest...</div>
+      <div class="question-number" id="q-num">0</div>
+    </div>
+
+    <!-- Number Line Component (Practice Mode Only) -->
+    <div id="number-line-box" class="number-line-container" style="display:none;">
+      <div class="nl-title">💡 Concept Visualizer (Number Line)</div>
+      <div class="nl-bar-wrapper">
+        <div class="nl-axis"></div>
+        
+        <div class="nl-tick" style="left:0%;"></div>
+        <div class="nl-label" style="left:0%;" id="nl-lower">0</div>
+
+        <div class="nl-tick" style="left:50%; background:#FF9800; height:26px;"></div>
+        <div class="nl-label" style="left:50%; color:#E65100;" id="nl-mid">5</div>
+
+        <div class="nl-tick" style="left:100%;"></div>
+        <div class="nl-label" style="left:100%;" id="nl-upper">10</div>
+
+        <div class="nl-pointer" id="nl-pointer" style="left:50%;">
+          <span id="nl-curr">0</span>
+        </div>
+      </div>
+    </div>
+
+    <input type="text" id="answer-input" placeholder="Type your answer..." autocomplete="off" inputmode="decimal">
+
+    <div id="feedback-area" class="feedback-box" style="visibility:hidden;"></div>
+
+    <button class="btn-2d btn-green" id="btn-submit" onclick="submitAnswer()">SUBMIT ANSWER</button>
+    <button class="btn-2d btn-blue" id="btn-next" onclick="nextQuestion()" style="display:none;">NEXT QUESTION ➔</button>
+  </div>
+
+  <!-- SCREEN 3: Results Screen -->
+  <div id="screen-results" class="screen">
+    <h1 id="result-title">Awesome Job! 🎉</h1>
+    <p id="result-name" style="font-size:1.3rem; font-weight:bold; color:#37474F;"></p>
+    
+    <div style="font-size:3.5rem; color:var(--accent-purple-dark); font-weight:700;" id="result-score">0 / 10</div>
+    
+    <div id="result-time-container" style="display:none; font-size:1.2rem; font-weight:bold; color:var(--accent-purple-dark); margin-bottom:10px;">
+      ⏱️ Total Time: <span id="result-time">00:00.000</span>
+    </div>
+
+    <div id="save-status" style="font-size:0.95rem; color:#666; margin-bottom:12px; font-weight:bold;">Saving result to spreadsheet...</div>
+
+    <!-- Review Section -->
+    <div class="review-box">
+      <button class="btn-2d btn-purple" id="btn-toggle-review" onclick="toggleReviewSection()">
+        🔍 Review Questions & Mistakes
+      </button>
+
+      <div id="review-container" class="review-container" style="display:none;">
+        <div class="filter-tabs">
+          <button class="filter-tab-btn" id="tab-rev-mistakes" onclick="setReviewFilter('mistakes')">
+            Mistakes Only (<span id="badge-mistakes-count">0</span>)
+          </button>
+          <button class="filter-tab-btn" id="tab-rev-all" onclick="setReviewFilter('all')">
+            All Questions (10)
+          </button>
+        </div>
+        <div id="review-list"></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <button class="btn-2d btn-green" onclick="resetApp()">PLAY AGAIN 🔄</button>
+      <button class="btn-2d btn-blue" onclick="showLeaderboard()">LEADERBOARD 🏆</button>
+    </div>
+  </div>
+
+  <!-- SCREEN 4: Leaderboard Screen -->
+  <div id="screen-leaderboard" class="screen">
+    <h1>Leaderboard 🏆</h1>
+    
+    <!-- Category Filter Dropdown -->
+    <label style="font-weight:bold; display:block; text-align:left; margin-bottom:4px;">Filter Category:</label>
+    <select id="lb-category-filter" onchange="renderLeaderboardTable()">
+      <option value="ALL">🌟 All Categories</option>
+      <option value="Std 1">Standard 1</option>
+      <option value="Std 2">Standard 2</option>
+      <option value="Std 3">Standard 3</option>
+      <option value="Std 4">Standard 4</option>
+      <option value="Std 5 (Whole)">Standard 5 (Whole Number)</option>
+      <option value="Std 5 (Decimal)">Standard 5 (Decimal)</option>
+    </select>
+
+    <div id="lb-loading" style="font-weight:bold; color:var(--primary-blue-dark); padding:20px;">Loading Top Scores...</div>
+    
+    <div id="lb-container" style="max-height:300px; overflow-y:auto; display:none;">
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student</th>
+            <th>Level</th>
+            <th>Score</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+
+    <button class="btn-2d btn-yellow" style="margin-top:20px;" onclick="resetApp()">BACK TO MENU 🏠</button>
+  </div>
+
+</div>
+
+<script>
+
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec"; 
+
+  async function apiRun(funcName, args = []) {
+      const response = await fetch(WEB_APP_URL, {
+          method: 'POST',
+          body: JSON.stringify({ func: funcName, args: args }),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          redirect: 'follow'
+      });
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+      return result.data;
+  }
+  
+  let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+  if (loggedInEmail === "" || loggedInEmail === "INSERT_USER_EMAIL_HERE" || loggedInEmail === "Guest") {
+      loggedInEmail = localStorage.getItem('loggedInUserEmail') || "Guest";
+  }
+
+  // Show detected email in the UI
+  document.getElementById('display-user-email').innerText = loggedInEmail;
+
+  let config = { studentName: '', userEmail: loggedInEmail, scope: '', level: 1, mode: '' };
+  let questions = [];
+  let currentQIndex = 0;
+  let score = 0;
+  let timerInterval = null;
+  let startTime = 0;
+  let elapsedTime = 0;
+  let rawLeaderboardData = [];
+  let currentReviewFilter = 'mistakes';
+
+  const WHOLE_LEVELS = [
+    { std: 1, name: 'Std 1', maxNum: 100, places: [10] },
+    { std: 2, name: 'Std 2', maxNum: 1000, places: [10, 100] },
+    { std: 3, name: 'Std 3', maxNum: 10000, places: [10, 100, 1000] },
+    { std: 4, name: 'Std 4', maxNum: 100000, places: [10, 100, 1000, 10000] },
+    { std: 5, name: 'Std 5', maxNum: 1000000, places: [10, 100, 1000, 10000, 100000] }
+  ];
+
+  const PLACE_NAMES_PLAIN = {
+    10: 'nearest tens',
+    100: 'nearest hundreds',
+    1000: 'nearest thousands',
+    10000: 'nearest ten thousands',
+    100000: 'nearest hundred thousands',
+    'whole': 'nearest whole number',
+    'tenth': 'nearest tenths (1 decimal place)',
+    'hundredth': 'nearest hundredths (2 decimal places)',
+    'thousandth': 'nearest thousandths (3 decimal places)'
+  };
+
+  const PLACE_NAMES_HIGHLIGHT = {
+    10: 'nearest <span class="highlight-red">tens</span>',
+    100: 'nearest <span class="highlight-red">hundreds</span>',
+    1000: 'nearest <span class="highlight-red">thousands</span>',
+    10000: 'nearest <span class="highlight-red">ten thousands</span>',
+    100000: 'nearest <span class="highlight-red">hundred thousands</span>',
+    'whole': 'nearest <span class="highlight-red">whole number</span>',
+    'tenth': 'nearest <span class="highlight-red">tenths</span> (1 decimal place)',
+    'hundredth': 'nearest <span class="highlight-red">hundredths</span> (2 decimal places)',
+    'thousandth': 'nearest <span class="highlight-red">thousandths</span> (3 decimal places)'
+  };
+
+  function selectScope(scope) {
+    config.scope = scope;
+    document.getElementById('btn-scope-whole').classList.toggle('btn-selected', scope === 'whole');
+    document.getElementById('btn-scope-decimal').classList.toggle('btn-selected', scope === 'decimal');
+    
+    const levelSection = document.getElementById('level-selection-section');
+    const levelContainer = document.getElementById('level-buttons-container');
+    levelSection.style.display = 'block';
+    levelContainer.innerHTML = '';
+
+    if (scope === 'whole') {
+      WHOLE_LEVELS.forEach(lvl => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-2d btn-yellow level-btn';
+        btn.id = `btn-lvl-${lvl.std}`;
+        btn.innerText = lvl.name;
+        btn.onclick = () => selectLevel(lvl.std);
+        levelContainer.appendChild(btn);
+      });
+      selectLevel(1);
+    } else {
+      const btn = document.createElement('button');
+      btn.className = 'btn-2d btn-yellow level-btn btn-selected';
+      btn.innerText = 'Std 5 (Decimals)';
+      levelContainer.appendChild(btn);
+      config.level = 5;
+    }
+  }
+
+  function selectLevel(lvl) {
+    config.level = lvl;
+    WHOLE_LEVELS.forEach(l => {
+      const el = document.getElementById(`btn-lvl-${l.std}`);
+      if (el) el.classList.toggle('btn-selected', l.std === lvl);
+    });
+  }
+
+  function selectMode(mode) {
+    config.mode = mode;
+    document.getElementById('btn-mode-practice').classList.toggle('btn-selected', mode === 'practice');
+    document.getElementById('btn-mode-contest').classList.toggle('btn-selected', mode === 'contest');
+  }
+
+  function getHighlightedNumber(numVal, placeKey) {
+    let str = numVal.toString();
+    let targetIdx = -1;
+
+    if (typeof placeKey === 'number') {
+      let exp = Math.log10(placeKey);
+      targetIdx = str.length - 1 - exp;
+    } else {
+      let dotIdx = str.indexOf('.');
+      if (dotIdx === -1) dotIdx = str.length;
+
+      if (placeKey === 'whole') targetIdx = dotIdx - 1;
+      else if (placeKey === 'tenth') targetIdx = dotIdx + 1;
+      else if (placeKey === 'hundredth') targetIdx = dotIdx + 2;
+      else if (placeKey === 'thousandth') targetIdx = dotIdx + 3;
+    }
+
+    if (targetIdx < 0 || targetIdx >= str.length) return str;
+
+    let result = '';
+    for (let i = 0; i < str.length; i++) {
+      if (i === targetIdx) {
+        result += `<span class="highlight-red">${str[i]}</span>`;
+      } else {
+        result += str[i];
+      }
+    }
+    return result;
+  }
+
+  function getNumberLineData(numVal, placeKey) {
+    let lower, upper, mid, pct;
+
+    if (typeof placeKey === 'number') {
+      const P = placeKey;
+      lower = Math.floor(numVal / P) * P;
+      upper = lower + P;
+      mid = lower + (P / 2);
+      pct = ((numVal - lower) / P) * 100;
+
+      return {
+        lowerStr: lower.toString(),
+        upperStr: upper.toString(),
+        midStr: mid.toString(),
+        pct: Math.min(Math.max(pct, 0), 100)
+      };
+    } else {
+      let P = 1, dec = 0;
+      if (placeKey === 'whole') { P = 1; dec = 0; }
+      else if (placeKey === 'tenth') { P = 0.1; dec = 1; }
+      else if (placeKey === 'hundredth') { P = 0.01; dec = 2; }
+      else if (placeKey === 'thousandth') { P = 0.001; dec = 3; }
+
+      const factor = Math.pow(10, dec);
+      lower = Math.floor(Math.round(numVal * factor * 1000) / 1000) / factor;
+      upper = lower + P;
+      mid = lower + (P / 2);
+      pct = ((numVal - lower) / P) * 100;
+
+      return {
+        lowerStr: lower.toFixed(dec),
+        upperStr: upper.toFixed(dec),
+        midStr: mid.toFixed(dec + 1),
+        pct: Math.min(Math.max(pct, 0), 100)
+      };
+    }
+  }
+
+  function generateQuestions() {
+    questions = [];
+    for (let i = 0; i < 10; i++) {
+      if (config.scope === 'whole') {
+        const lvlData = WHOLE_LEVELS.find(l => l.std === config.level);
+        const place = lvlData.places[Math.floor(Math.random() * lvlData.places.length)];
+        const min = place;
+        const max = lvlData.maxNum;
+        const num = Math.floor(Math.random() * (max - min + 1)) + min;
+        const correctAns = Math.round(num / place) * place;
+        
+        questions.push({
+          placeKey: place,
+          rawNum: num,
+          correctAns: correctAns.toString(),
+          targetText: PLACE_NAMES_PLAIN[place]
+        });
+      } else {
+        const places = ['whole', 'tenth', 'hundredth', 'thousandth'];
+        const chosenPlace = places[Math.floor(Math.random() * places.length)];
+        const numVal = parseFloat((Math.random() * 800 + 10).toFixed(4));
+
+        let correctAns = '';
+        if (chosenPlace === 'whole') correctAns = Math.round(numVal).toString();
+        else if (chosenPlace === 'tenth') correctAns = (Math.round((numVal + Number.EPSILON) * 10) / 10).toFixed(1);
+        else if (chosenPlace === 'hundredth') correctAns = (Math.round((numVal + Number.EPSILON) * 100) / 100).toFixed(2);
+        else if (chosenPlace === 'thousandth') correctAns = (Math.round((numVal + Number.EPSILON) * 1000) / 1000).toFixed(3);
+
+        questions.push({
+          placeKey: chosenPlace,
+          rawNum: numVal,
+          correctAns: correctAns,
+          targetText: PLACE_NAMES_PLAIN[chosenPlace]
+        });
+      }
+    }
+  }
+
+  function startGame() {
+    const nameInput = document.getElementById('student-name').value.trim();
+    if (!nameInput) { alert('Please enter your name!'); return; }
+    if (!config.scope) { alert('Please select a scope!'); return; }
+    if (!config.mode) { alert('Please select a mode!'); return; }
+
+    config.studentName = nameInput;
+    config.userEmail = loggedInEmail;
+    generateQuestions();
+    currentQIndex = 0;
+    score = 0;
+
+    switchScreen('screen-quiz');
+
+    const timerDisplay = document.getElementById('timer-container');
+    if (config.mode === 'contest') {
+      timerDisplay.style.display = 'block';
+      startTime = Date.now();
+      timerInterval = setInterval(updateTimer, 10);
+    } else {
+      timerDisplay.style.display = 'none';
+    }
+
+    loadQuestion();
+  }
+
+  function updateTimer() {
+    elapsedTime = Date.now() - startTime;
+    document.getElementById('timer-container').innerText = formatTime(elapsedTime);
+  }
+
+  function formatTime(ms) {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    const milliseconds = ms % 1000;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}`;
+  }
+
+  function loadQuestion() {
+    const q = questions[currentQIndex];
+    document.getElementById('q-index').innerText = currentQIndex + 1;
+    const isPractice = (config.mode === 'practice');
+
+    if (isPractice) {
+      document.getElementById('q-target').innerHTML = `Round off to the ${PLACE_NAMES_HIGHLIGHT[q.placeKey]}:`;
+      document.getElementById('q-num').innerHTML = getHighlightedNumber(q.rawNum, q.placeKey);
+      
+      const nl = getNumberLineData(q.rawNum, q.placeKey);
+      document.getElementById('number-line-box').style.display = 'block';
+      document.getElementById('nl-lower').innerText = nl.lowerStr;
+      document.getElementById('nl-mid').innerText = nl.midStr;
+      document.getElementById('nl-upper').innerText = nl.upperStr;
+      document.getElementById('nl-curr').innerText = q.rawNum;
+      document.getElementById('nl-pointer').style.left = `${nl.pct}%`;
+    } else {
+      document.getElementById('q-target').innerText = `Round off to the ${PLACE_NAMES_PLAIN[q.placeKey]}:`;
+      document.getElementById('q-num').innerText = q.rawNum;
+      document.getElementById('number-line-box').style.display = 'none';
+    }
+
+    const input = document.getElementById('answer-input');
+    input.value = '';
+    input.disabled = false;
+    input.focus();
+
+    document.getElementById('feedback-area').style.visibility = 'hidden';
+    document.getElementById('btn-submit').style.display = 'block';
+    document.getElementById('btn-next').style.display = 'none';
+  }
+
+  function submitAnswer() {
+    const userAns = document.getElementById('answer-input').value.trim().replace(/,/g, '');
+    if (userAns === '') return;
+
+    const q = questions[currentQIndex];
+    const isCorrect = (userAns === q.correctAns);
+
+    // Track user response for review screen
+    q.userAns = userAns;
+    q.isCorrect = isCorrect;
+
+    if (isCorrect) score++;
+
+    if (config.mode === 'practice') {
+      const feedback = document.getElementById('feedback-area');
+      feedback.style.visibility = 'visible';
+      
+      if (isCorrect) {
+        feedback.innerText = '🎉 Correct! Great job!';
+        feedback.className = 'feedback-box feedback-correct';
+      } else {
+        feedback.innerText = `❌ Oops! Correct Answer: ${q.correctAns}`;
+        feedback.className = 'feedback-box feedback-wrong';
+      }
+
+      document.getElementById('answer-input').disabled = true;
+      document.getElementById('btn-submit').style.display = 'none';
+      document.getElementById('btn-next').style.display = 'block';
+    } else {
+      nextQuestion();
+    }
+  }
+
+  function nextQuestion() {
+    currentQIndex++;
+    if (currentQIndex < 10) loadQuestion();
+    else endGame();
+  }
+
+  function endGame() {
+    if (timerInterval) clearInterval(timerInterval);
+
+    switchScreen('screen-results');
+    document.getElementById('result-name').innerText = `Great effort, ${config.studentName}!`;
+    document.getElementById('result-score').innerText = `${score} / 10`;
+
+    const timeContainer = document.getElementById('result-time-container');
+    const formattedT = formatTime(elapsedTime);
+    
+    if (config.mode === 'contest') {
+      timeContainer.style.display = 'block';
+      document.getElementById('result-time').innerText = formattedT;
+    } else {
+      timeContainer.style.display = 'none';
+    }
+
+    // Initialize Review Feature
+    setupReviewSection();
+
+    const saveStatus = document.getElementById('save-status');
+    saveStatus.innerText = 'Saving result to spreadsheet...';
+
+    const payload = {
+      userEmail: config.userEmail,
+      studentName: config.studentName,
+      scope: config.scope,
+      level: config.level,
+      mode: config.mode,
+      score: score,
+      timeSeconds: elapsedTime,
+      formattedTime: formattedT
+    };
+    
+    apiRun('saveGameResult', [payload])
+      .then(res => {
+        if (res && res.success) {
+          saveStatus.innerText = '✅ Saved to leaderboard!';
+        } else {
+          saveStatus.innerText = '⚠️ Save failed: ' + (res?.error || 'Check Spreadsheet ID');
+        }
+      })
+      .catch(err => {
+        console.error("Save error:", err);
+        saveStatus.innerText = '⚠️ Error saving score to spreadsheet.';
+      });
+  }
+
+  /* REVIEW FEATURE LOGIC */
+  function setupReviewSection() {
+    const mistakesCount = questions.filter(q => !q.isCorrect).length;
+    document.getElementById('badge-mistakes-count').innerText = mistakesCount;
+
+    const container = document.getElementById('review-container');
+    const btn = document.getElementById('btn-toggle-review');
+
+    // Auto-open review if mistakes exist
+    if (mistakesCount > 0) {
+      container.style.display = 'block';
+      btn.innerText = '🔼 Hide Question Review';
+      setReviewFilter('mistakes');
+    } else {
+      container.style.display = 'none';
+      btn.innerText = '🔍 Review Questions & Mistakes';
+      setReviewFilter('all');
+    }
+  }
+
+  function toggleReviewSection() {
+    const container = document.getElementById('review-container');
+    const btn = document.getElementById('btn-toggle-review');
+
+    if (container.style.display === 'none' || container.style.display === '') {
+      container.style.display = 'block';
+      btn.innerText = '🔼 Hide Question Review';
+    } else {
+      container.style.display = 'none';
+      btn.innerText = '🔍 Review Questions & Mistakes';
+    }
+  }
+
+  function setReviewFilter(filter) {
+    currentReviewFilter = filter;
+    document.getElementById('tab-rev-all').classList.toggle('active', filter === 'all');
+    document.getElementById('tab-rev-mistakes').classList.toggle('active', filter === 'mistakes');
+    renderReviewList();
+  }
+
+  function renderReviewList() {
+    const listEl = document.getElementById('review-list');
+    listEl.innerHTML = '';
+
+    const listToDisplay = questions.filter((q, idx) => {
+      q._origIndex = idx + 1;
+      if (currentReviewFilter === 'mistakes') {
+        return !q.isCorrect;
+      }
+      return true;
+    });
+
+    if (listToDisplay.length === 0) {
+      if (currentReviewFilter === 'mistakes') {
+        listEl.innerHTML = '<div style="text-align:center; padding:15px; font-weight:bold; color:#2E7D32;">🎉 Perfect Score! No mistakes made!</div>';
+      } else {
+        listEl.innerHTML = '<div style="text-align:center; padding:15px;">No questions found.</div>';
+      }
+      return;
+    }
+
+    listToDisplay.forEach(q => {
+      const card = document.createElement('div');
+      card.className = `review-card ${q.isCorrect ? 'review-correct' : 'review-wrong'}`;
+      
+      card.innerHTML = `
+        <div class="review-header">
+          <span>Q${q._origIndex}: Round <strong>${q.rawNum}</strong> to ${q.targetText}</span>
+          <span>${q.isCorrect ? '✅ Correct' : '❌ Incorrect'}</span>
+        </div>
+        <div class="review-details">
+          <span>Your Answer: <span class="${q.isCorrect ? 'text-green' : 'text-red'}">${q.userAns !== undefined ? q.userAns : 'None'}</span></span>
+          ${!q.isCorrect ? `<span>Correct Answer: <span class="text-green">${q.correctAns}</span></span>` : ''}
+        </div>
+      `;
+      listEl.appendChild(card);
+    });
+  }
+
+  // Fetch Leaderboard from Server
+  function showLeaderboard() {
+    switchScreen('screen-leaderboard');
+    const container = document.getElementById('lb-container');
+    const loading = document.getElementById('lb-loading');
+
+    container.style.display = 'none';
+    loading.style.display = 'block';
+
+    apiRun('getROLeaderboard')
+      .then(records => {
+        rawLeaderboardData = records || [];
+        loading.style.display = 'none';
+        container.style.display = 'block';
+        renderLeaderboardTable();
+      })
+      .catch(err => {
+        console.error("Leaderboard fetch error:", err);
+        loading.innerText = '⚠️ Failed to load Leaderboard data.';
+      });
+  }
+
+  // Render & Filter Leaderboard Client-Side
+  function renderLeaderboardTable() {
+    const tbody = document.getElementById('lb-body');
+    const filterVal = document.getElementById('lb-category-filter').value;
+    tbody.innerHTML = '';
+
+    let filtered = rawLeaderboardData.filter(r => {
+      if (filterVal === 'ALL') return true;
+      if (filterVal === 'Std 1') return r.standard === 'Std 1';
+      if (filterVal === 'Std 2') return r.standard === 'Std 2';
+      if (filterVal === 'Std 3') return r.standard === 'Std 3';
+      if (filterVal === 'Std 4') return r.standard === 'Std 4';
+      if (filterVal === 'Std 5 (Whole)') return r.standard === 'Std 5' && r.scope === 'Whole Numbers';
+      if (filterVal === 'Std 5 (Decimal)') return r.standard === 'Std 5' && r.scope === 'Decimals';
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">No records found for this category!</td></tr>';
+      return;
+    }
+
+    filtered.forEach((r, idx) => {
+      const row = document.createElement('tr');
+      const catLabel = (r.standard === 'Std 5') ? `${r.standard} (${r.scope === 'Decimals' ? 'Dec' : 'Whole'})` : r.standard;
+      
+      row.innerHTML = `
+        <td><strong>${idx + 1}</strong></td>
+        <td><strong>${r.name}</strong><br><small style="color:#666;">${r.email || 'Guest'}</small></td>
+        <td><small>${catLabel}</small></td>
+        <td><strong>${r.score}</strong>/10</td>
+        <td><small>${r.formattedTime}</small></td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  function resetApp() {
+    switchScreen('screen-setup');
+  }
+
+  function switchScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  // Keypress event for Enter key
+  document.getElementById('answer-input').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      const submitBtn = document.getElementById('btn-submit');
+      const nextBtn = document.getElementById('btn-next');
+      if (submitBtn.style.display !== 'none') submitAnswer();
+      else if (nextBtn.style.display !== 'none') nextQuestion();
+    }
+  });
+
+  // Initial defaults
+  selectScope('whole');
+  selectMode('practice');
+  
+  document.getElementById('btnBackToPortal').addEventListener('click', async function() {
+      const backBtn = document.getElementById('btnBackToPortal');
+      if (backBtn) {
+          backBtn.disabled = true;
+          backBtn.innerText = "Returning to GrowPlus...";
+      }
+  
+      try {
+          const baseUrl = await apiRun('getWebAppUrl');
+          window.location.href = baseUrl + "?page=app";
+      } catch (err) {
+          console.warn("Could not get Web App URL, redirecting locally...", err);
+          window.location.href = "index.html"; // Redirects to your main GitHub Pages portal
+      }
+  });
+</script>
+</body>
+</html>
