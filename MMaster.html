@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Styles & Animations */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Light green/blue tint suitable for learning */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .view-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .btn-pop:active {
+            animation: pop 0.2s ease-out;
+        }
+
+        /* Fraction formatting */
+        .frac {
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            letter-spacing: 0.01em;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .frac > span {
+            display: block;
+            padding: 0.1em;
+        }
+        .frac span.fdn { border-top: 2px solid currentcolor; }
+        .frac span.sup { display: none; }
+        
+        /* Hide scrollbar for clean app feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        /* Custom Modal */
+        #custom-modal { display: none; }
+        #custom-modal.flex { display: flex; animation: fadeIn 0.2s; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen pb-20 relative select-none">
+
+    <header id="main-header" class="bg-white shadow-sm sticky top-0 z-40 hidden rounded-b-2xl mb-4 max-w-lg mx-auto">
+        <div class="px-4 py-3 flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-extrabold text-blue-600 tracking-tight">📏 Measurement Master</h1>
+                <p class="text-xs text-gray-500 font-semibold mt-1">
+                    <span id="hdr-name">Name</span> | <span id="hdr-class">Class</span> | <span id="hdr-level" class="text-blue-500">Level</span>
+                </p>
+            </div>
+            <div class="text-right flex flex-col items-end">
+                <div class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-bold shadow-sm border border-yellow-200">
+                    ⭐ <span id="hdr-best">0/10</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Container (Constrained width for mobile feel on desktop) -->
+    <main class="max-w-lg mx-auto w-full px-4" id="app-container">
+        
+        <!-- VIEW: Registration -->
+        <section id="view-registration" class="view-section active pt-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">📐</div>
+                <h2 class="text-3xl font-extrabold text-blue-600">Welcome to<br>Measurement Master! 👋</h2>
+                <p class="text-gray-600 mt-2 font-medium">Let's become a measurement master!</p>
+            </div>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-xl border-t-4 border-blue-500">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="reg-email" placeholder="student@school.edu.my" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg transition-all">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Enter your name</label>
+                    <input type="text" id="reg-name" placeholder="E.g. Ahmad" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg transition-all" maxlength="20">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Select your class</label>
+                    <select id="reg-class" onchange="autoSelectLevelByClass()" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg transition-all bg-white">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Choose your level</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="relative flex cursor-pointer rounded-xl border bg-white p-3 shadow-sm hover:bg-gray-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-500">
+                            <input type="radio" id="lvl-year4" name="reg-level" value="year4" class="sr-only" checked>
+                            <span class="flex flex-1 items-center justify-center font-bold text-gray-900">🟢 Year 4</span>
+                        </label>
+                        <label class="relative flex cursor-pointer rounded-xl border bg-white p-3 shadow-sm hover:bg-gray-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 has-[:checked]:ring-1 has-[:checked]:ring-blue-500">
+                            <input type="radio" id="lvl-year5" name="reg-level" value="year5" class="sr-only">
+                            <span class="flex flex-1 items-center justify-center font-bold text-gray-900">🔵 Year 5</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="registerUser()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-colors btn-pop text-lg">
+                    Start Learning 🚀
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW: Home -->
+        <section id="view-home" class="view-section pt-2">
+            <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-3xl p-6 text-white shadow-lg mb-6">
+                <h2 class="text-2xl font-bold mb-1">👋 Hi, <span id="home-name">Student</span>!</h2>
+                <p class="opacity-90 text-sm font-medium">Ready to master measurements?</p>
+            </div>
+
+            <h3 class="text-lg font-bold text-gray-800 mb-3 px-1">Choose Your Activity</h3>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div onclick="navigate('view-learn')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all active:scale-95">
+                    <div class="text-4xl mb-2">📚</div>
+                    <h4 class="font-bold text-gray-800">Learn</h4>
+                    <p class="text-xs text-gray-500 mt-1">Read the notes</p>
+                </div>
+                <div onclick="navigate('view-infographic')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all active:scale-95">
+                    <div class="text-4xl mb-2">📊</div>
+                    <h4 class="font-bold text-gray-800">Visuals</h4>
+                    <p class="text-xs text-gray-500 mt-1">Conversion guides</p>
+                </div>
+                <div onclick="navigate('view-practice')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-md transition-all active:scale-95">
+                    <div class="text-4xl mb-2">🎯</div>
+                    <h4 class="font-bold text-gray-800">Practise</h4>
+                    <p class="text-xs text-gray-500 mt-1">Quick questions</p>
+                </div>
+                <div onclick="navigate('view-quiz')" class="bg-white p-4 rounded-2xl shadow-md border-2 border-blue-500 bg-blue-50 flex flex-col items-center justify-center text-center cursor-pointer hover:shadow-lg transition-all active:scale-95">
+                    <div class="text-4xl mb-2">📝</div>
+                    <h4 class="font-bold text-blue-700">Start Quiz</h4>
+                    <p class="text-xs text-blue-600/80 mt-1">Test your skills</p>
+                </div>
+            </div>
+            
+            <!-- Achievements -->
+            <h3 class="text-lg font-bold text-gray-800 mb-3 px-1 mt-6">My Achievements</h3>
+            <div id="achievements-container" class="flex gap-3 overflow-x-auto pb-2">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- VIEW: Learn -->
+        <section id="view-learn" class="view-section pt-2">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📚 Learning Notes</h2>
+            
+            <!-- Length -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-5">
+                <div class="bg-blue-500 text-white px-4 py-3 font-bold flex items-center">
+                    <span class="text-xl mr-2">📏</span> Length
+                </div>
+                <div class="p-4 space-y-4 text-sm text-gray-700">
+                    <div class="flex justify-around items-center bg-blue-50 rounded-xl p-3 font-bold">
+                        <div class="text-center">1 km<br>=<br>1000 m</div>
+                        <div class="text-center text-blue-300">|</div>
+                        <div class="text-center">1 m<br>=<br>100 cm</div>
+                        <div class="text-center text-blue-300">|</div>
+                        <div class="text-center">1 cm<br>=<br>10 mm</div>
+                    </div>
+                    <p class="font-medium text-gray-800">Rule of Thumb:</p>
+                    <ul class="list-disc pl-5 space-y-2">
+                        <li>Large unit to small unit (e.g. km &rarr; m) &rarr; <strong class="text-red-500">Multiply (&times;)</strong></li>
+                        <li>Small unit to large unit (e.g. cm &rarr; m) &rarr; <strong class="text-green-600">Divide (&divide;)</strong></li>
+                    </ul>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="font-bold text-gray-800 block mb-1">Example:</span>
+                        250 cm &rarr; m<br>
+                        Since 100 cm = 1 m, divide by 100.<br>
+                        250 &divide; 100 = <strong class="text-blue-600">2.5 m</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mass (Show based on level, but Year 4 learns basics in Y3, so keep visible) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-5">
+                <div class="bg-orange-500 text-white px-4 py-3 font-bold flex items-center">
+                    <span class="text-xl mr-2">⚖️</span> Mass
+                </div>
+                <div class="p-4 space-y-4 text-sm text-gray-700">
+                    <div class="flex justify-center items-center bg-orange-50 rounded-xl p-3 font-bold text-lg">
+                        1000 g = 1 kg
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="font-bold text-gray-800 block mb-1">Fraction Example:</span>
+                        <div class="mb-2">500 g &rarr; kg<br>
+                        500 &divide; 1000 = 0.5 kg = <strong class="text-orange-600">&frac12; kg</strong></div>
+                        
+                        <div>1250 g &rarr; kg<br>
+                        1250 &divide; 1000 = 1.25 kg = <strong class="text-orange-600">1 &frac14; kg</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Volume -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-5 pb-4">
+                <div class="bg-teal-500 text-white px-4 py-3 font-bold flex items-center">
+                    <span class="text-xl mr-2">🥤</span> Volume of Liquid
+                </div>
+                <div class="p-4 space-y-4 text-sm text-gray-700">
+                    <div class="flex justify-center items-center bg-teal-50 rounded-xl p-3 font-bold text-lg">
+                        1000 mL = 1 L
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                        <span class="font-bold text-gray-800 block mb-1">Decimal Example:</span>
+                        3 L 45 mL &rarr; L<br>
+                        45 &divide; 1000 = 0.045 L<br>
+                        3 L + 0.045 L = <strong class="text-teal-600">3.045 L</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: Infographic -->
+        <section id="view-infographic" class="view-section pt-2">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">📊 Visual Guides</h2>
+            <p class="text-sm text-gray-500 mb-6">Tap the arrows to see the math operation!</p>
+
+            <!-- Length Interactive -->
+            <div class="bg-white rounded-2xl shadow-md p-5 border-t-4 border-blue-500 mb-6 relative">
+                <h3 class="text-lg font-bold text-center mb-6">📏 Length Conversion</h3>
+                
+                <div class="flex flex-col items-center space-y-2 relative">
+                    <!-- km -->
+                    <div class="bg-blue-100 text-blue-800 font-bold px-6 py-3 rounded-full text-lg w-32 text-center shadow-sm z-10 relative">km</div>
+                    
+                    <!-- Arrows between km and m -->
+                    <div class="flex justify-between w-48 text-sm font-bold items-center my-1 relative">
+                        <button onclick="showInfo('km to m', '1 km = 1000 m<br>Multiply by 1000 (&times; 1000)')" class="bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 flex-1 mr-2 text-right btn-pop">&times; 1000 ⬇</button>
+                        <button onclick="showInfo('m to km', '1000 m = 1 km<br>Divide by 1000 (&divide; 1000)')" class="bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 flex-1 ml-2 text-left btn-pop">⬆ &divide; 1000</button>
+                    </div>
+
+                    <!-- m -->
+                    <div class="bg-green-100 text-green-800 font-bold px-6 py-3 rounded-full text-lg w-32 text-center shadow-sm z-10 relative">m</div>
+                    
+                    <!-- Arrows between m and cm -->
+                    <div class="flex justify-between w-48 text-sm font-bold items-center my-1">
+                        <button onclick="showInfo('m to cm', '1 m = 100 cm<br>Multiply by 100 (&times; 100)')" class="bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 flex-1 mr-2 text-right btn-pop">&times; 100 ⬇</button>
+                        <button onclick="showInfo('cm to m', '100 cm = 1 m<br>Divide by 100 (&divide; 100)')" class="bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 flex-1 ml-2 text-left btn-pop">⬆ &divide; 100</button>
+                    </div>
+
+                    <!-- cm -->
+                    <div class="bg-yellow-100 text-yellow-800 font-bold px-6 py-3 rounded-full text-lg w-32 text-center shadow-sm z-10 relative">cm</div>
+                    
+                    <!-- Arrows between cm and mm -->
+                    <div class="flex justify-between w-48 text-sm font-bold items-center my-1">
+                        <button onclick="showInfo('cm to mm', '1 cm = 10 mm<br>Multiply by 10 (&times; 10)')" class="bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 flex-1 mr-2 text-right btn-pop">&times; 10 ⬇</button>
+                        <button onclick="showInfo('mm to cm', '10 mm = 1 cm<br>Divide by 10 (&divide; 10)')" class="bg-gray-100 hover:bg-gray-200 rounded px-2 py-1 flex-1 ml-2 text-left btn-pop">⬆ &divide; 10</button>
+                    </div>
+
+                    <!-- mm -->
+                    <div class="bg-red-100 text-red-800 font-bold px-6 py-3 rounded-full text-lg w-32 text-center shadow-sm z-10 relative">mm</div>
+                </div>
+                
+                <!-- Info Display Area -->
+                <div id="info-display" class="mt-6 p-4 bg-gray-50 rounded-xl text-center hidden border border-gray-200 shadow-inner min-h-[80px] flex items-center justify-center font-medium">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <!-- Mass & Volume Summary -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-orange-50 rounded-xl p-4 text-center shadow-sm border border-orange-100">
+                    <div class="text-2xl mb-1">⚖️</div>
+                    <div class="font-bold text-orange-800 mb-2">Mass</div>
+                    <div class="text-xs space-y-1 text-gray-700">
+                        <div>kg &rarr; g (&times; 1000)</div>
+                        <div>g &rarr; kg (&divide; 1000)</div>
+                    </div>
+                </div>
+                <div class="bg-teal-50 rounded-xl p-4 text-center shadow-sm border border-teal-100">
+                    <div class="text-2xl mb-1">🥤</div>
+                    <div class="font-bold text-teal-800 mb-2">Volume</div>
+                    <div class="text-xs space-y-1 text-gray-700">
+                        <div>L &rarr; mL (&times; 1000)</div>
+                        <div>mL &rarr; L (&divide; 1000)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: Practice -->
+        <section id="view-practice" class="view-section pt-2">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">🎯 Quick Practice</h2>
+            <p class="text-sm text-gray-500 mb-4">Choose a topic to practice without pressure.</p>
+
+            <div class="mb-4">
+                <select id="practice-topic" onchange="resetPracticeArea()" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold bg-white shadow-sm">
+                    <!-- Options populated by JS based on Level -->
+                </select>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-md p-6 border border-gray-100 text-center relative overflow-hidden" id="practice-area">
+                <div id="practice-question" class="text-2xl font-extrabold text-gray-800 mb-6 py-4">
+                    Press "Start Practice"
+                </div>
+                
+                <div id="practice-options" class="grid grid-cols-1 gap-3 hidden">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <div id="practice-feedback" class="mt-6 p-4 rounded-xl hidden text-left font-medium">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <button id="btn-next-practice" onclick="generatePractice()" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow transition-colors btn-pop">
+                    Start Practice 🚀
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW: Quiz Intro -->
+        <section id="view-quiz" class="view-section pt-4">
+            <div class="bg-white p-6 rounded-2xl shadow-xl text-center border-t-8 border-blue-500">
+                <div class="text-6xl mb-4">📝</div>
+                <h2 class="text-2xl font-extrabold text-gray-800 mb-2">10-Question Quiz</h2>
+                <p class="text-gray-600 mb-6 font-medium">Test your skills! Every quiz has different questions. Are you ready?</p>
+                
+                <div class="bg-blue-50 rounded-xl p-4 mb-6 text-sm text-blue-800 text-left space-y-2 font-medium">
+                    <p>✅ 10 objective questions</p>
+                    <p>✅ Based on your level (<span class="lvl-display font-bold"></span>)</p>
+                    <p>✅ Score saved to Records</p>
+                </div>
+
+                <button onclick="startQuiz()" class="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-xl tracking-wide">
+                    START NOW
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW: Quiz Active -->
+        <section id="view-quiz-active" class="view-section pt-2">
+            <div class="flex justify-between items-center mb-3">
+                <span class="font-bold text-gray-500 text-sm">Question <span id="quiz-current-num">1</span> of 10</span>
+                <span class="font-bold text-blue-600 text-sm"><span id="quiz-progress-text">10%</span></span>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                <div id="quiz-progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6 flex flex-col min-h-[350px]">
+                <!-- Question -->
+                <div class="p-6 bg-blue-50/50 border-b border-gray-100 flex-grow flex items-center justify-center text-center">
+                    <h3 id="quiz-q-text" class="text-2xl font-extrabold text-gray-800 leading-tight">
+                        <!-- Question Text -->
+                    </h3>
+                </div>
+                
+                <!-- Options -->
+                <div id="quiz-options-container" class="p-4 grid grid-cols-1 gap-3">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            
+            <!-- Feedback Overlay (Hidden until answered) -->
+            <div id="quiz-feedback-area" class="hidden mb-6 p-4 rounded-2xl border">
+                <div class="flex items-start">
+                    <div id="quiz-feedback-icon" class="text-3xl mr-3"></div>
+                    <div>
+                        <h4 id="quiz-feedback-title" class="font-bold text-lg mb-1"></h4>
+                        <p id="quiz-feedback-desc" class="text-sm font-medium opacity-90"></p>
+                    </div>
+                </div>
+                <button id="btn-quiz-next" onclick="nextQuizQuestion()" class="mt-4 w-full font-bold py-3 rounded-xl shadow transition-colors active:scale-95 text-white bg-blue-600 hover:bg-blue-700">
+                    Next Question &rarr;
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW: Results -->
+        <section id="view-results" class="view-section pt-4">
+            <div class="bg-white p-6 rounded-3xl shadow-xl text-center relative overflow-hidden">
+                <!-- Confetti placeholder effect -->
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 via-yellow-400 to-blue-500"></div>
+                
+                <h2 class="text-3xl font-extrabold text-gray-800 mb-1">🎉 Quiz Complete!</h2>
+                <p class="text-gray-500 font-medium mb-6">Well done, <span class="res-name font-bold"></span>!</p>
+                
+                <div class="relative w-40 h-40 mx-auto mb-6 flex items-center justify-center">
+                    <svg class="w-full h-full transform -rotate-90 absolute" viewBox="0 0 36 36">
+                        <path class="text-gray-100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path id="res-circle" class="text-blue-500 drop-shadow-md transition-all duration-1000 ease-out" stroke-dasharray="0, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <div class="text-center absolute">
+                        <div id="res-score" class="text-4xl font-extrabold text-gray-800">8/10</div>
+                        <div id="res-pct" class="text-sm font-bold text-gray-500">80%</div>
+                    </div>
+                </div>
+
+                <div id="res-band" class="inline-block px-4 py-1 rounded-full text-sm font-bold mb-6">
+                    🌟 Excellent!
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-green-50 p-3 rounded-xl border border-green-100">
+                        <div class="text-green-600 font-bold text-sm">Correct</div>
+                        <div id="res-correct" class="text-2xl font-black text-green-700">8</div>
+                    </div>
+                    <div class="bg-red-50 p-3 rounded-xl border border-red-100">
+                        <div class="text-red-600 font-bold text-sm">Incorrect</div>
+                        <div id="res-incorrect" class="text-2xl font-black text-red-700">2</div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="showReview()" id="btn-review" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-3 rounded-xl transition-colors btn-pop hidden">
+                        🔍 Review Mistakes
+                    </button>
+                    <div class="flex gap-3">
+                        <button onclick="startQuiz()" class="flex-1 bg-white border-2 border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 btn-pop">
+                            Try Again
+                        </button>
+                        <button onclick="navigate('view-home')" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-blue-700 btn-pop">
+                            Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: Review -->
+        <section id="view-review" class="view-section pt-2">
+            <div class="flex items-center mb-4">
+                <button onclick="navigate('view-results')" class="text-blue-500 font-bold mr-3 text-xl">&larr;</button>
+                <h2 class="text-2xl font-bold text-gray-800">Review Mistakes</h2>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Review these questions to learn and improve!</p>
+            
+            <div id="review-list" class="space-y-4">
+                <!-- Populated by JS -->
+            </div>
+            
+            <button onclick="navigate('view-home')" class="mt-6 w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md btn-pop mb-10">
+                Back to Home
+            </button>
+        </section>
+
+        <!-- VIEW: Records -->
+        <section id="view-record" class="view-section pt-2">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">🏆 My Records</h2>
+            
+            <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-5 text-white shadow-md mb-6 flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-bold opacity-90 mb-1">Personal Best</div>
+                    <div class="text-3xl font-black" id="rec-best">0/10</div>
+                </div>
+                <div class="text-5xl">🏆</div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-700">Past Attempts</h3>
+                    <button onclick="clearRecords()" class="text-xs text-red-500 font-bold bg-red-50 px-2 py-1 rounded hover:bg-red-100">Clear</button>
+                </div>
+                <div id="record-list" class="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                    <!-- Populated by JS -->
+                    <div class="p-4 text-center text-sm text-gray-500 font-medium">No records yet. Take a quiz!</div>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 hidden">
+        <div class="max-w-lg mx-auto flex justify-between items-center px-2">
+            <button onclick="navigate('view-home')" class="nav-btn flex-1 py-3 flex flex-col items-center text-gray-400 hover:text-blue-500 transition-colors" data-target="view-home">
+                <span class="text-xl mb-1">🏠</span>
+                <span class="text-[10px] font-bold">Home</span>
+            </button>
+            <button onclick="navigate('view-learn')" class="nav-btn flex-1 py-3 flex flex-col items-center text-gray-400 hover:text-blue-500 transition-colors" data-target="view-learn">
+                <span class="text-xl mb-1">📚</span>
+                <span class="text-[10px] font-bold">Learn</span>
+            </button>
+            <button onclick="navigate('view-practice')" class="nav-btn flex-1 py-3 flex flex-col items-center text-gray-400 hover:text-blue-500 transition-colors" data-target="view-practice">
+                <span class="text-xl mb-1">🎯</span>
+                <span class="text-[10px] font-bold">Practice</span>
+            </button>
+            <button onclick="navigate('view-quiz')" class="nav-btn flex-1 py-3 flex flex-col items-center text-gray-400 hover:text-blue-500 transition-colors" data-target="view-quiz">
+                <span class="text-xl mb-1">📝</span>
+                <span class="text-[10px] font-bold">Quiz</span>
+            </button>
+            <button onclick="navigate('view-record')" class="nav-btn flex-1 py-3 flex flex-col items-center text-gray-400 hover:text-blue-500 transition-colors" data-target="view-record">
+                <span class="text-xl mb-1">🏆</span>
+                <span class="text-[10px] font-bold">Record</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Custom Modal/Alert System -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/50 z-[100] items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center">
+            <div id="modal-icon" class="text-4xl mb-3">⚠️</div>
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-2">Notice</h3>
+            <p id="modal-msg" class="text-sm text-gray-600 mb-6 font-medium">Message goes here.</p>
+            <div id="modal-actions" class="flex gap-3 justify-center">
+                <button onclick="closeModal()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl btn-pop">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* === CONFIGURATION & DATA === */
+        const TEACHER_CLASSES = [
+            "4 ANGGERIK", "4 MAWAR", "4 RAYA", "4 SEROJA", "4 TULIP",
+            "5 ANGGERIK", "5 MAWAR", "5 RAYA", "5 SEROJA", "5 TULIP"
+        ];
+        
+        const BADGES = {
+            FIRST_QUIZ: { id: 'first_quiz', icon: '🌱', title: 'First Quiz' },
+            FIVE_CORRECT: { id: 'five_correct', icon: '⭐', title: '5 Correct' },
+            PERFECT: { id: 'perfect', icon: '🌟', title: '10/10 Master' },
+            STREAK: { id: 'streak', icon: '🔥', title: '3-Day Streak' }
+        };
+
+        /* === STATE MANAGEMENT === */
+        let AppState = {
+            user: {
+                email: '',
+                name: '',
+                className: '',
+                level: 'year4' // 'year4' or 'year5'
+            },
+            stats: {
+                bestScore: 0,
+                streak: 0,
+                lastPlayDate: null
+            },
+            records: [],
+            achievements: [],
+            
+            // Temporary active quiz state
+            activeQuiz: {
+                questions: [],
+                currentIndex: 0,
+                score: 0,
+                mistakes: []
+            }
+        };
+
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyPfH3XrCaE3_oGa1UqdlqNpfgn3YFTLxa9917ursl5uGb7RGDJAL3j0_3hqsX03fvcRw/exec";
+
+        async function apiRun(funcName, args = []) {
+            const response = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ func: funcName, args: args }),
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8' 
+                },
+                redirect: 'follow'
+            });
+            
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.error);
+            }
+            return result.data;
+        }
+      
+        // Initialize App
+        function initApp() {
+            // Populate Class Dropdown
+            const classSelect = document.getElementById('reg-class');
+            classSelect.innerHTML = TEACHER_CLASSES.map(c => `<option value="${c}">${c}</option>`).join('');
+        
+            loadState();
+            
+            // Track email from Local storage
+            let loggedInEmail = "INSERT_USER_EMAIL_HERE";
+            if (loggedInEmail === "" || loggedInEmail === "INSERT_USER_EMAIL_HERE" || loggedInEmail === "Guest") {
+                loggedInEmail = localStorage.getItem('loggedInUserEmail') || null;
+            }
+        
+            // MAIN CONTROL FLOW
+            if (loggedInEmail) {
+                AppState.user.email = loggedInEmail;
+                document.getElementById('reg-email').value = loggedInEmail;
+                
+                // Fetch user details from Google Sheets via Web App API
+                apiRun('getUserData', [loggedInEmail])
+                    .then(userData => {
+                        if (userData && userData.fullName) {
+                            onUserFetched(userData);
+                        } else if (AppState.user.name) {
+                            // Fallback to local storage if user not found in Sheet
+                            onUserFetched({
+                                email: AppState.user.email,
+                                fullName: AppState.user.name,
+                                className: AppState.user.className,
+                                level: AppState.user.level
+                            });
+                        } else {
+                            navigate('view-registration');
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Error getting user data from sheet:", err);
+                        // Fallback to saved local state on network error
+                        if (AppState.user.name) {
+                            onUserFetched({
+                                email: AppState.user.email,
+                                fullName: AppState.user.name,
+                                className: AppState.user.className,
+                                level: AppState.user.level
+                            });
+                        } else {
+                            navigate('view-registration');
+                        }
+                    });
+        
+            } else if (AppState.user.name) {
+                // No email logged in, but user profile exists in local storage
+                updateUI();
+                navigate('view-home');
+                document.getElementById('main-header').classList.remove('hidden');
+                document.getElementById('bottom-nav').classList.remove('hidden');
+        
+            } else {
+                // Brand new user with no email or saved profile
+                navigate('view-registration');
+            }
+        }
+
+        function autoSelectLevelByClass() {
+            const selectedClass = document.getElementById('reg-class').value;
+            if (selectedClass.startsWith('5')) {
+                document.getElementById('lvl-year5').checked = true;
+            } else {
+                document.getElementById('lvl-year4').checked = true;
+            }
+        }
+
+        function onUserFetched(userData) {
+            if (userData && userData.fullName) {
+                AppState.user.email = userData.email || AppState.user.email;
+                AppState.user.name = userData.fullName;
+                AppState.user.className = userData.className;
+                
+                // Auto-set Year 5 level for classes starting with 5 (e.g. 5 MAWAR, 5 RAYA)
+                if (userData.className && userData.className.startsWith("5")) {
+                    AppState.user.level = 'year5';
+                } else {
+                    AppState.user.level = userData.level || 'year4';
+                }
+                
+                saveState();
+                updateUI();
+                fetchUserRecordsFromSheet();
+                navigate('view-home');
+                document.getElementById('main-header').classList.remove('hidden');
+                document.getElementById('bottom-nav').classList.remove('hidden');
+            } else {
+                navigate('view-registration');
+            }
+        }
+
+        function registerUser() {
+            const email = document.getElementById('reg-email').value.trim();
+            const name = document.getElementById('reg-name').value.trim();
+            const cls = document.getElementById('reg-class').value;
+            let lvl = document.querySelector('input[name="reg-level"]:checked').value;
+
+            // Automatically override to year5 if class starts with 5
+            if (cls.startsWith('5')) {
+                lvl = 'year5';
+            }
+
+            if (!name) {
+                showModal('Oops!', 'Please enter your name.', '⚠️');
+                return;
+            }
+
+            AppState.user.email = email || 'Guest';
+            AppState.user.name = name;
+            AppState.user.className = cls;
+            AppState.user.level = lvl;
+            
+            if (email) {
+                localStorage.setItem('loggedInUserEmail', email);
+            }
+            
+            saveState();
+            
+            // Sync user to Google Sheet
+            apiRun('registerOrUpdateUser', [{
+                email: AppState.user.email,
+                fullName: AppState.user.name,
+                className: AppState.user.className,
+                level: AppState.user.level
+            }])
+            .then(res => console.log("User synced successfully:", res))
+            .catch(err => console.error("Error syncing user:", err));
+            
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            navigate('view-home');
+        }
+
+        function finishQuiz() {
+            const score = AppState.activeQuiz.score;
+            const pct = (score / 10) * 100;
+            const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            
+            // Local record update
+            AppState.records.unshift({ date: dateStr, score: score, percentage: pct });
+            
+            // Best score
+            if (score > AppState.stats.bestScore) {
+                AppState.stats.bestScore = score;
+            }
+
+            updateStreak();
+            checkAchievements(score);
+            saveState();
+            
+            // Sync quiz result to MeasurementRecord Google Sheet
+            apiRun('saveMeasurementRecord', [{
+                email: AppState.user.email,
+                fullName: AppState.user.name,
+                className: AppState.user.className,
+                level: AppState.user.level,
+                score: score,
+                total: 10,
+                percentage: pct,
+                date: new Date().toLocaleString()
+            }])
+            .then(res => {
+                console.log("GAS Save Success:", res);
+            })
+            .catch(err => {
+                console.error("GAS Save Failure:", err);
+                showModal("Back-End Notice", "Your quiz score was saved locally, but failed to sync to Google Sheets: " + err.message, "⚠️");
+            });
+            
+            // Render Results View
+            document.querySelectorAll('.res-name').forEach(el => el.innerText = AppState.user.name);
+            document.getElementById('res-score').innerText = `${score}/10`;
+            document.getElementById('res-pct').innerText = `${pct}%`;
+            document.getElementById('res-correct').innerText = score;
+            document.getElementById('res-incorrect').innerText = 10 - score;
+            
+            // Circle animation
+            setTimeout(() => {
+                document.getElementById('res-circle').style.strokeDasharray = `${pct}, 100`;
+                let color = pct >= 90 ? '#10b981' : (pct >= 70 ? '#3b82f6' : (pct >= 50 ? '#f59e0b' : '#ef4444'));
+                document.getElementById('res-circle').style.color = color;
+            }, 100);
+            
+            const bandEl = document.getElementById('res-band');
+            if (pct >= 90) { bandEl.innerHTML = '🌟 Excellent!'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-green-100 text-green-700'; }
+            else if (pct >= 70) { bandEl.innerHTML = '👍 Good Job!'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-blue-100 text-blue-700'; }
+            else if (pct >= 50) { bandEl.innerHTML = '💪 Keep Practising!'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-yellow-100 text-yellow-700'; }
+            else { bandEl.innerHTML = '📚 Let\'s Learn Again'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-red-100 text-red-700'; }
+            
+            if (AppState.activeQuiz.mistakes.length > 0) {
+                document.getElementById('btn-review').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-review').classList.add('hidden');
+            }
+
+            navigate('view-results');
+        }
+
+        function fetchUserRecordsFromSheet() {
+            if (AppState.user.email) {
+                apiRun('getUserRecords', [AppState.user.email])
+                    .then((records) => {
+                        if (records && records.length > 0) {
+                            AppState.records = records.map(r => ({
+                                date: r.date,
+                                score: r.score,
+                                percentage: r.percentage
+                            }));
+                            renderRecords();
+                        }
+                    })
+                    .catch(err => console.error("Error fetching records:", err));
+            }
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('measurementMasterData');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Merge saved state to handle older versions safely
+                    AppState = { ...AppState, ...parsed, user: {...AppState.user, ...parsed.user}, stats: {...AppState.stats, ...parsed.stats} };
+                } catch(e) {
+                    console.error("Failed to parse local storage", e);
+                }
+            }
+            checkStreak();
+        }
+
+        function saveState() {
+            localStorage.setItem('measurementMasterData', JSON.stringify(AppState));
+            updateUI();
+        }
+
+        function updateUI() {
+            // Header
+            document.getElementById('hdr-name').innerText = AppState.user.name;
+            document.getElementById('hdr-class').innerText = AppState.user.className;
+            document.getElementById('hdr-level').innerText = AppState.user.level === 'year4' ? 'Year 4' : 'Year 5';
+            document.getElementById('hdr-best').innerText = `${AppState.stats.bestScore}/10`;
+            
+            // Home
+            document.getElementById('home-name').innerText = AppState.user.name;
+            const streakEl = document.getElementById('home-streak');
+            if (streakEl) streakEl.innerText = AppState.stats.streak;
+            
+            // Populate multiple level displays
+            document.querySelectorAll('.lvl-display').forEach(el => {
+                el.innerText = AppState.user.level === 'year4' ? 'Year 4' : 'Year 5';
+            });
+            
+            // Populate Practice Topics based on level
+            const pSelect = document.getElementById('practice-topic');
+            let opts = '';
+            if (AppState.user.level === 'year4') {
+                opts = `
+                    <option value="y4_mm_cm">Length: mm ↔ cm</option>
+                    <option value="y4_m_km">Length: m ↔ km</option>
+                    <option value="y4_mixed">Mixed Year 4</option>
+                `;
+            } else {
+                opts = `
+                    <option value="y5_len_dec">Length (Decimals)</option>
+                    <option value="y5_len_frac">Length (Fractions)</option>
+                    <option value="y5_mass">Mass (g ↔ kg)</option>
+                    <option value="y5_vol">Volume (mL ↔ L)</option>
+                    <option value="y5_mixed">Mixed Year 5</option>
+                `;
+            }
+            // Only update if changed to avoid resetting selection unnecessarily
+            if(pSelect.innerHTML.trim() !== opts.trim()) pSelect.innerHTML = opts;
+
+            renderAchievements();
+            renderRecords();
+        }
+
+        function registerUser() {
+            const name = document.getElementById('reg-name').value.trim();
+            const cls = document.getElementById('reg-class').value;
+            const lvl = document.querySelector('input[name="reg-level"]:checked').value;
+
+            if (!name) {
+                showModal('Oops!', 'Please enter your name.', '⚠️');
+                return;
+            }
+
+            AppState.user.name = name;
+            AppState.user.className = cls;
+            AppState.user.level = lvl;
+            
+            saveState();
+            
+            document.getElementById('main-header').classList.remove('hidden');
+            document.getElementById('bottom-nav').classList.remove('hidden');
+            navigate('view-home');
+        }
+
+        function navigate(viewId) {
+            // Warn if exiting active quiz
+            if (document.getElementById('view-quiz-active').classList.contains('active') && viewId !== 'view-results' && viewId !== 'view-quiz-active') {
+                showConfirm('End Quiz?', 'Your current quiz progress will be lost.', () => {
+                    executeNavigation(viewId);
+                });
+                return;
+            }
+            executeNavigation(viewId);
+        }
+
+        function executeNavigation(viewId) {
+            // Hide all views
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show target view
+            document.getElementById(viewId).classList.add('active');
+            
+            // Update bottom nav active state visually
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-blue-600');
+                btn.classList.add('text-gray-400');
+                if (btn.getAttribute('data-target') === viewId) {
+                    btn.classList.remove('text-gray-400');
+                    btn.classList.add('text-blue-600');
+                }
+            });
+
+            // Specific view actions
+            if (viewId === 'view-practice') {
+                resetPracticeArea();
+            }
+            
+            window.scrollTo(0,0);
+        }
+
+        /* === CUSTOM MODAL SYSTEM === */
+        function showModal(title, msg, icon = '⚠️') {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-msg').innerHTML = msg;
+            document.getElementById('modal-icon').innerText = icon;
+            document.getElementById('modal-actions').innerHTML = `<button onclick="closeModal()" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl btn-pop">OK</button>`;
+            document.getElementById('custom-modal').classList.add('flex');
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function showConfirm(title, msg, onConfirm) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-msg').innerHTML = msg;
+            document.getElementById('modal-icon').innerText = '❓';
+            
+            const btnCancel = `<button onclick="closeModal()" class="flex-1 bg-gray-200 text-gray-700 font-bold py-3 rounded-xl btn-pop">Cancel</button>`;
+            const btnOk = `<button id="confirm-ok-btn" class="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl btn-pop">Yes, Exit</button>`;
+            
+            document.getElementById('modal-actions').innerHTML = btnCancel + btnOk;
+            document.getElementById('confirm-ok-btn').onclick = () => {
+                closeModal();
+                onConfirm();
+            };
+            
+            document.getElementById('custom-modal').classList.add('flex');
+            document.getElementById('custom-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('custom-modal').classList.remove('flex');
+            document.getElementById('custom-modal').classList.add('hidden');
+        }
+
+        // Learn/Infographics Interaction
+        function showInfo(title, calcHtml) {
+            const display = document.getElementById('info-display');
+            display.innerHTML = `<span class="text-blue-700 font-bold block mb-1 text-sm">${title.toUpperCase()}</span>${calcHtml}`;
+            display.classList.remove('hidden');
+            display.classList.add('animate-[pop_0.3s_ease-out]');
+            setTimeout(() => display.classList.remove('animate-[pop_0.3s_ease-out]'), 300);
+        }
+
+        
+        // Helper to format fraction strings into HTML
+        function fmtFrac(num, den, whole = 0) {
+            const f = `<div class="frac"><span class="num">${num}</span><span class="fdn">${den}</span></div>`;
+            return whole > 0 ? `${whole} ${f}` : f;
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Array of common Year 5 valid fraction multipliers (e.g. quarters, halves, fifths, tenths)
+        const y5Fractions = [
+            {dec: 0.25, html: fmtFrac(1,4)},
+            {dec: 0.5,  html: fmtFrac(1,2)},
+            {dec: 0.75, html: fmtFrac(3,4)},
+            {dec: 0.2,  html: fmtFrac(1,5)},
+            {dec: 0.4,  html: fmtFrac(2,5)},
+            {dec: 0.6,  html: fmtFrac(3,5)},
+            {dec: 0.8,  html: fmtFrac(4,5)},
+            {dec: 0.1,  html: fmtFrac(1,10)}
+        ];
+
+        /* ========================================================
+           GENERATORS: Each returns {q: String, opts: [{text, val}], correctVal, exp: String}
+           ======================================================== */
+           
+        // --- YEAR 4 (Whole numbers mostly) ---
+        function genY4_mm_cm() {
+            // cm to mm or mm to cm
+            const isCmToMm = Math.random() > 0.5;
+            if (isCmToMm) {
+                let cm = getRandomInt(2, 50);
+                let mm = cm * 10;
+                let wrong = [cm*100, cm, mm*10, cm+10];
+                return createQObj(`${cm} cm = ? mm`, mm + " mm", wrong.map(w=>w+" mm"), `1 cm = 10 mm. Therefore, ${cm} &times; 10 = ${mm} mm.`);
+            } else {
+                let cm = getRandomInt(3, 80);
+                let mm = cm * 10;
+                let wrong = [cm*10, cm/10, mm/100, cm+10];
+                return createQObj(`${mm} mm = ? cm`, cm + " cm", wrong.map(w=>w+" cm"), `10 mm = 1 cm. Therefore, ${mm} &divide; 10 = ${cm} cm.`);
+            }
+        }
+
+        function genY4_m_km() {
+            const isKmToM = Math.random() > 0.5;
+            if (isKmToM) {
+                let km = getRandomInt(2, 20);
+                let m = km * 1000;
+                let wrong = [km*100, km*10, m+1000, km*10000];
+                return createQObj(`${km} km = ? m`, m + " m", wrong.map(w=>w+" m"), `1 km = 1000 m. Therefore, ${km} &times; 1000 = ${m} m.`);
+            } else {
+                let km = getRandomInt(3, 40);
+                let m = km * 1000;
+                let wrong = [km*100, km*10, m/10, km+1];
+                return createQObj(`${m} m = ? km`, km + " km", wrong.map(w=>w+" km"), `1000 m = 1 km. Therefore, ${m} &divide; 1000 = ${km} km.`);
+            }
+        }
+
+        // --- YEAR 5 (Decimals & Fractions) ---
+        function genY5_mass_dec() {
+            // g to kg (decimal)
+            let values = [250, 500, 750, 1200, 1500, 2400, 350, 45, 1050];
+            let g = values[Math.floor(Math.random()*values.length)];
+            let kg = g / 1000;
+            let wrong = [g/10, g/100, g*10, kg+1];
+            return createQObj(`${g} g = ? kg`, kg + " kg", wrong.map(w=>w+" kg"), `1000 g = 1 kg. Therefore, ${g} &divide; 1000 = ${kg} kg.`);
+        }
+
+        function genY5_mass_frac() {
+            // fraction kg to g OR g to fraction kg
+            let fracObj = y5Fractions[Math.floor(Math.random()*y5Fractions.length)];
+            let whole = Math.random() > 0.5 ? getRandomInt(1, 3) : 0;
+            let totalKgDec = whole + fracObj.dec;
+            let totalG = totalKgDec * 1000;
+            
+            const isFracToG = Math.random() > 0.5;
+            if (isFracToG) {
+                let fracStr = whole > 0 ? `${whole} ${fracObj.html}` : fracObj.html;
+                let wrong = [totalG/10, totalG*10, totalG+50, totalG-100];
+                return createQObj(`${fracStr} kg = ? g`, totalG + " g", wrong.map(w=>w+" g"), `1 kg = 1000 g.<br>${fracStr} kg = ${totalKgDec} &times; 1000 = ${totalG} g.`);
+            } else {
+                let wrongDec = [totalKgDec*10, totalKgDec/10, totalKgDec+1, totalKgDec+0.5];
+                return createQObj(`${totalG} g = ? kg`, totalKgDec + " kg", wrongDec.map(w=>w+" kg"), `1000 g = 1 kg. ${totalG} &divide; 1000 = ${totalKgDec} kg.`);
+            }
+        }
+
+        function genY5_vol_dec() {
+            let values = [1250, 2500, 3050, 4005, 50, 75];
+            let ml = values[Math.floor(Math.random()*values.length)];
+            let l = ml / 1000;
+            let wrong = [ml/100, ml/10, l+1, l*10];
+            return createQObj(`${ml} mL = ? L`, l + " L", wrong.map(w=>w+" L"), `1000 mL = 1 L. Therefore, ${ml} &divide; 1000 = ${l} L.`);
+        }
+
+        function genY5_vol_frac() {
+            let fracObj = y5Fractions[Math.floor(Math.random()*y5Fractions.length)];
+            let whole = Math.random() > 0.5 ? getRandomInt(1, 3) : 0;
+            let totalLDec = whole + fracObj.dec;
+            let totalMl = totalLDec * 1000;
+            
+            let fracStr = whole > 0 ? `${whole} ${fracObj.html}` : fracObj.html;
+            let wrong = [totalMl/10, totalMl*10, totalMl+100, totalMl-100].filter(w => w > 0);
+            return createQObj(`${fracStr} L = ? mL`, totalMl + " mL", wrong.map(w=>w+" mL"), `1 L = 1000 mL.<br>${fracStr} L = ${totalLDec} &times; 1000 = ${totalMl} mL.`);
+        }
+
+        function genY5_len_dec() {
+            // cm to m or m to km
+            let type = Math.random() > 0.5 ? 'cm_m' : 'm_km';
+            if (type === 'cm_m') {
+                let cm = getRandomInt(5, 450);
+                let m = cm / 100;
+                let wrong = [cm/10, cm/1000, m+1, cm];
+                return createQObj(`${cm} cm = ? m`, m + " m", wrong.map(w=>w+" m"), `100 cm = 1 m. Therefore, ${cm} &divide; 100 = ${m} m.`);
+            } else {
+                let m = getRandomInt(150, 3500);
+                let km = m / 1000;
+                let wrong = [m/100, m/10, km+1, m*10];
+                return createQObj(`${m} m = ? km`, km + " km", wrong.map(w=>w+" km"), `1000 m = 1 km. Therefore, ${m} &divide; 1000 = ${km} km.`);
+            }
+        }
+
+        function genY5_len_frac() {
+            let fracObj = y5Fractions[Math.floor(Math.random()*y5Fractions.length)];
+            let whole = Math.random() > 0.5 ? getRandomInt(1, 3) : 0;
+            let type = Math.random() > 0.5 ? 'km_m' : 'm_cm';
+            
+            if (type === 'km_m') {
+                let totalKmDec = whole + fracObj.dec;
+                let totalM = totalKmDec * 1000;
+                let fracStr = whole > 0 ? `${whole} ${fracObj.html}` : fracObj.html;
+                let wrong = [totalM/10, totalM*10, totalM+50, totalM-100].filter(w => w > 0);
+                return createQObj(`${fracStr} km = ? m`, totalM + " m", wrong.map(w=>w+" m"), `1 km = 1000 m.<br>${fracStr} km = ${totalKmDec} &times; 1000 = ${totalM} m.`);
+            } else {
+                let totalMDec = whole + fracObj.dec;
+                let totalCm = totalMDec * 100;
+                let fracStr = whole > 0 ? `${whole} ${fracObj.html}` : fracObj.html;
+                let wrong = [totalCm*10, totalCm/10, totalCm+50, totalCm-20].filter(w => w > 0);
+                return createQObj(`${fracStr} m = ? cm`, totalCm + " cm", wrong.map(w=>w+" cm"), `1 m = 100 cm.<br>${fracStr} m = ${totalMDec} &times; 100 = ${totalCm} cm.`);
+            }
+        }
+        
+        function genWordProblem(level) {
+            if (level === 'year4') {
+                let m = getRandomInt(2, 9) * 1000;
+                let km = m/1000;
+                let items = ["Ali cycles", "A road is", "The distance is"];
+                let item = items[Math.floor(Math.random()*items.length)];
+                let wrong = [km*10, km*100, km/10, km+2];
+                return createQObj(`${item} ${m} m. What is this distance in km?`, km + " km", wrong.map(w=>w+" km"), `Divide by 1000: ${m} &divide; 1000 = ${km} km.`);
+            } else {
+                let ml = [1500, 2500, 500][Math.floor(Math.random()*3)];
+                let l = ml/1000;
+                let wrong = [l*10, l/10, l+1, l+0.5];
+                return createQObj(`A bottle contains ${ml} mL of water. How many litres is this?`, l + " L", wrong.map(w=>w+" L"), `1000 mL = 1 L. ${ml} &divide; 1000 = ${l} L.`);
+            }
+        }
+
+        // Helper to assemble question object and guarantee unique options
+        function createQObj(qText, correctTxt, wrongArr, expHtml) {
+            let optsSet = new Set([correctTxt]);
+            let wIdx = 0;
+            // Add wrong answers until we have 4 unique options
+            while(optsSet.size < 4 && wIdx < wrongArr.length) {
+                // Fix floating point quirks in display
+                let w = wrongArr[wIdx];
+                if(typeof w === 'string' && w.includes('.')) {
+                    let parts = w.split(' ');
+                    let num = parseFloat(parts[0]);
+                    w = Number(num.toFixed(3)) + (parts[1] ? ' ' + parts[1] : '');
+                }
+                optsSet.add(w);
+                wIdx++;
+            }
+            // Fallbacks if not enough unique (rare but safe)
+            let fallbackNum = 1.11;
+            while(optsSet.size < 4) {
+                 optsSet.add(fallbackNum + " (err)");
+                 fallbackNum += 1;
+            }
+
+            let finalOpts = Array.from(optsSet).map(text => ({ text, isCorrect: text === correctTxt }));
+            finalOpts = shuffle(finalOpts);
+
+            return {
+                q: qText,
+                opts: finalOpts,
+                correctTxt: correctTxt,
+                exp: expHtml,
+                sig: qText // Signature to prevent duplicate questions
+            };
+        }
+
+        
+        function generateQuizSet(level) {
+            let pool = [];
+            let signatures = new Set();
+            let safety = 0;
+            
+            while(pool.length < 10 && safety < 100) {
+                let qObj;
+                safety++;
+                
+                if (level === 'year4') {
+                    let r = Math.random();
+                    if (r < 0.4) qObj = genY4_mm_cm();
+                    else if (r < 0.8) qObj = genY4_m_km();
+                    else qObj = genWordProblem('year4');
+                } else {
+                    let r = Math.random();
+                    if (r < 0.2) qObj = genY5_len_dec();
+                    else if (r < 0.35) qObj = genY5_len_frac();
+                    else if (r < 0.5) qObj = genY5_mass_dec();
+                    else if (r < 0.65) qObj = genY5_mass_frac();
+                    else if (r < 0.8) qObj = Math.random() > 0.5 ? genY5_vol_dec() : genY5_vol_frac();
+                    else qObj = genWordProblem('year5');
+                }
+
+                if (!signatures.has(qObj.sig)) {
+                    signatures.add(qObj.sig);
+                    pool.push(qObj);
+                }
+            }
+            return pool;
+        }
+
+        function startQuiz() {
+            AppState.activeQuiz.questions = generateQuizSet(AppState.user.level);
+            AppState.activeQuiz.currentIndex = 0;
+            AppState.activeQuiz.score = 0;
+            AppState.activeQuiz.mistakes = [];
+            
+            navigate('view-quiz-active');
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const idx = AppState.activeQuiz.currentIndex;
+            const qData = AppState.activeQuiz.questions[idx];
+            
+            // Progress
+            document.getElementById('quiz-current-num').innerText = idx + 1;
+            let pct = ((idx) / 10) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
+            document.getElementById('quiz-progress-text').innerText = `${Math.round(pct)}%`;
+            
+            // Text
+            document.getElementById('quiz-q-text').innerHTML = qData.q;
+            
+            // Options
+            const optsContainer = document.getElementById('quiz-options-container');
+            optsContainer.innerHTML = '';
+            
+            const letters = ['A', 'B', 'C', 'D'];
+            
+            qData.opts.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-opt-btn w-full bg-white border-2 border-gray-200 text-left p-4 rounded-xl font-bold text-gray-700 hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center shadow-sm active:scale-95';
+                btn.innerHTML = `<span class="bg-gray-100 text-gray-500 rounded-lg w-8 h-8 flex items-center justify-center mr-3 font-black">${letters[i]}</span> <span class="flex-grow text-lg">${opt.text}</span>`;
+                
+                btn.onclick = () => handleQuizAnswer(btn, opt);
+                optsContainer.appendChild(btn);
+            });
+            
+            // Reset feedback
+            document.getElementById('quiz-feedback-area').classList.add('hidden');
+        }
+
+        function handleQuizAnswer(selectedBtn, optData) {
+            // Disable all buttons
+            const buttons = document.querySelectorAll('.quiz-opt-btn');
+            buttons.forEach(b => {
+                b.onclick = null;
+                b.classList.remove('hover:border-blue-500', 'hover:bg-blue-50', 'active:scale-95');
+                b.classList.add('opacity-50', 'cursor-default');
+            });
+            
+            const qData = AppState.activeQuiz.questions[AppState.activeQuiz.currentIndex];
+            const isCorrect = optData.isCorrect;
+            
+            // Styling the selected
+            selectedBtn.classList.remove('opacity-50', 'border-gray-200');
+            
+            const feedbackArea = document.getElementById('quiz-feedback-area');
+            const fbTitle = document.getElementById('quiz-feedback-title');
+            const fbDesc = document.getElementById('quiz-feedback-desc');
+            const fbIcon = document.getElementById('quiz-feedback-icon');
+            const nextBtn = document.getElementById('btn-quiz-next');
+            
+            if (isCorrect) {
+                AppState.activeQuiz.score++;
+                selectedBtn.classList.add('border-green-500', 'bg-green-50', 'text-green-800');
+                
+                feedbackArea.className = 'mt-4 p-4 rounded-2xl border bg-green-50 border-green-200 block animate-[fadeIn_0.3s_ease-out]';
+                fbIcon.innerText = '✅';
+                fbTitle.innerText = 'Correct!';
+                fbTitle.className = 'font-bold text-lg mb-1 text-green-700';
+                fbDesc.innerHTML = qData.exp;
+                fbDesc.className = 'text-sm font-medium text-green-800 opacity-90';
+                if (nextBtn) nextBtn.className = 'mt-4 w-full font-bold py-3 rounded-xl shadow transition-colors active:scale-95 text-white bg-green-600 hover:bg-green-700';
+            } else {
+                AppState.activeQuiz.mistakes.push({
+                    q: qData.q,
+                    selected: optData.text,
+                    correct: qData.correctTxt,
+                    exp: qData.exp
+                });
+                
+                selectedBtn.classList.add('border-red-500', 'bg-red-50', 'text-red-800');
+                
+                // Highlight correct answer
+                buttons.forEach(b => {
+                    if(b.innerHTML.includes(qData.correctTxt)) {
+                        b.classList.remove('opacity-50');
+                        b.classList.add('border-green-500', 'border-2', 'ring-2', 'ring-green-200');
+                    }
+                });
+
+                feedbackArea.className = 'mt-4 p-4 rounded-2xl border bg-red-50 border-red-200 block animate-[fadeIn_0.3s_ease-out]';
+                fbIcon.innerText = '❌';
+                fbTitle.innerText = 'Not quite.';
+                fbTitle.className = 'font-bold text-lg mb-1 text-red-700';
+                fbDesc.innerHTML = `Correct answer: <strong>${qData.correctTxt}</strong><br><br>${qData.exp}`;
+                fbDesc.className = 'text-sm font-medium text-red-800 opacity-90';
+                if (nextBtn) nextBtn.className = 'mt-4 w-full font-bold py-3 rounded-xl shadow transition-colors active:scale-95 text-white bg-red-600 hover:bg-red-700';
+            }
+            
+            document.getElementById('quiz-progress-bar').style.width = `${((AppState.activeQuiz.currentIndex + 1) / 10) * 100}%`;
+            document.getElementById('quiz-progress-text').innerText = `${((AppState.activeQuiz.currentIndex + 1) / 10) * 100}%`;
+        }
+
+        function nextQuizQuestion() {
+            AppState.activeQuiz.currentIndex++;
+            if (AppState.activeQuiz.currentIndex < 10) {
+                renderQuizQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            const score = AppState.activeQuiz.score;
+            const pct = (score / 10) * 100;
+            
+            // Update records
+            const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            AppState.records.unshift({ date: dateStr, score: score, percentage: pct });
+            
+            // Best score
+            if (score > AppState.stats.bestScore) {
+                AppState.stats.bestScore = score;
+            }
+
+            // Streak Logic (Basic: +1 if played today, reset if more than 1 day)
+            updateStreak();
+            
+            // Achievements
+            checkAchievements(score);
+            
+            saveState();
+            
+            // Render Results View
+            document.querySelectorAll('.res-name').forEach(el => el.innerText = AppState.user.name);
+            document.getElementById('res-score').innerText = `${score}/10`;
+            document.getElementById('res-pct').innerText = `${pct}%`;
+            document.getElementById('res-correct').innerText = score;
+            document.getElementById('res-incorrect').innerText = 10 - score;
+            
+            // Circle animation
+            setTimeout(() => {
+                document.getElementById('res-circle').style.strokeDasharray = `${pct}, 100`;
+                let color = pct >= 90 ? '#10b981' : (pct >= 70 ? '#3b82f6' : (pct >= 50 ? '#f59e0b' : '#ef4444'));
+                document.getElementById('res-circle').style.color = color;
+            }, 100);
+            
+            const bandEl = document.getElementById('res-band');
+            if (pct >= 90) { bandEl.innerHTML = '🌟 Excellent!'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-green-100 text-green-700'; }
+            else if (pct >= 70) { bandEl.innerHTML = '👍 Good Job!'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-blue-100 text-blue-700'; }
+            else if (pct >= 50) { bandEl.innerHTML = '💪 Keep Practising!'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-yellow-100 text-yellow-700'; }
+            else { bandEl.innerHTML = '📚 Let\'s Learn Again'; bandEl.className = 'inline-block px-4 py-1 rounded-full text-sm font-bold mb-6 bg-red-100 text-red-700'; }
+            
+            if (AppState.activeQuiz.mistakes.length > 0) {
+                document.getElementById('btn-review').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-review').classList.add('hidden');
+            }
+
+            navigate('view-results');
+        }
+
+        function showReview() {
+            const list = document.getElementById('review-list');
+            list.innerHTML = '';
+            
+            AppState.activeQuiz.mistakes.forEach((m, i) => {
+                list.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-red-100 p-4">
+                        <div class="font-bold text-gray-800 mb-2">${m.q}</div>
+                        <div class="text-sm space-y-1">
+                            <div class="flex items-center text-red-600"><span class="mr-2">❌</span> Your answer: ${m.selected}</div>
+                            <div class="flex items-center text-green-600 font-bold"><span class="mr-2">✅</span> Correct answer: ${m.correct}</div>
+                        </div>
+                        <div class="mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800 font-medium">
+                            <span class="block text-xs font-bold uppercase mb-1 opacity-70">Explanation</span>
+                            ${m.exp}
+                        </div>
+                    </div>
+                `;
+            });
+            navigate('view-review');
+        }
+
+        /* --- Gamification Logic --- */
+        function updateStreak() {
+            const today = new Date().toDateString();
+            if (AppState.stats.lastPlayDate !== today) {
+                // If yesterday
+                let yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                
+                if (AppState.stats.lastPlayDate === yesterday.toDateString()) {
+                    AppState.stats.streak++;
+                } else {
+                    AppState.stats.streak = 1; // reset or start
+                }
+                AppState.stats.lastPlayDate = today;
+            }
+        }
+
+        function checkStreak() {
+             const today = new Date().toDateString();
+             if (!AppState.stats.lastPlayDate) return;
+             
+             let yesterday = new Date();
+             yesterday.setDate(yesterday.getDate() - 1);
+             
+             if (AppState.stats.lastPlayDate !== today && AppState.stats.lastPlayDate !== yesterday.toDateString()) {
+                 AppState.stats.streak = 0; // Lost streak
+                 saveState();
+             }
+        }
+
+        function checkAchievements(score) {
+            let newAch = false;
+            if (!AppState.achievements.includes(BADGES.FIRST_QUIZ.id)) {
+                AppState.achievements.push(BADGES.FIRST_QUIZ.id); newAch = true;
+            }
+            if (score >= 5 && !AppState.achievements.includes(BADGES.FIVE_CORRECT.id)) {
+                AppState.achievements.push(BADGES.FIVE_CORRECT.id); newAch = true;
+            }
+            if (score === 10 && !AppState.achievements.includes(BADGES.PERFECT.id)) {
+                AppState.achievements.push(BADGES.PERFECT.id); newAch = true;
+            }
+            if (AppState.stats.streak >= 3 && !AppState.achievements.includes(BADGES.STREAK.id)) {
+                AppState.achievements.push(BADGES.STREAK.id); newAch = true;
+            }
+            if(newAch) {
+                // Could show toast notification here
+            }
+        }
+
+        function renderAchievements() {
+            const c = document.getElementById('achievements-container');
+            if (AppState.achievements.length === 0) {
+                c.innerHTML = `<div class="text-sm text-gray-400 italic px-2">Play quizzes to earn badges!</div>`;
+                return;
+            }
+            
+            c.innerHTML = AppState.achievements.map(id => {
+                const b = Object.values(BADGES).find(x => x.id === id);
+                return `
+                <div class="bg-white rounded-xl shadow-sm border border-yellow-100 p-3 min-w-[100px] text-center flex-shrink-0 animate-[fadeIn_0.5s]">
+                    <div class="text-3xl mb-1">${b.icon}</div>
+                    <div class="text-[10px] font-bold text-gray-700 leading-tight">${b.title}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderRecords() {
+            document.getElementById('rec-best').innerText = `${AppState.stats.bestScore}/10`;
+            const list = document.getElementById('record-list');
+            
+            if (AppState.records.length === 0) {
+                list.innerHTML = `<div class="p-6 text-center text-sm text-gray-500 font-medium">No records yet. Take a quiz!</div>`;
+                return;
+            }
+            
+            list.innerHTML = AppState.records.map((r, i) => `
+                <div class="px-4 py-3 flex justify-between items-center hover:bg-gray-50 transition-colors ${i===0 ? 'bg-blue-50/30' : ''}">
+                    <div>
+                        <div class="font-bold text-gray-800 text-sm">Attempt ${AppState.records.length - i}</div>
+                        <div class="text-xs text-gray-500">${r.date}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-black text-blue-600 text-lg">${r.score}/10</div>
+                        <div class="text-[10px] font-bold text-gray-400 uppercase">${r.percentage}%</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function clearRecords() {
+            showConfirm("Clear Records?", "Are you sure you want to delete all past attempts?", () => {
+                AppState.records = [];
+                saveState();
+                renderRecords();
+            });
+        }
+
+        let currentPractice = null;
+
+        function resetPracticeArea() {
+            document.getElementById('practice-question').innerHTML = 'Press "Start Practice"';
+            document.getElementById('practice-options').classList.add('hidden');
+            document.getElementById('practice-options').innerHTML = '';
+            document.getElementById('practice-feedback').classList.add('hidden');
+            
+            const btnNext = document.getElementById('btn-next-practice');
+            btnNext.innerText = 'Start Practice 🚀';
+            btnNext.classList.remove('hidden');
+        }
+
+        function generatePractice() {
+            const topic = document.getElementById('practice-topic').value;
+            let qObj;
+            
+            if (topic === 'y4_mm_cm') qObj = genY4_mm_cm();
+            else if (topic === 'y4_m_km') qObj = genY4_m_km();
+            else if (topic === 'y5_len_dec') qObj = genY5_len_dec();
+            else if (topic === 'y5_len_frac') qObj = genY5_len_frac();
+            else if (topic === 'y5_mass') qObj = Math.random() > 0.5 ? genY5_mass_dec() : genY5_mass_frac();
+            else if (topic === 'y5_vol') qObj = Math.random() > 0.5 ? genY5_vol_dec() : genY5_vol_frac();
+            else if (topic === 'y5_mixed') {
+                let r = Math.random();
+                if (r < 0.2) qObj = genY5_len_dec();
+                else if (r < 0.4) qObj = genY5_len_frac();
+                else if (r < 0.6) qObj = Math.random() > 0.5 ? genY5_mass_dec() : genY5_mass_frac();
+                else if (r < 0.8) qObj = Math.random() > 0.5 ? genY5_vol_dec() : genY5_vol_frac();
+                else qObj = genWordProblem('year5');
+            } else {
+                let r = Math.random();
+                if (AppState.user.level === 'year4') {
+                     qObj = r > 0.5 ? genY4_mm_cm() : genY4_m_km();
+                } else {
+                     if (r < 0.33) qObj = genY5_len_dec();
+                     else if (r < 0.66) qObj = genY5_mass_dec();
+                     else qObj = genY5_vol_dec();
+                }
+            }
+            
+            currentPractice = qObj;
+            
+            // Render UI
+            document.getElementById('practice-question').innerHTML = qObj.q;
+            document.getElementById('practice-feedback').classList.add('hidden');
+            document.getElementById('btn-next-practice').classList.add('hidden'); // Hide next until answered
+            
+            const optsContainer = document.getElementById('practice-options');
+            optsContainer.innerHTML = '';
+            optsContainer.classList.remove('hidden');
+            
+            qObj.opts.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full bg-gray-50 border-2 border-gray-200 p-3 rounded-xl font-bold text-gray-700 hover:border-blue-400 hover:bg-blue-50 transition-colors text-center text-lg active:scale-95';
+                btn.innerHTML = opt.text;
+                btn.onclick = () => handlePracticeAnswer(btn, opt);
+                optsContainer.appendChild(btn);
+            });
+        }
+        
+        function handlePracticeAnswer(btn, optData) {
+            // Disable all practice buttons
+            const btns = document.getElementById('practice-options').querySelectorAll('button');
+            btns.forEach(b => {
+                b.onclick = null;
+                b.classList.remove('hover:border-blue-400', 'hover:bg-blue-50', 'active:scale-95');
+            });
+            
+            const fb = document.getElementById('practice-feedback');
+            fb.classList.remove('hidden');
+            
+            if (optData.isCorrect) {
+                btn.classList.replace('border-gray-200', 'border-green-500');
+                btn.classList.replace('bg-gray-50', 'bg-green-100');
+                btn.classList.add('text-green-800');
+                
+                fb.className = 'mt-6 p-4 rounded-xl text-left font-medium bg-green-50 border border-green-200 text-green-800 animate-[fadeIn_0.3s_ease-out] block';
+                fb.innerHTML = `<strong>✅ Correct!</strong><br><div class="text-sm mt-1">${currentPractice.exp}</div>`;
+            } else {
+                btn.classList.replace('border-gray-200', 'border-red-500');
+                btn.classList.replace('bg-gray-50', 'bg-red-100');
+                btn.classList.add('text-red-800');
+                
+                // Highlight correct
+                btns.forEach(b => {
+                    if (b.innerHTML === currentPractice.correctTxt) {
+                         b.classList.replace('border-gray-200', 'border-green-500');
+                         b.classList.add('ring-2', 'ring-green-300');
+                    }
+                });
+
+                fb.className = 'mt-6 p-4 rounded-xl text-left font-medium bg-red-50 border border-red-200 text-red-800 animate-[fadeIn_0.3s_ease-out] block';
+                fb.innerHTML = `<strong>❌ Not quite.</strong><br><div class="text-sm mt-1">${currentPractice.exp}</div>`;
+            }
+            
+            const nextBtn = document.getElementById('btn-next-practice');
+            nextBtn.innerText = 'Next Practice Question &rarr;';
+            nextBtn.classList.remove('hidden');
+        }
+
+        // Initialize on Load
+        window.onload = initApp;
+    </script>
+</body>
+</html>
