@@ -133,6 +133,89 @@
             transform-origin: center;
             transition: transform 0.1s;
         }
+
+        .polygon-container {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f9fbfd;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+    
+        .polygon-title {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 8px;
+            font-size: 1.6rem;
+        }
+    
+        .polygon-formula {
+            text-align: center;
+            color: #555;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+    
+        .polygon-formula code {
+            background-color: #eef2f7;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: #d9534f;
+            font-weight: bold;
+        }
+    
+        .table-responsive {
+            overflow-x: auto;
+        }
+    
+        .polygon-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    
+        .polygon-table thead tr {
+            background-color: #3498db;
+            color: #ffffff;
+            text-align: left;
+            font-weight: bold;
+        }
+    
+        .polygon-table th, 
+        .polygon-table td {
+            padding: 12px 16px;
+            text-align: center;
+            border-bottom: 1px solid #e1e8ed;
+        }
+    
+        .polygon-table th:first-child,
+        .polygon-table td:first-child {
+            text-align: left;
+        }
+    
+        .polygon-table tbody tr:nth-of-type(even) {
+            background-color: #f4f8fb;
+        }
+    
+        .polygon-table tbody tr:last-of-type {
+            border-bottom: 3px solid #3498db;
+        }
+    
+        /* Hover effect for pupil interactivity */
+        .polygon-table tbody tr:hover {
+            background-color: #e8f4fc;
+            transition: background-color 0.2s ease-in-out;
+        }
+    
+        .highlight {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 1.05rem;
+        }
     </style>
 </head>
 <body class="pb-20 md:pb-0 md:pt-20">
