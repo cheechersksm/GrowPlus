@@ -714,7 +714,56 @@
             { title: "Infographic: Regular Polygons (Up to 8 Sides)", content: "<table class='w-full text-sm text-left border-collapse'><tr class='bg-slate-700'><th>Shape</th><th>Sides/Corners</th><th>Sym. Axes</th></tr><tr class='border-b border-slate-600'><td>Equilateral Triangle</td><td>3</td><td>3</td></tr><tr class='border-b border-slate-600'><td>Square</td><td>4</td><td>4</td></tr><tr class='border-b border-slate-600'><td>Regular Pentagon</td><td>5</td><td>5</td></tr><tr class='border-b border-slate-600'><td>Regular Hexagon</td><td>6</td><td>6</td></tr><tr class='border-b border-slate-600'><td>Regular Heptagon</td><td>7</td><td>7</td></tr><tr><td>Regular Octagon</td><td>8</td><td>8</td></tr></table>" },
             { title: "Lines of Symmetry", content: "<p>A line of symmetry divides a shape into two identical halves that mirror each other.</p><p class='text-yellow-300 text-sm mt-1'>💡 Tip: A regular polygon has the same number of symmetrical axes as its sides!</p>" },
             { title: "Diagonals", content: "<p>A diagonal is a straight line joining two opposite corners of a straight-sided shape.</p><p>Square = 2 diagonals. Triangle = 0 diagonals.</p>" },
-            { title: "Interactive: Angles in Polygons", content: "Use the protractor to measure the interior angle of a Regular Pentagon.<div class='protractor-container mt-4'><div id='protractor-img'></div></div><div class='mt-2 text-center'><input type='range' min='0' max='360' value='0' oninput='document.getElementById(\"protractor-img\").style.transform=\"rotate(\"+this.value+\"deg)\"' class='w-32'></div><button class='btn bg-cyan-600 px-3 py-1 mt-2 text-sm rounded mx-auto block' onclick='alert(\"The interior angle of a regular pentagon is 108°\")'>Show Answer</button>" },
+            { title: "Interactive: Angles in Polygons", content: "<div class="table-responsive">
+                <table class="polygon-table">
+                    <thead>
+                        <tr>
+                            <th>Regular Polygon</th>
+                            <th>Number of Sides (<em>n</em>)</th>
+                            <th>Sum of Interior Angles</th>
+                            <th>Each Interior Angle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Equilateral Triangle</strong></td>
+                            <td>3</td>
+                            <td>180°</td>
+                            <td><span class="highlight">60°</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Square</strong></td>
+                            <td>4</td>
+                            <td>360°</td>
+                            <td><span class="highlight">90°</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regular Pentagon</strong></td>
+                            <td>5</td>
+                            <td>540°</td>
+                            <td><span class="highlight">108°</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regular Hexagon</strong></td>
+                            <td>6</td>
+                            <td>720°</td>
+                            <td><span class="highlight">120°</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regular Heptagon</strong></td>
+                            <td>7</td>
+                            <td>900°</td>
+                            <td><span class="highlight">128.57°</span> <small>(128 <sup>4</sup>/<sub>7</sub>°)</small></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Regular Octagon</strong></td>
+                            <td>8</td>
+                            <td>1080°</td>
+                            <td><span class="highlight">135°</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>" },
             { title: "Perimeter", content: "<p>Perimeter is the total distance around the outside of a 2D shape. Just add the lengths of all outer sides!</p><p class='text-yellow-300 text-sm'>⚠️ Common Mistake: Do not include lines inside the shape.</p>" },
             { title: "Area", content: "<p>Area is the amount of space inside a 2D shape. Measured in square units (e.g., cm²).</p><ul class='list-disc pl-5 mt-2'><li>Rectangle/Square: Length × Width</li><li>Triangle: (Base × Height) ÷ 2</li></ul>" },
             { title: "Combined Shapes", content: "<p>To find the area of a combined shape, break it down into simple shapes (squares, rectangles, triangles), find their individual areas, and add them up!</p><p>For combined perimeter, trace the outside boundary only.</p>" },
