@@ -82,10 +82,11 @@
             <!-- Image Slider -->
             <div class="embedded-slider w-full">
                 <div class="slider-track">
+                    
                     <img src="https://lh3.googleusercontent.com/d/18p5OHuxVsGs971YODMPHJuka28DM7I7e" alt="Poster Data Detective">
+                    <img src="https://lh3.googleusercontent.com/d/1dROn9VJKUI0gh4eE9_5WhEMt1i5NBe_o" alt="Poster SpaceX"> 
                     <img src="https://lh3.googleusercontent.com/d/1Bm6zcscaPMWRLprTfJ2_y93wKkYDWuAR" alt="Qestion 2000GP">
                     <img src="https://lh3.googleusercontent.com/d/1jYf6sh45XoK8QxdrbxBZP2YeYScXryXd" alt="Collect 2000GP">
-                    <img src="https://lh3.googleusercontent.com/d/1MDOM3X1vnp_hlcoqM4cMliGZgGtHzPdH" alt="Poster ComingSoon SpaceX">
                     <img src="https://lh3.googleusercontent.com/d/17fZybCW8XO4QvgCmfJmEi_XGqTeFfw0x" alt="Kenapa perlu belajar Matematik">
                 </div>
                 <button class="slider-btn prev">&#10094;</button>
@@ -109,7 +110,7 @@
                 <img src="https://lh3.googleusercontent.com/d/1Mnzty1gYSdz6EfOmbwp0KbwSh-JmnOOc" alt="Header Image" style="width: 50px; height: auto; display: block; margin: 0 auto -5px auto;">
             </div>
             <h1 class="text-3xl font-bold text-emerald-800 mb-2">GROWPLUS</h1>
-            <p class="text-emerald-600 mb-8 text-sm">Version 1.4.3 (5 SEPTEMBER 2026)</p>
+            <p class="text-emerald-600 mb-8 text-sm">Version 1.4.4 (14 SEPTEMBER 2026)</p>
 
             <form id="loginForm" class="space-y-4 text-left">
                 <div>
@@ -434,84 +435,33 @@
         // For Guest to launch AppHub
         async function launchPracticeApp(appKey) {
             if (appKey === 'mathSafari') {
-                try {
-                    // 1. Dynamically retrieve the absolute Web App deployment URL
-                    const baseUrl = await api.run('getWebAppUrl');
-                    
-                    // 2. Append the target page parameter flag pointing to MathGame.html
-                    const targetGameUrl = baseUrl + "?page=game";
-                    
-                    // 3. Perform a safe top-frame redirect out of the sandbox
-                    if (window.top && window.top.location) {
-                        window.top.location.href = targetGameUrl;
-                    } else {
-                        window.location.href = targetGameUrl;
-                    }
-                    api.run('logStudentActivity', 'Guest', 'Enter to Arithmetic Math Safari', '' , '0' );
-                } catch (err) {
-                    console.error("Failed to route to game page container safely:", err);
-                    
-                    // Fallback backup route assignment in case the promise encounters an absolute break
-                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec?page=game";
-                    if (window.top && window.top.location) {
-                        window.top.location.href = fallbackUrl;
-                    } else {
-                        window.location.href = fallbackUrl;
-                    }
+                // Since Safari.html is in the same folder path on GitHub, link to it directly!
+                const targetGameUrl = "Safari.html";
+                
+                if (window.top && window.top.location) {
+                    window.top.location.href = targetGameUrl;
+                } else {
+                    window.location.href = targetGameUrl;
                 }
             }
             if (appKey === 'roundOffApp') {
-                try {
-                    // 1. Dynamically retrieve the absolute Web App deployment URL
-                    const baseUrl = await api.run('getWebAppUrl');
-                    
-                    // 2. Append the target page parameter flag pointing to MathGame.html
-                    const targetGameUrl = baseUrl + "?page=roundOff";
-                    
-                    // 3. Perform a safe top-frame redirect out of the sandbox
-                    if (window.top && window.top.location) {
-                        window.top.location.href = targetGameUrl;
-                    } else {
-                        window.location.href = targetGameUrl;
-                    }
-                    api.run('logStudentActivity', 'Guest', 'Enter to Rounding Master', '' , '0' );
-                } catch (err) {
-                    console.error("Failed to route to game page container safely:", err);
-                    
-                    // Fallback backup route assignment in case the promise encounters an absolute break
-                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec?page=roundOff";
-                    if (window.top && window.top.location) {
-                        window.top.location.href = fallbackUrl;
-                    } else {
-                        window.location.href = fallbackUrl;
-                    }
+                // Since RounOff.html is in the same folder path on GitHub, link to it directly!
+                const targetGameUrl = "RoundOff.html";
+                
+                if (window.top && window.top.location) {
+                    window.top.location.href = targetGameUrl;
+                } else {
+                    window.location.href = targetGameUrl;
                 }
             }
             if (appKey === 'Unit7') {
-                try {
-                    // 1. Dynamically retrieve the absolute Web App deployment URL
-                    const baseUrl = await api.run('getWebAppUrl');
-                    
-                    // 2. Append the target page parameter flag pointing to MathGame.html
-                    const targetGameUrl = baseUrl + "?page=Unit7";
-                    
-                    // 3. Perform a safe top-frame redirect out of the sandbox
-                    if (window.top && window.top.location) {
-                        window.top.location.href = targetGameUrl;
-                    } else {
-                        window.location.href = targetGameUrl;
-                    }
-                    api.run('logStudentActivity', 'Guest', 'Enter to Unit 7', '' , '0' );
-                } catch (err) {
-                    console.error("Failed to route to game page container safely:", err);
-                    
-                    // Fallback backup route assignment in case the promise encounters an absolute break
-                    const fallbackUrl = "https://script.google.com/macros/s/AKfycbxyBrdGP1ghVf0nPG3gyXgle4BAxmRy8UTTwrUlkTacvEJ-SG2l4W42b9IZMdiCx6rHhw/exec?page=Unit7";
-                    if (window.top && window.top.location) {
-                        window.top.location.href = fallbackUrl;
-                    } else {
-                        window.location.href = fallbackUrl;
-                    }
+                // Since Unit7.html is in the same folder path on GitHub, link to it directly!
+                const targetGameUrl = "Unit7.html";
+                
+                if (window.top && window.top.location) {
+                    window.top.location.href = targetGameUrl;
+                } else {
+                    window.location.href = targetGameUrl;
                 }
             }
         }
