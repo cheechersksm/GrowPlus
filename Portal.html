@@ -1324,7 +1324,7 @@
             const cleanStudentAns = userAnsVal.toLowerCase().replace(/[\s\.:]/g, '');
             
             // 2. Split the correct answer reference criteria by the vertical pipe "|"
-            const allowedChoices = String(correctAns).split('|');
+            const allowedChoices = String(correctAns).split('||');
             let isCorrect = false;
 
             // 3. Scan each item variant to search for a clean validation match
