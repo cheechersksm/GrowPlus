@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mid-Term Exam Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Theme Variables */
+        :root {
+            --bg-color: #fdf2f8; /* Light Pink / fuchsia-50 */
+            --container-bg: #ffffff;
+            --text-main: #831843; /* Dark Pink / fuchsia-900 */
+            --text-muted: #be185d;
+            --border-color: #fbcfe8;
+            --input-bg: #ffffff;
+        }
+
+        .dark-mode {
+            --bg-color: #4a044e; /* Very Dark Pink / fuchsia-950 */
+            --container-bg: #701a75; /* fuchsia-900 */
+            --text-main: #fdf2f8;
+            --text-muted: #fbcfe8;
+            --border-color: #831843;
+            --input-bg: #831843;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .theme-container { background-color: var(--container-bg); border-color: var(--border-color); }
+        .theme-input { background-color: var(--input-bg); color: var(--text-main); border-color: var(--border-color); }
+        .theme-text-muted { color: var(--text-muted); }
+
+        @media print {
+          /* Hide all non-dashboard elements */
+          body * {
+            visibility: hidden;
+          }
+
+          /* Display dashboard elements */
+          #dashboard, #dashboard * {
+            visibility: visible;
+          }
+
+          /* Reveal and format the print-only title header */
+          .print-only-title {
+            display: block !important;
+            visibility: visible !important;
+            width: 100% !important;
+            margin-bottom: 1.5rem !important;
+          }
+
+          /* Position dashboard at top left of paper */
+          #dashboard {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          /* Keep 2-column layout for top charts */
+          #dashboard .grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 0.75rem !important;
+          }
+
+          #dashboard .grid > div:nth-child(3) {
+            grid-column: span 2 / span 2 !important;
+          }
+
+          /* Compact chart sizes to fit Page 1 cleanly with the new title */
+          #dashboard canvas {
+            max-width: 100% !important;
+            max-height: 300px !important;
+          }
+
+          /* Force Detailed Table to Page 2 */
+          #dashboard > div:last-child {
+            break-before: page !important;
+            page-break-before: always !important;
+            margin-top: 0 !important;
+          }
+
+          @page {
+            size: auto;
+            margin: 10mm;
+          }
+        }
+    </style>
+</head>
+<body class="p-6 font-sans">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Header & Controls -->
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Pupil Performance Dashboard (MID TERM 2026)</h1>
+            <button onclick="toggleTheme()" class="px-4 py-2 rounded-lg font-bold shadow-md bg-pink-600 text-white hover:bg-pink-700 transition">
+                Toggle Day/Dark Mode
+            </button>
+        </div>
+
+        <!-- Search Section -->
+        <div class="theme-container border rounded-xl p-6 mb-8 shadow-sm">
+            <h2 class="text-lg font-bold mb-4">Search Pupil Record</h2>
+            <div class="flex gap-4">
+                <input type="text" id="icInput" placeholder="Enter IC Number..." class="theme-input border rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+                
+                <button onclick="fetchData()" class="px-6 py-2 bg-pink-600 text-white font-bold rounded-lg hover:bg-pink-700 transition" id="searchBtn">
+                    Analyze
+                </button>
+                
+                <!-- Added ml-auto to push button to the far right -->
+                <button onclick="printDashboard()" class="ml-auto px-6 py-2 bg-slate-700 text-white font-bold rounded-lg hover:bg-slate-800 transition" id="printBtn">
+                    Print
+                </button>
+            </div>
+            <p id="statusMsg" class="mt-2 text-sm hidden"></p>
+        </div>
+
+        <!-- Dashboard Content (Hidden initially) -->
+        <div id="dashboard" class="hidden space-y-8">
+
+            <!-- Print-Only Title Header (Hidden on screen) -->
+              <div class="print-only-title hidden">
+                  <h1 class="text-3xl font-bold text-center border-b-2 border-pink-600 pb-2 mb-4">
+                      PUPIL PERFORMANCE REPORT IN MID-TERM ASSESSMENT 2026
+                  </h1>
+              </div>
+
+            <!-- Pupil Info -->
+            <div class="theme-container border rounded-xl p-6 shadow-sm flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold" id="pupilName">Name</h2>
+                    <p class="theme-text-muted" id="pupilClass">Class</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm theme-text-muted">Total Score</p>
+                    <p class="text-3xl font-bold" id="totalScore">0%</p>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="theme-container border rounded-xl p-4 shadow-sm">
+                    <h3 class="font-bold text-center mb-2">Performance by Construct</h3>
+                    <canvas id="chartConstruct"></canvas>
+                </div>
+                <div class="theme-container border rounded-xl p-4 shadow-sm">
+                    <h3 class="font-bold text-center mb-2">Performance by Topic</h3>
+                    <canvas id="chartTopic"></canvas>
+                </div>
+                <div class="theme-container border rounded-xl p-4 shadow-sm md:col-span-2">
+                    <h3 class="font-bold text-center mb-2">Performance by Question Type</h3>
+                    <canvas id="chartType"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="theme-container border rounded-xl p-6 shadow-sm overflow-x-auto">
+                <h3 class="font-bold mb-4 text-xl">Detailed Question Breakdown</h3>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-pink-200">
+                            <th class="p-2">Q No</th>
+                            <th class="p-2">Topic</th>
+                            <th class="p-2">Construct</th>
+                            <th class="p-2">Diff.</th>
+                            <th class="p-2 text-center">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const SPREADSHEET_ID = "1dUL6fzK7dxYujl_PLMO-Fg7ZKq71dE4APZ46ce4jzjM";
+        let charts = {};
+
+        // 1. Receive the IC number from the Code.gs template safely
+        const injectedIcNumber = "<?= passedIcNumber ?>";
+
+        // 2. When the page loads, check if an IC was passed
+        window.onload = function() {
+            if (injectedIcNumber && injectedIcNumber.trim() !== "") {
+                // Fill the input box
+                document.getElementById('icInput').value = injectedIcNumber;
+                // Auto-trigger the fetch function
+                fetchData();
+            }
+        };
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            updateChartColors();
+        }
+
+        function getChartTextColor() {
+            return document.body.classList.contains('dark-mode') ? '#fdf2f8' : '#831843';
+        }
+
+        function updateChartColors() {
+            const color = getChartTextColor();
+            Object.values(charts).forEach(chart => {
+                chart.options.scales.x.ticks.color = color;
+                chart.options.scales.y.ticks.color = color;
+                chart.options.plugins.legend.labels.color = color;
+                chart.update();
+            });
+        }
+
+        function fetchData() {
+            const ic = document.getElementById('icInput').value.trim();
+            if (!ic) return alert("Please enter an IC Number");
+
+            const btn = document.getElementById('searchBtn');
+            const status = document.getElementById('statusMsg');
+            
+            btn.disabled = true;
+            btn.innerText = "Loading...";
+            status.innerText = "Fetching data from database...";
+            status.classList.remove('hidden', 'text-red-500');
+            status.classList.add('theme-text-muted');
+
+            // Call Apps Script Function
+            google.script.run
+                .withSuccessHandler(processData)
+                .withFailureHandler(err => {
+                    showError("Connection failed: " + err);
+                })
+                .getExamAnalysisData(ic, SPREADSHEET_ID);
+        }
+
+        function showError(msg) {
+            const btn = document.getElementById('searchBtn');
+            const status = document.getElementById('statusMsg');
+            btn.disabled = false;
+            btn.innerText = "Analyze";
+            status.innerText = msg;
+            status.classList.add('text-red-500');
+            status.classList.remove('theme-text-muted');
+        }
+
+        function processData(response) {
+            const btn = document.getElementById('searchBtn');
+            btn.disabled = false;
+            btn.innerText = "Analyze";
+            
+            if (!response.success) {
+                showError(response.message);
+                return;
+            }
+
+            document.getElementById('statusMsg').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+
+            const scoreData = response.score;
+            const qData = response.questions;
+
+            // Populate Info
+            document.getElementById('pupilName').innerText = scoreData['Name'];
+            document.getElementById('pupilClass').innerText = "Class: " + scoreData['Class'];
+
+            // Aggregation Objects
+            let totalMax = 0;
+            let totalObtained = 0;
+            let aggConstruct = {};
+            let aggTopic = {};
+            let aggType = {};
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            // Process each question
+            qData.forEach(q => {
+                const qNo = q['Q No'];
+                const maxMarks = Number(q['Max Marks']) || 0;
+                const obtained = Number(scoreData[qNo]) || 0;
+                
+                totalMax += maxMarks;
+                totalObtained += obtained;
+
+                // Build Table Row
+                tbody.innerHTML += `
+                    <tr class="border-b border-pink-100 hover:bg-pink-50 hover:text-pink-900 transition">
+                        <td class="p-2 font-bold">${qNo}</td>
+                        <td class="p-2 text-sm">${q['Topic']}</td>
+                        <td class="p-2 text-sm">${q['Construct']}</td>
+                        <td class="p-2 text-sm">${q['Difficulty']}</td>
+                        <td class="p-2 text-center font-bold">${obtained} / ${maxMarks}</td>
+                    </tr>
+                `;
+
+                // Aggregate Construct
+                if(q['Construct']) {
+                    if(!aggConstruct[q['Construct']]) aggConstruct[q['Construct']] = { max: 0, obtained: 0 };
+                    aggConstruct[q['Construct']].max += maxMarks;
+                    aggConstruct[q['Construct']].obtained += obtained;
+                }
+
+                // Aggregate Topic
+                if(q['Topic']) {
+                    if(!aggTopic[q['Topic']]) aggTopic[q['Topic']] = { max: 0, obtained: 0 };
+                    aggTopic[q['Topic']].max += maxMarks;
+                    aggTopic[q['Topic']].obtained += obtained;
+                }
+
+                // Aggregate Types (Split by comma)
+                if(q['Type']) {
+                    const typesArray = q['Type'].split(',').map(t => t.trim());
+                    typesArray.forEach(t => {
+                        if(!aggType[t]) aggType[t] = { max: 0, obtained: 0 };
+                        aggType[t].max += maxMarks;
+                        aggType[t].obtained += obtained;
+                    });
+                }
+            });
+
+            // Set Total Score %
+            const overallPercent = totalMax > 0 ? Math.round((totalObtained / totalMax) * 100) : 0;
+            document.getElementById('totalScore').innerText = overallPercent + '%';
+
+            // Render Charts
+            renderChart('chartConstruct', 'Constructs', aggConstruct, '#ec4899'); // Pink-500
+            renderChart('chartTopic', 'Topics', aggTopic, '#d946ef'); // Fuchsia-500
+            renderChart('chartType', 'Types', aggType, '#8b5cf6'); // Violet-500
+        }
+
+        function renderChart(canvasId, labelString, dataObj, colorHex) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+
+            const labels = Object.keys(dataObj);
+            const dataPercentages = labels.map(key => {
+                const item = dataObj[key];
+                return item.max > 0 ? Math.round((item.obtained / item.max) * 100) : 0;
+            });
+
+            const textColor = getChartTextColor();
+
+            charts[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score Percentage (%)',
+                        data: dataPercentages,
+                        backgroundColor: colorHex,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            ticks: { color: textColor }
+                        },
+                        x: {
+                            ticks: { color: textColor, autoSkip: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: textColor } }
+                    }
+                }
+            });
+        }
+        
+        function printDashboard() {
+          const dashboard = document.getElementById('dashboard');
+
+          // Guard clause: ensure data is loaded first
+          if (dashboard.classList.contains('hidden')) {
+            alert('Please search and analyze a pupil record before printing.');
+            return;
+          }
+
+          window.print();
+        }
+    </script>
+</body>
+</html>
