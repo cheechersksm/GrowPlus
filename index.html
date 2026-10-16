@@ -82,7 +82,7 @@
             <!-- Image Slider -->
             <div class="embedded-slider w-full">
                 <div class="slider-track">
-                    <img src="https://lh3.googleusercontent.com/d/1zFZCOXqBz5nd_d1nuHsjx6coY8Q-nBDs" alt="School Closed Announcement">
+                    <img src="https://lh3.googleusercontent.com/d/1r67bGMhL4AdRzQcAPM1CPn_CBIHORlnO" alt="Post UASA Poster">
                     <img src="https://lh3.googleusercontent.com/d/18p5OHuxVsGs971YODMPHJuka28DM7I7e" alt="Poster Data Detective">
                     <img src="https://lh3.googleusercontent.com/d/1dROn9VJKUI0gh4eE9_5WhEMt1i5NBe_o" alt="Poster SpaceX"> 
                     <img src="https://lh3.googleusercontent.com/d/1Bm6zcscaPMWRLprTfJ2_y93wKkYDWuAR" alt="Qestion 2000GP">
@@ -131,9 +131,9 @@
 
             <div class="mt-6 pt-4 border-t border-gray-200">
                 <p class="text-sm text-gray-500 mb-2">Play Apphub as Guest</p>
+                <button onclick="launchPracticeApp('BlitzA')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">⚡ Blitz Arithmetic Challenge (STEM WEEK)</button>
                 <button onclick="launchPracticeApp('mathSafari')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">🦁 Arithmetic Math Safari</button>
-                <button onclick="launchPracticeApp('roundOffApp')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">🎯 Rounding Master</button>
-                <button onclick="launchPracticeApp('Unit7')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">7️⃣ Coordinate, Ratio & Proportion</button>   
+                <button onclick="launchPracticeApp('roundOffApp')" class="w-full py-2 bg-white border-2 border-emerald-500 text-emerald-600 rounded-lg font-medium">🎯 Rounding Master</button>  
             </div>
         </div>
     </div>
@@ -486,6 +486,13 @@
                 } else {
                     window.location.href = targetGameUrl;
                 }
+            }
+            if (appKey === 'BlitzA') {
+            // Automatically grabs the current GAS web app base URL (/exec)
+            const baseUrl = "https://bit.ly/BlitzMathSKSM";
+            
+            // Opens the exam analysis dashboard in a new browser tab
+            window.open(baseUrl, "_blank");
             }
         }
 </script>
