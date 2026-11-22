@@ -482,6 +482,7 @@
                 <a href="#" onclick="showAdminTab('student')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="student"><i class="ph ph-users mr-3"></i>Students</a>
                 <a href="#" onclick="showAdminTab('assignment')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="assignment"><i class="ph ph-book-bookmark mr-3"></i>Assignments</a>
                 <a href="#" onclick="showAdminTab('grading')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="grading"><i class="ph ph-check-circle mr-3"></i>Grading</a>
+                <a href="#" onclick="showAdminTab('analyseWork')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="analyseWork"><i class="ph ph-chart-bar mr-3"></i>Analyse Work</a>
                 <a href="#" onclick="showAdminTab('challenge')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="challenge"><i class="ph ph-target mr-3"></i>Challenges</a>
                 <a href="#" onclick="showAdminTab('exam')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="exam"><i class="ph ph-exam mr-3"></i>Exams</a>
                 <a href="#" onclick="showAdminTab('info')" class="admin-nav-item block px-6 py-3 text-emerald-100 hover:bg-emerald-700 border-l-4 border-transparent" data-target="info"><i class="ph ph-megaphone mr-3"></i>Info</a>
@@ -1901,7 +1902,13 @@
                         `).join('');
                     }
                 }
-                
+                    
+                else if (type === 'analyseWork') {
+                    title.innerText = 'Analyse Work';
+                    customCtrl.classList.remove('hide');
+                    await initAnalyseWorkModule(customCtrl, thead, tbody);
+                }
+                    
                 else if(type === 'grading') {
                     title.innerText = 'Submission Grading';
                     customCtrl.classList.remove('hide');
@@ -3256,6 +3263,472 @@
             }
         }
 
+        // ==================== ANALYSE WORK MODULE ====================
+        let workAnalysisCache = null;
+
+        async function initAnalyseWorkModule(customCtrl, thead, tbody) {
+            const res = await api.run('getWorkAnalysisData');
+            if (!res || !res.success) {
+                tbody.innerHTML = `<tr><td class="p-6 text-center text-red-500">Failed to load work analysis data: ${res ? res.message : 'Unknown error'}</td></tr>`;
+                return;
+            }
+            workAnalysisCache = res;
+
+            const uniqueClasses = [...new Set(res.students.map(s => s.Class).filter(Boolean))];
+
+            customCtrl.innerHTML = `
+                <div class="w-full space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                        <!-- Layer 1: Analysis Mode -->
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-800 mb-1">1. Filter Type</label>
+                            <select id="analyseLayer1" onchange="updateAnalyseLayer2Options()" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none bg-white font-semibold text-gray-700 focus:border-emerald-500">
+                                <option value="unit">Analyse by Unit</option>
+                                <option value="pupil">Analyse by Pupils</option>
+                            </select>
+                        </div>
+
+                        <!-- Layer 2: Dynamic Dropdown (Unit + Overall OR Pupil Name) -->
+                        <div class="md:col-span-2">
+                            <label id="analyseLayer2Label" class="block text-xs font-bold text-emerald-800 mb-1">2. Select Unit</label>
+                            <select id="analyseLayer2" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm outline-none bg-white text-gray-700 focus:border-emerald-500">
+                            </select>
+                        </div>
+
+                        <!-- Search Button -->
+                        <div>
+                            <button onclick="executeAnalyseWorkSearch()" class="btn-green w-full h-[42px] rounded-lg text-sm font-bold shadow-sm flex items-center justify-center gap-2">
+                                <i class="ph-bold ph-magnifying-glass"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Optional Class Filter for Unit Mode -->
+                    <div id="analyseClassFilterRow" class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200 text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-gray-600">Filter Class:</span>
+                            <select id="analyseClassFilter" class="p-1.5 border rounded bg-white text-gray-700 outline-none">
+                                <option value="ALL">All Classes (${res.students.length} Pupils)</option>
+                                ${uniqueClasses.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            </select>
+                        </div>
+                        <span class="text-gray-400 italic">Tip: Click any pupil's "Details" button to open their assignment modal.</span>
+                    </div>
+                </div>
+            `;
+
+            // Populate Layer 2 for default selection ("Analyse by Unit")
+            updateAnalyseLayer2Options();
+
+            // Prompt user to click Search (or auto-run default Overall view)
+            thead.innerHTML = '';
+            tbody.innerHTML = `<tr><td class="p-8 text-center text-gray-400">Select your filters above and click <strong class="text-emerald-700">Search</strong> to view performance analysis.</td></tr>`;
+        }
+
+        function updateAnalyseLayer2Options() {
+            if (!workAnalysisCache) return;
+            const layer1 = document.getElementById('analyseLayer1').value;
+            const layer2 = document.getElementById('analyseLayer2');
+            const layer2Label = document.getElementById('analyseLayer2Label');
+            const classFilterRow = document.getElementById('analyseClassFilterRow');
+
+            if (layer1 === 'unit') {
+                layer2Label.innerText = '2. Select Unit (or Overall)';
+                classFilterRow.classList.remove('hide');
+                layer2.innerHTML = `
+                    <option value="OVERALL">Overall (All Units Summary)</option>
+                    ${workAnalysisCache.units.map(u => `<option value="${u}">${u}</option>`).join('')}
+                `;
+            } else {
+                layer2Label.innerText = '2. Select Pupil';
+                classFilterRow.classList.add('hide');
+                layer2.innerHTML = `
+                    <option value="">-- Choose a Pupil --</option>
+                    ${workAnalysisCache.students.map(s => `<option value="${s.Email}">${s.FullName} (${s.Class})</option>`).join('')}
+                `;
+            }
+        }
+
+        // Helper: Check if an assignment was assigned to a specific student
+        function isAssignmentForStudent(assignment, student) {
+            const target = String(assignment.AssignedTo || '').trim().toLowerCase();
+            if (!target || target === 'all') return true;
+            const emailLower = student.Email.toLowerCase();
+            const classLower = student.Class.toLowerCase();
+            if (target.includes(emailLower)) return true;
+            if (classLower && target.includes(classLower)) return true;
+            return false;
+        }
+
+        // Helper: Compute scores per unit and overall for a single student
+        function computeStudentWorkMetrics(student) {
+            const { assignments, submissions, units } = workAnalysisCache;
+            const emailLower = student.Email.toLowerCase();
+            const studentSubs = submissions.filter(s => s.StudentEmail === emailLower);
+
+            const unitBreakdown = {};
+            let overallEarned = 0;
+            let overallMax = 0;
+            let overallSubmittedCount = 0;
+            let overallAssignedCount = 0;
+
+            units.forEach(unitName => {
+                const unitAssignments = assignments.filter(
+                    a => a.Unit === unitName && isAssignmentForStudent(a, student)
+                );
+
+                let unitEarned = 0;
+                let unitMax = unitAssignments.length * 10; // Each assignment is graded out of 10
+                let unitSubmitted = 0;
+
+                const assignmentDetails = unitAssignments.map(ass => {
+                    const sub = studentSubs.find(s => s.AssignmentId === ass.Id);
+                    const isSubmitted = sub && sub.Submitted === 'Yes';
+                    const isGraded = sub && sub.Graded === 'Yes' && sub.Score !== null;
+                    const score = isGraded ? sub.Score : 0;
+
+                    if (isSubmitted || isGraded) unitSubmitted++;
+                    if (isGraded) unitEarned += score;
+
+                    return {
+                        id: ass.Id,
+                        title: ass.Title,
+                        submitted: isSubmitted ? 'Yes' : 'No',
+                        graded: isGraded ? 'Yes' : 'No',
+                        score: isGraded ? sub.Score : null
+                    };
+                });
+
+                const unitPct = unitMax > 0 ? ((unitEarned / unitMax) * 100).toFixed(1) : null;
+
+                unitBreakdown[unitName] = {
+                    earned: unitEarned,
+                    max: unitMax,
+                    pct: unitPct,
+                    submittedCount: unitSubmitted,
+                    assignedCount: unitAssignments.length,
+                    assignments: assignmentDetails
+                };
+
+                overallEarned += unitEarned;
+                overallMax += unitMax;
+                overallSubmittedCount += unitSubmitted;
+                overallAssignedCount += unitAssignments.length;
+            });
+
+            const overallPct = overallMax > 0 ? ((overallEarned / overallMax) * 100).toFixed(1) : '0.0';
+
+            return {
+                student,
+                unitBreakdown,
+                overallEarned,
+                overallMax,
+                overallPct,
+                overallSubmittedCount,
+                overallAssignedCount
+            };
+        }
+
+        function executeAnalyseWorkSearch() {
+            if (!workAnalysisCache) return;
+            const layer1 = document.getElementById('analyseLayer1').value;
+            const layer2 = document.getElementById('analyseLayer2').value;
+            const thead = document.getElementById('adminTableHead');
+            const tbody = document.getElementById('adminTableBody');
+
+            if (layer1 === 'pupil') {
+                if (!layer2) {
+                    return Swal.fire('Select Pupil', 'Please choose a pupil from the second dropdown first.', 'warning');
+                }
+                renderAnalyseBySinglePupil(layer2, thead, tbody);
+            } else {
+                const selectedClass = document.getElementById('analyseClassFilter').value;
+                if (layer2 === 'OVERALL') {
+                    renderAnalyseByAllUnits(selectedClass, thead, tbody);
+                } else {
+                    renderAnalyseBySpecificUnit(layer2, selectedClass, thead, tbody);
+                }
+            }
+        }
+
+        // MODE 1A: Analyse by Unit -> Overall (All Pupils x All Units + Unit Totals + Overall Score)
+        function renderAnalyseByAllUnits(selectedClass, thead, tbody) {
+            const { students, units } = workAnalysisCache;
+            const filteredStudents = selectedClass === 'ALL'
+                ? students
+                : students.filter(s => s.Class === selectedClass);
+
+            if (filteredStudents.length === 0) {
+                thead.innerHTML = '';
+                tbody.innerHTML = `<tr><td class="p-6 text-center text-gray-400">No pupils found for the selected filter.</td></tr>`;
+                return;
+            }
+
+            const allMetrics = filteredStudents.map(s => computeStudentWorkMetrics(s));
+
+            // Table Header
+            thead.innerHTML = `
+                <tr class="bg-emerald-50 text-emerald-900 border-b border-emerald-200">
+                    <th class="p-3 text-center">#</th>
+                    <th class="p-3">Pupil Details</th>
+                    ${units.map(u => `<th class="p-3 text-center">${u}</th>`).join('')}
+                    <th class="p-3 text-center bg-emerald-100/80 font-extrabold">Overall Score</th>
+                    <th class="p-3 text-center">Modal</th>
+                </tr>
+            `;
+
+            // Track column totals across all displayed pupils
+            const cohortUnitTotals = {};
+            units.forEach(u => cohortUnitTotals[u] = { earned: 0, max: 0 });
+            let cohortOverallEarned = 0;
+            let cohortOverallMax = 0;
+
+            const rowsHtml = allMetrics.map((m, idx) => {
+                cohortOverallEarned += m.overallEarned;
+                cohortOverallMax += m.overallMax;
+
+                const unitCells = units.map(u => {
+                    const uData = m.unitBreakdown[u];
+                    cohortUnitTotals[u].earned += uData.earned;
+                    cohortUnitTotals[u].max += uData.max;
+
+                    if (uData.assignedCount === 0) {
+                        return `<td class="p-3 text-center text-gray-300 text-xs">N/A</td>`;
+                    }
+                    const pctNum = Number(uData.pct);
+                    const colorClass = pctNum >= 80 ? 'text-emerald-700' : (pctNum >= 50 ? 'text-gray-700' : 'text-rose-600');
+                    return `
+                        <td class="p-3 text-center">
+                            <div class="font-bold ${colorClass}">${uData.earned} / ${uData.max}</div>
+                            <div class="text-[11px] text-gray-400">${uData.pct}%</div>
+                        </td>
+                    `;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-gray-50 transition border-b">
+                        <td class="p-3 text-center text-gray-500 font-medium">${idx + 1}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-gray-800">${m.student.FullName}</div>
+                            <div class="text-xs text-gray-500">${m.student.Class} &bull; <span class="text-gray-400">${m.student.Email}</span></div>
+                        </td>
+                        ${unitCells}
+                        <td class="p-3 text-center bg-emerald-50/50">
+                            <div class="font-extrabold text-emerald-800 text-sm">${m.overallEarned} / ${m.overallMax}</div>
+                            <div class="text-xs font-semibold text-emerald-600">${m.overallPct}%</div>
+                        </td>
+                        <td class="p-3 text-center">
+                            <button onclick="openPupilWorkModal('${m.student.Email}')" class="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded text-xs font-bold transition">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Summary Row for Total Score per Unit & Cohort Overall
+            const cohortOverallPct = cohortOverallMax > 0 ? ((cohortOverallEarned / cohortOverallMax) * 100).toFixed(1) : '0.0';
+            const totalFooterRow = `
+                <tr class="bg-gray-100 font-bold text-gray-800 border-t-2 border-emerald-300">
+                    <td class="p-3 text-center" colspan="2">TOTAL SCORE (ALL LISTED PUPILS)</td>
+                    ${units.map(u => {
+                        const tot = cohortUnitTotals[u];
+                        const pct = tot.max > 0 ? ((tot.earned / tot.max) * 100).toFixed(1) : '0.0';
+                        return `<td class="p-3 text-center text-emerald-900">${tot.earned} / ${tot.max}<div class="text-[11px] font-semibold text-gray-500">${pct}%</div></td>`;
+                    }).join('')}
+                    <td class="p-3 text-center bg-emerald-200/70 text-emerald-950">
+                        ${cohortOverallEarned} / ${cohortOverallMax}
+                        <div class="text-xs font-bold text-emerald-800">${cohortOverallPct}%</div>
+                    </td>
+                    <td class="p-3"></td>
+                </tr>
+            `;
+
+            tbody.innerHTML = rowsHtml + totalFooterRow;
+        }
+
+        // MODE 1B: Analyse by Unit -> Specific Unit Selected (Lists all pupils + each assignment in that unit + Unit Total + Overall Score)
+        function renderAnalyseBySpecificUnit(selectedUnit, selectedClass, thead, tbody) {
+            const { students, assignments } = workAnalysisCache;
+            const filteredStudents = selectedClass === 'ALL'
+                ? students
+                : students.filter(s => s.Class === selectedClass);
+
+            const unitAssignments = assignments.filter(a => a.Unit === selectedUnit);
+
+            thead.innerHTML = `
+                <tr class="bg-emerald-50 text-emerald-900 border-b border-emerald-200">
+                    <th class="p-3 text-center">#</th>
+                    <th class="p-3">Pupil Details</th>
+                    ${unitAssignments.map(a => `<th class="p-3 text-center max-w-[140px] whitespace-normal text-xs">${a.Title}</th>`).join('')}
+                    <th class="p-3 text-center bg-blue-50 font-bold text-blue-900">Unit Total</th>
+                    <th class="p-3 text-center bg-emerald-100/80 font-extrabold">Overall Score</th>
+                </tr>
+            `;
+
+            tbody.innerHTML = filteredStudents.map((stu, idx) => {
+                const m = computeStudentWorkMetrics(stu);
+                const uData = m.unitBreakdown[selectedUnit] || { earned: 0, max: 0, pct: '0.0', assignments: [] };
+
+                const assCells = unitAssignments.map(ass => {
+                    const detail = uData.assignments.find(d => d.id === ass.Id);
+                    if (!detail) {
+                        return `<td class="p-3 text-center text-gray-300 text-xs">Not Assigned</td>`;
+                    }
+                    if (detail.graded === 'Yes') {
+                        return `<td class="p-3 text-center font-bold text-gray-800">${detail.score}/10</td>`;
+                    }
+                    if (detail.submitted === 'Yes') {
+                        return `<td class="p-3 text-center"><span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-semibold">Pending</span></td>`;
+                    }
+                    return `<td class="p-3 text-center text-rose-400 text-xs font-semibold">0/10</td>`;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-gray-50 transition border-b">
+                        <td class="p-3 text-center text-gray-500">${idx + 1}</td>
+                        <td class="p-3">
+                            <div class="font-bold text-gray-800">${stu.FullName}</div>
+                            <div class="text-xs text-gray-500">${stu.Class}</div>
+                        </td>
+                        ${assCells}
+                        <td class="p-3 text-center bg-blue-50/40 font-bold text-blue-900">
+                            ${uData.earned} / ${uData.max}
+                            <div class="text-[11px] font-normal text-blue-700">${uData.pct !== null ? uData.pct + '%' : '-'}</div>
+                        </td>
+                        <td class="p-3 text-center bg-emerald-50/50 font-extrabold text-emerald-800">
+                            ${m.overallEarned} / ${m.overallMax}
+                            <div class="text-[11px] font-semibold text-emerald-600">${m.overallPct}%</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // MODE 2: Analyse by Pupils -> Specific Pupil Selected (Lists scores by Unit, total per Unit, and Overall Score)
+        function renderAnalyseBySinglePupil(studentEmail, thead, tbody) {
+            const student = workAnalysisCache.students.find(s => s.Email.toLowerCase() === studentEmail.toLowerCase());
+            if (!student) return;
+
+            const m = computeStudentWorkMetrics(student);
+
+            thead.innerHTML = `
+                <tr class="bg-emerald-50 text-emerald-900 border-b border-emerald-200">
+                    <th class="p-3">Unit</th>
+                    <th class="p-3">Assignment Title</th>
+                    <th class="p-3 text-center">Submitted</th>
+                    <th class="p-3 text-center">Graded</th>
+                    <th class="p-3 text-center">Score</th>
+                </tr>
+            `;
+
+            let htmlRows = `
+                <tr class="bg-emerald-800 text-white">
+                    <td colspan="5" class="p-4">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <div>
+                                <div class="text-base font-bold">${student.FullName}</div>
+                                <div class="text-xs text-emerald-200">Class: ${student.Class} &bull; Email: ${student.Email}</div>
+                            </div>
+                            <div class="bg-emerald-900/80 px-4 py-2 rounded-lg text-right">
+                                <div class="text-[11px] uppercase tracking-wider text-emerald-300">Overall Score</div>
+                                <div class="text-lg font-extrabold">${m.overallEarned} / ${m.overallMax} (${m.overallPct}%)</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            workAnalysisCache.units.forEach(unitName => {
+                const uData = m.unitBreakdown[unitName];
+                if (!uData || uData.assignedCount === 0) return;
+
+                uData.assignments.forEach((a, idx) => {
+                    htmlRows += `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-semibold text-gray-700">${idx === 0 ? unitName : ''}</td>
+                            <td class="p-3 text-gray-800">${a.title}</td>
+                            <td class="p-3 text-center">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold ${a.submitted === 'Yes' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}">${a.submitted}</span>
+                            </td>
+                            <td class="p-3 text-center">
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold ${a.graded === 'Yes' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}">${a.graded}</span>
+                            </td>
+                            <td class="p-3 text-center font-bold text-gray-800">${a.score !== null ? a.score + ' / 10' : '-'}</td>
+                        </tr>
+                    `;
+                });
+
+                // Total score row for every Unit
+                htmlRows += `
+                    <tr class="bg-blue-50/70 border-b-2 border-blue-200 font-bold text-blue-950">
+                        <td colspan="4" class="p-3 text-right">Total Score for ${unitName}:</td>
+                        <td class="p-3 text-center">${uData.earned} / ${uData.max} (${uData.pct}%)</td>
+                    </tr>
+                `;
+            });
+
+            // Final Overall Score Row
+            htmlRows += `
+                <tr class="bg-emerald-100 font-extrabold text-emerald-950 text-sm">
+                    <td colspan="4" class="p-4 text-right uppercase">Overall Score (All Units):</td>
+                    <td class="p-4 text-center text-base">${m.overallEarned} / ${m.overallMax} (${m.overallPct}%)</td>
+                </tr>
+            `;
+
+            tbody.innerHTML = htmlRows;
+        }
+
+        // MODAL POPUP: Inspect a Pupil's Unit-by-Unit & Assignment-by-Assignment Marks
+        function openPupilWorkModal(studentEmail) {
+            if (!workAnalysisCache) return;
+            const student = workAnalysisCache.students.find(s => s.Email.toLowerCase() === studentEmail.toLowerCase());
+            if (!student) return;
+
+            const m = computeStudentWorkMetrics(student);
+
+            const unitSectionsHtml = workAnalysisCache.units.map(unitName => {
+                const uData = m.unitBreakdown[unitName];
+                if (!uData || uData.assignedCount === 0) return '';
+
+                return `
+                    <div class="border border-gray-200 rounded-lg overflow-hidden mb-3 text-left">
+                        <div class="bg-emerald-50 px-3 py-2 flex justify-between items-center border-b border-emerald-100">
+                            <span class="font-bold text-xs text-emerald-900">${unitName}</span>
+                            <span class="text-xs font-extrabold text-emerald-700">Unit Total: ${uData.earned}/${uData.max} (${uData.pct}%)</span>
+                        </div>
+                        <div class="divide-y divide-gray-100 text-xs">
+                            ${uData.assignments.map(a => `
+                                <div class="px-3 py-2 flex justify-between items-center">
+                                    <span class="text-gray-700 pr-2">${a.title}</span>
+                                    <span class="font-bold whitespace-nowrap ${a.graded === 'Yes' ? 'text-gray-900' : 'text-amber-600'}">
+                                        ${a.graded === 'Yes' ? `${a.score}/10` : (a.submitted === 'Yes' ? 'Submitted (Ungraded)' : 'Not Submitted')}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            Swal.fire({
+                title: `<span class="text-lg font-bold text-emerald-900">${student.FullName}</span>`,
+                html: `
+                    <div class="text-xs text-gray-500 mb-3">Class: <strong>${student.Class}</strong> &bull; ${student.Email}</div>
+                    <div class="bg-emerald-600 text-white rounded-lg p-3 mb-4 flex justify-between items-center">
+                        <span class="text-xs font-semibold uppercase tracking-wide">Overall Performance</span>
+                        <span class="text-base font-extrabold">${m.overallEarned} / ${m.overallMax} (${m.overallPct}%)</span>
+                    </div>
+                    <div class="max-h-[55vh] overflow-y-auto pr-1">
+                        ${unitSectionsHtml}
+                    </div>
+                `,
+                width: '650px',
+                confirmButtonText: 'Close',
+                confirmButtonColor: '#10b981'
+            });
+        }
+        
         // Helper to convert file input to base64 data string
         function convertFileToBase64(file) {
             return new Promise((resolve, reject) => {
